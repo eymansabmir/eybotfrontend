@@ -4,6 +4,7 @@ import { FileText as FileTextIcon, Link as LinkIcon, Type } from "lucide-react";
 import type { DocumentNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { MediaUploader } from "@/components/MediaUploader";
 
 export function DocumentNodeRenderer({ id, data, selected }: NodeProps & { data: DocumentNodeData }) {
     const { setNodes } = useReactFlow();
@@ -41,18 +42,21 @@ export function DocumentNodeRenderer({ id, data, selected }: NodeProps & { data:
             </div>
 
             <div className="p-4 space-y-3">
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5">
-                        <LinkIcon size={10} className="text-muted-foreground" />
-                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Document URL</label>
+                <div className="space-y-3">
+                    <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                            <LinkIcon size={10} className="text-muted-foreground" />
+                            <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Document URL (or Upload)</label>
+                        </div>
+                        <input
+                            type="text"
+                            className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                            value={data.url || ""}
+                            placeholder="https://example.com/file.pdf"
+                            onChange={(e) => updateData({ url: e.target.value })}
+                        />
                     </div>
-                    <input
-                        type="text"
-                        className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                        value={data.url || ""}
-                        placeholder="https://example.com/file.pdf"
-                        onChange={(e) => updateData({ url: e.target.value })}
-                    />
+                    <MediaUploader onUploadSuccess={(url) => updateData({ url })} folder="workspaces" />
                 </div>
 
                 <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-3 py-2.5">
