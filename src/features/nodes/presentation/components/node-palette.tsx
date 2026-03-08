@@ -30,6 +30,7 @@ export function NodePalette() {
         ]);
         const inputTypes = new Set<NodeTypeValue>([
             NodeType.ASK_QUESTION,
+            NodeType.LOCATION_REQUEST,
         ]);
 
         return Object.values(nodeRegistry).reduce(
@@ -54,10 +55,10 @@ export function NodePalette() {
         accent: string;
         nodes: NodeDefinition[];
     }> = [
-        { key: "output", title: "Output Nodes", accent: "text-sky-500", nodes: groupedNodes.output },
-        { key: "input", title: "Input Nodes", accent: "text-emerald-500", nodes: groupedNodes.input },
-        { key: "logical", title: "Logical Nodes", accent: "text-amber-500", nodes: groupedNodes.logical },
-    ];
+            { key: "output", title: "Output Nodes", accent: "text-sky-500", nodes: groupedNodes.output },
+            { key: "input", title: "Input Nodes", accent: "text-emerald-500", nodes: groupedNodes.input },
+            { key: "logical", title: "Logical Nodes", accent: "text-amber-500", nodes: groupedNodes.logical },
+        ];
 
     return (
         <TooltipProvider delayDuration={0}>
