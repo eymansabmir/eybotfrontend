@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ImageNodeSchema = z.object({
-    filePath: z.string().min(1, "Image file path or URL is required"),
+    url: z.string().min(1, "Image file path or URL is required"),
     caption: z.string().optional(),
 });
 
