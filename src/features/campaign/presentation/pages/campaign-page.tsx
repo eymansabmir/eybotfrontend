@@ -1,9 +1,40 @@
+import { useState } from "react";
+import { Plus } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+
+import { useCampaigns } from "../../api/campaign-queries";
+import { CampaignTable } from "../components/campaign-table";
+import { CreateCampaignDialog } from "../components/create-campaign-dialog";
+
 export function CampaignPage() {
+  const { data: campaigns, isLoading } = useCampaigns();
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   return (
-    <div className="space-y-2">
-      <p className="text-sm text-muted-foreground uppercase">Campaign</p>
-      <h1 className="text-3xl font-semibold tracking-tight">Outbound orchestration</h1>
-      <p className="text-muted-foreground">Campaign workflows will appear here.</p>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground uppercase tracking-wide">
+            Campaign
+          </p>
+          <h1 className="text-2xl font-bold text-foreground">Campaigns</h1>
+        </div>
+        <Button onClick={() => setDialogOpen(true)} className="gap-2">
+          <Plus className="size-4" />
+          Create Campaign
+        </Button>
+      </div>
+
+      {/* Table */}
+      <CampaignTable campaigns={campaigns} isLoading={isLoading} />
+
+      {/* Create Dialog */}
+      <CreateCampaignDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
-  )
+  );
 }

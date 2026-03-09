@@ -4,9 +4,19 @@ import { Video as VideoIcon, Link as LinkIcon, Type } from "lucide-react";
 import type { VideoNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { MediaUploader, useResolveUrl } from "@/lib/storage";
+
+/** Returns true if the value looks like an absolute URL (not a storage path). */
+function isAbsoluteUrl(value: string) {
+    return /^https?:\/\//i.test(value);
+}
 
 export function VideoNodeRenderer({ id, data, selected }: NodeProps & { data: VideoNodeData }) {
     const { setNodes } = useReactFlow();
+
+    const isPath = !!data.filePath && !isAbsoluteUrl(data.filePath);
+    const { data: resolvedUrl } = useResolveUrl(isPath ? data.filePath : undefined, "public");
+    const previewSrc = data.filePath ? (isPath ? resolvedUrl : data.filePath) : undefined;
 
     const updateData = (newData: Partial<VideoNodeData>) => {
         setNodes((nds) =>
@@ -41,24 +51,27 @@ export function VideoNodeRenderer({ id, data, selected }: NodeProps & { data: Vi
             </div>
 
             <div className="p-4 space-y-4">
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5">
-                        <LinkIcon size={10} className="text-muted-foreground" />
-                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Video URL</label>
+                <div className="space-y-3">
+                    <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                            <LinkIcon size={10} className="text-muted-foreground" />
+                            <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Video URL (or Upload)</label>
+                        </div>
+                        <input
+                            type="text"
+                            className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                            value={data.filePath || ""}
+                            placeholder="https://example.com/video.mp4"
+                            onChange={(e) => updateData({ filePath: e.target.value })}
+                        />
                     </div>
-                    <input
-                        type="text"
-                        className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                        value={data.url || ""}
-                        placeholder="https://example.com/video.mp4"
-                        onChange={(e) => updateData({ url: e.target.value })}
-                    />
+                    <MediaUploader onUploadSuccess={(path) => updateData({ filePath: path })} purpose="video" />
                 </div>
 
-                {data.url ? (
+                {previewSrc ? (
                     <div className="relative w-full overflow-hidden rounded-xl border border-border bg-muted/50">
                         <video
-                            src={data.url}
+                            src={previewSrc}
                             className="w-full max-h-32 object-cover"
                             controls={false}
                             preload="metadata"

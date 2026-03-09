@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const VideoNodeSchema = z.object({
-    url: z.string().url("Valid video URL is required"),
+    filePath: z.string().min(1, "Video file path or URL is required"),
     caption: z.string().optional(),
 });
 

@@ -1,0 +1,38 @@
+import { apiClient } from "@/lib/api-client";
+import type { Campaign, CreateCampaignInput, CampaignAnalytics } from "../types";
+
+const BASE = "/campaigns";
+
+export const campaignApi = {
+    list: async (): Promise<Campaign[]> => {
+        const { data } = await apiClient.get<Campaign[]>(BASE);
+        return data;
+    },
+
+    getById: async (id: string): Promise<Campaign> => {
+        const { data } = await apiClient.get<Campaign>(`${BASE}/${id}`);
+        return data;
+    },
+
+    create: async (input: CreateCampaignInput): Promise<Campaign> => {
+        const { data } = await apiClient.post<Campaign>(BASE, input);
+        return data;
+    },
+
+    start: async (id: string): Promise<void> => {
+        await apiClient.post(`${BASE}/${id}/start`);
+    },
+
+    cancel: async (id: string): Promise<void> => {
+        await apiClient.post(`${BASE}/${id}/cancel`);
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await apiClient.delete(`${BASE}/${id}`);
+    },
+
+    getAnalytics: async (id: string): Promise<CampaignAnalytics> => {
+        const { data } = await apiClient.get<CampaignAnalytics>(`${BASE}/${id}/analytics`);
+        return data;
+    },
+} as const;
