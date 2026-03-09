@@ -4,7 +4,7 @@ import { Music as MusicIcon, Link as LinkIcon } from "lucide-react";
 import type { AudioNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
-import { MediaUploader } from "@/components/MediaUploader";
+import { MediaUploader } from "@/lib/storage";
 
 export function AudioNodeRenderer({ id, data, selected }: NodeProps & { data: AudioNodeData }) {
     const { setNodes } = useReactFlow();
@@ -51,12 +51,12 @@ export function AudioNodeRenderer({ id, data, selected }: NodeProps & { data: Au
                         <input
                             type="text"
                             className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                            value={data.url || ""}
+                            value={data.filePath || ""}
                             placeholder="https://example.com/audio.mp3"
-                            onChange={(e) => updateData({ url: e.target.value })}
+                            onChange={(e) => updateData({ filePath: e.target.value })}
                         />
                     </div>
-                    <MediaUploader onUploadSuccess={(url) => updateData({ url })} folder="bot-media" />
+                    <MediaUploader onUploadSuccess={(path) => updateData({ filePath: path })} purpose="audio" />
                 </div>
 
                 <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-4 py-3">
@@ -68,7 +68,7 @@ export function AudioNodeRenderer({ id, data, selected }: NodeProps & { data: Au
                             <div className="h-full w-1/3 rounded-full bg-green-500/40" />
                         </div>
                         <p className="mt-1.5 text-[9px] text-muted-foreground truncate">
-                            {data.url ? (data.url.split('/').pop() || 'audio file') : 'audio file'}
+                            {data.filePath ? (data.filePath.split('/').pop() || 'audio file') : 'audio file'}
                         </p>
                     </div>
                 </div>

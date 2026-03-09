@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState } from "react";
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X } from "lucide-react";
-import { useFileUpload } from "@/lib/storage/use-file-upload";
+import { useFileUpload, useUploadPolicy } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
-const CSV_ACCEPT = ".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel";
+
 
 interface CsvUploaderProps {
     /** Called with the uploaded file URL on success */
@@ -14,7 +14,7 @@ interface CsvUploaderProps {
 
 /**
  * Campaign-specific CSV / Excel file uploader.
- * Uses the shared useFileUpload hook with folder = "campaigns".
+ * Uses the shared useFileUpload hook with purpose = "campaign_csv".
  */
 export function CsvUploader({
     onUploadSuccess,
@@ -24,8 +24,10 @@ export function CsvUploader({
     const [isDragOver, setIsDragOver] = useState(false);
     const [fileName, setFileName] = useState<string | null>(null);
 
+    const { data: policy } = useUploadPolicy("campaign_csv");
+
     const { upload, state, reset } = useFileUpload({
-        folder: "campaigns",
+        purpose: "campaign_csv",
         onSuccess: (url) => onUploadSuccess(url),
     });
 
@@ -92,7 +94,7 @@ export function CsvUploader({
                     ref={inputRef}
                     type="file"
                     className="hidden"
-                    accept={CSV_ACCEPT}
+                    accept={policy?.acceptString}
                     onChange={(e) => handleFile(e.target.files?.[0])}
                 />
             </div>
