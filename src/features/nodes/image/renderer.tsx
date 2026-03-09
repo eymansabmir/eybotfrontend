@@ -15,9 +15,9 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
     const { setNodes } = useReactFlow();
 
     // Resolve storage path → displayable URL (skipped when the value is already a URL)
-    const isPath = !!data.filePath && !isAbsoluteUrl(data.filePath);
-    const { data: resolvedUrl } = useResolveUrl(isPath ? data.filePath : undefined, "public");
-    const previewSrc = data.filePath ? (isPath ? resolvedUrl : data.filePath) : undefined;
+    const isPath = !!data.url && !isAbsoluteUrl(data.url);
+    const { data: resolvedUrl } = useResolveUrl(isPath ? data.url : undefined, "public");
+    const previewSrc = data.url ? (isPath ? resolvedUrl : data.url) : undefined;
 
     const updateData = (newData: Partial<ImageNodeData>) => {
         setNodes((nds) =>
@@ -66,12 +66,12 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
                         <input
                             type="text"
                             className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                            value={data.filePath || ""}
+                            value={data.url || ""}
                             placeholder="https://example.com/image.jpg"
-                            onChange={(e) => updateData({ filePath: e.target.value })}
+                            onChange={(e) => updateData({ url: e.target.value })}
                         />
                     </div>
-                    <MediaUploader onUploadSuccess={(path) => updateData({ filePath: path })} purpose="image" />
+                    <MediaUploader onUploadSuccess={(path) => updateData({ url: path })} purpose="image" />
                 </div>
 
                 {/* Preview */}
