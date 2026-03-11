@@ -95,11 +95,11 @@ export function useCampaignAnalytics(id: string) {
     });
 }
 
-export function useAnalyticsPolling(id: string, enabled: boolean) {
+export function useAnalyticsPolling(id: string, isPolling: boolean) {
     return useQuery({
         queryKey: ["campaigns", id, "analytics"],
         queryFn: () => campaignApi.getAnalytics(id),
-        enabled: enabled && !!id,
-        refetchInterval: enabled ? 15_000 : false,
+        enabled: !!id,
+        refetchInterval: isPolling ? 15_000 : false,
     });
 }
