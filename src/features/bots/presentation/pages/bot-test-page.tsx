@@ -91,7 +91,7 @@ export function BotTestPage() {
         setIsTriggering(true);
         try {
             const waId = phoneNumber.startsWith("+") ? phoneNumber : `+${phoneNumber}`;
-            const mockWaBusinessNumber = "985457214653919";
+            const mockWaBusinessNumber = "986914541176866";
 
             const result = await chatSessionApi.startFlow({
                 orgId: bot.orgId,
