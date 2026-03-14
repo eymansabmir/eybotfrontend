@@ -13,10 +13,10 @@ export function exportCampaignCsv(
     // Overview
     lines.push("CAMPAIGN OVERVIEW");
     lines.push("Field,Value");
-    lines.push(`Campaign Name,${escCsv(campaign.title)}`);
+    lines.push(`Campaign Name,${escCsv(campaign.name)}`);
     lines.push(`Campaign ID,${campaign.id}`);
     lines.push(`Status,${campaign.status}`);
-    lines.push(`Execution Mode,${campaign.executionMode}`);
+    lines.push(`Execution Mode,${campaign.scheduleTime ? 'Scheduled' : 'Immediate'}`);
     lines.push(`Created,${campaign.createdAt}`);
     lines.push(`Total Recipients,${stats.total}`);
     lines.push("");
@@ -73,7 +73,7 @@ export function exportCampaignCsv(
     const blob = new Blob([lines.join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const sanitized = campaign.title.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+    const sanitized = campaign.name.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
     const shortId = campaign.id.slice(0, 8);
     const ts = new Date().toISOString().slice(0, 10);
     a.href = url;

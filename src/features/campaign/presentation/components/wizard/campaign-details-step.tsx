@@ -75,7 +75,7 @@ export function CampaignDetailsStep({
                             </SelectTrigger>
                             <SelectContent>
                                 {publishedBots.map((bot) => (
-                                    <SelectItem key={bot._id} value={bot._id}>
+                                    <SelectItem key={bot.id} value={bot.id}>
                                         {bot.name}
                                     </SelectItem>
                                 ))}

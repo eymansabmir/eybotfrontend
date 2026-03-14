@@ -7,7 +7,7 @@ export const TriggerTypeSchema = z.enum(['inbound', 'keyword', 'api']);
 export type TriggerType = z.infer<typeof TriggerTypeSchema>;
 
 export const BotSchema = z.object({
-    _id: z.string(),
+    id: z.string(),
     orgId: z.string(),
     name: z.string(),
     description: z.string().optional(),
@@ -33,7 +33,7 @@ export const BotSchema = z.object({
 export type Bot = z.infer<typeof BotSchema>;
 
 export const CreateBotSchema = BotSchema.omit({
-    _id: true,
+    id: true,
     createdAt: true,
     updatedAt: true,
     executions: true,

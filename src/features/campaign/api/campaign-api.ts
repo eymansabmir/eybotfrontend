@@ -15,8 +15,8 @@ export const campaignApi = {
     },
 
     create: async (input: CreateCampaignInput): Promise<Campaign> => {
-        const { data } = await apiClient.post<Campaign>(BASE, input);
-        return data;
+        const { data } = await apiClient.post<{ campaign: Campaign }>(BASE, input);
+        return data.campaign;
     },
 
     start: async (id: string): Promise<void> => {
@@ -32,7 +32,8 @@ export const campaignApi = {
     },
 
     getAnalytics: async (id: string): Promise<CampaignAnalytics> => {
-        const { data } = await apiClient.get<CampaignAnalytics>(`${BASE}/${id}/analytics`);
+        const { data } = await apiClient.get<CampaignAnalytics>(`${BASE}/${id}/stats`);
         return data;
     },
+
 } as const;

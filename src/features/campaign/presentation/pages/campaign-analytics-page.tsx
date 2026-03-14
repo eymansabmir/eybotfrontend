@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { useCampaignPolling, useAnalyticsPolling } from "../../api/campaign-queries";
+import { useCampaignPolling, useCampaignAnalytics } from "../../api/campaign-queries";
 import { exportCampaignCsv } from "../../api/campaign-export";
 
 import { CampaignStatusBadge } from "../components/campaign-status-badge";
@@ -29,25 +29,26 @@ export function CampaignAnalyticsPage() {
     const navigate = useNavigate();
 
     const { data: campaign, isLoading: isLoadingCampaign } = useCampaignPolling(id ?? "", true);
-    const { data: analyticsData, isLoading: isLoadingAnalytics } = useAnalyticsPolling(id ?? "", campaign?.status === "RUNNING");
+    const { data: analyticsData, isLoading: isLoadingAnalytics } = useCampaignAnalytics(id);
 
-    if (isLoadingCampaign || !campaign) {
+    if (isLoadingCampaign || !campaign || isLoadingAnalytics) {
         return <AnalyticsSkeleton />;
     }
 
-    const analytics = analyticsData?.analytics;
-    const stats = analytics || {
-        total: campaign.totalRecipients,
-        sent: campaign.sentCount,
+    const stats = analyticsData?.analytics ?? {
+        total: 0,
+        initiated: 0,
+        sent: 0,
         delivered: 0,
         opened: 0,
         started: 0,
         completed: 0,
-        failed: campaign.failedCount,
-        pending: campaign.totalRecipients - campaign.sentCount - campaign.failedCount,
+        failed: 0,
+        pending: 0,
         queued: 0,
-        initiated: campaign.sentCount
     };
+
+    const nps = analyticsData?.analytics.nps ?? null;
 
     const deliveryRate = stats.sent > 0 ? (stats.delivered / stats.sent) * 100 : 0;
     const openRate = stats.delivered > 0 ? (stats.opened / stats.delivered) * 100 : 0;
@@ -78,7 +79,7 @@ export function CampaignAnalyticsPage() {
                     </Button>
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <h1 className="text-2xl font-black text-foreground tracking-tight">{campaign.title}</h1>
+                            <h1 className="text-2xl font-black text-foreground tracking-tight">{campaign.name}</h1>
                             <CampaignStatusBadge status={campaign.status} />
                         </div>
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
@@ -90,7 +91,7 @@ export function CampaignAnalyticsPage() {
                     <Button
                         variant="outline"
                         className="gap-2 rounded-xl border-dashed hover:border-solid hover:bg-primary/5 hover:text-primary transition-all shadow-sm"
-                        onClick={() => exportCampaignCsv(campaign, stats, analytics?.nps ?? undefined)}
+                        onClick={() => exportCampaignCsv(campaign, stats, undefined)}
                     >
                         <Download className="size-4" />
                         Download Report
@@ -106,14 +107,7 @@ export function CampaignAnalyticsPage() {
             </div>
 
             {/* NPS Deep Dive */}
-            <NpsSection nps={analytics?.nps ?? null} isLoading={isLoadingAnalytics} />
-
-            {/* Core Funnel and Distribution */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-12">
-                    <ConversionFunnel steps={funnelSteps} />
-                </div>
-            </div>
+            <NpsSection nps={nps} isLoading={isLoadingAnalytics} />
 
             {/* Detailed Metric Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -126,9 +120,17 @@ export function CampaignAnalyticsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard title="Conversation Started" value={stats.started} total={stats.total} icon={PlayCircle} color="#6366f1" description="Users who replied to the bot" />
                 <MetricCard title="Completed Flow" value={stats.completed} total={stats.total} icon={CheckCircle2} color="#ec4899" description="Users reached end of campaign" />
-                <MetricCard title="Current Queue" value={stats.pending + stats.queued} total={stats.total} icon={Clock} color="#94a3b8" description="Pending/Queued for execution" />
+                {/* <MetricCard title="Current Queue" value={stats.pending + stats.queued} total={stats.total} icon={Clock} color="#94a3b8" description="Pending/Queued for execution" /> */}
                 <MetricCard title="Failed / Bounced" value={stats.failed} total={stats.total} icon={XCircle} color="#ef4444" description="Errors and delivery failures" />
             </div>
+
+            {/* Core Funnel and Distribution */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-12">
+                    <ConversionFunnel steps={funnelSteps} />
+                </div>
+            </div>
+
 
             {/* Raw Data Table */}
             <StatsTable stats={stats} />
@@ -136,24 +138,83 @@ export function CampaignAnalyticsPage() {
     );
 }
 
-// ─── Loading Skeleton ────────────────────────────────────────
+// ─── Loading Skeleton ─────────────────────────────────────────
+// Each section mirrors the real layout so there's no visual 'jump' when data loads.
 function AnalyticsSkeleton() {
     return (
-        <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Skeleton className="size-10 rounded-md" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-7 w-48" />
+        <div className="space-y-8 pb-12 animate-pulse">
+            {/* Header card */}
+            <div className="flex items-center justify-between gap-4 bg-muted/30 p-6 rounded-2xl border border-border/50">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="size-10 rounded-full" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-7 w-48 rounded-lg" />
+                        <Skeleton className="h-3.5 w-32 rounded" />
+                    </div>
+                </div>
+                <Skeleton className="h-9 w-36 rounded-xl" />
+            </div>
+
+            {/* 3 rate cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                    <div key={i} className="rounded-xl border border-border bg-card p-5 space-y-3">
+                        <div className="flex justify-between items-center">
+                            <Skeleton className="h-4 w-28 rounded" />
+                            <Skeleton className="size-8 rounded-full" />
+                        </div>
+                        <Skeleton className="h-10 w-20 rounded-lg" />
+                        <Skeleton className="h-1.5 w-full rounded-full" />
+                        <Skeleton className="h-3 w-24 rounded" />
+                    </div>
+                ))}
+            </div>
+
+            {/* NPS placeholder */}
+            <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+                <Skeleton className="h-5 w-32 rounded" />
+                <div className="grid grid-cols-3 gap-4">
+                    {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-20 rounded-xl" />
+                    ))}
                 </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+
+            {/* 4 metric cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="rounded-xl border border-border bg-card p-5 space-y-3">
+                        <div className="flex justify-between items-start">
+                            <Skeleton className="h-4 w-24 rounded" />
+                            <Skeleton className="size-5 rounded" />
+                        </div>
+                        <Skeleton className="h-9 w-16 rounded-lg" />
+                        <Skeleton className="h-1.5 w-full rounded-full" />
+                    </div>
+                ))}
             </div>
-            <Skeleton className="h-64 rounded-xl" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
+
+            {/* Stats table placeholder */}
+            <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+                <Skeleton className="h-5 w-40 rounded" />
+                <Skeleton className="h-3 w-56 rounded" />
+                <div className="space-y-3 mt-4">
+                    {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                        <div key={i} className="flex items-center gap-4 py-2">
+                            <div className="flex items-center gap-2.5 w-[45%]">
+                                <Skeleton className="size-2.5 rounded-full flex-shrink-0" />
+                                <Skeleton className={`h-4 rounded w-${i % 2 === 0 ? "28" : "36"}`} />
+                            </div>
+                            <Skeleton className="h-4 w-8 rounded ml-auto" />
+                            <div className="flex items-center gap-3 w-[40%]">
+                                <Skeleton className="h-1.5 flex-1 max-w-36 rounded-full" />
+                                <Skeleton className="h-3 w-10 rounded" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
 }
+
