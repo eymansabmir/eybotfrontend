@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { useCampaignPolling, useAnalyticsPolling } from "../../api/campaign-queries";
+import { useCampaignPolling, useCampaignAnalytics } from "../../api/campaign-queries";
 import { exportCampaignCsv } from "../../api/campaign-export";
 
 import { CampaignStatusBadge } from "../components/campaign-status-badge";
@@ -29,25 +29,26 @@ export function CampaignAnalyticsPage() {
     const navigate = useNavigate();
 
     const { data: campaign, isLoading: isLoadingCampaign } = useCampaignPolling(id ?? "", true);
-    const { data: analyticsData, isLoading: isLoadingAnalytics } = useAnalyticsPolling(id ?? "", campaign?.status === "RUNNING");
+    const { data: analyticsData, isLoading: isLoadingAnalytics } = useCampaignAnalytics(id);
 
-    if (isLoadingCampaign || !campaign) {
+    if (isLoadingCampaign || !campaign || isLoadingAnalytics) {
         return <AnalyticsSkeleton />;
     }
 
-    const analytics = analyticsData?.analytics;
-    const stats = analytics || {
-        total: campaign.totalRecipients,
-        sent: campaign.sentCount,
+    const stats = analyticsData?.analytics ?? {
+        total: 0,
+        initiated: 0,
+        sent: 0,
         delivered: 0,
         opened: 0,
         started: 0,
         completed: 0,
-        failed: campaign.failedCount,
-        pending: campaign.totalRecipients - campaign.sentCount - campaign.failedCount,
+        failed: 0,
+        pending: 0,
         queued: 0,
-        initiated: campaign.sentCount
     };
+
+    const nps = analyticsData?.analytics.nps ?? null;
 
     const deliveryRate = stats.sent > 0 ? (stats.delivered / stats.sent) * 100 : 0;
     const openRate = stats.delivered > 0 ? (stats.opened / stats.delivered) * 100 : 0;
@@ -78,7 +79,7 @@ export function CampaignAnalyticsPage() {
                     </Button>
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <h1 className="text-2xl font-black text-foreground tracking-tight">{campaign.title}</h1>
+                            <h1 className="text-2xl font-black text-foreground tracking-tight">{campaign.name}</h1>
                             <CampaignStatusBadge status={campaign.status} />
                         </div>
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
@@ -90,7 +91,7 @@ export function CampaignAnalyticsPage() {
                     <Button
                         variant="outline"
                         className="gap-2 rounded-xl border-dashed hover:border-solid hover:bg-primary/5 hover:text-primary transition-all shadow-sm"
-                        onClick={() => exportCampaignCsv(campaign, stats, analytics?.nps ?? undefined)}
+                        onClick={() => exportCampaignCsv(campaign, stats, undefined)}
                     >
                         <Download className="size-4" />
                         Download Report
@@ -106,7 +107,7 @@ export function CampaignAnalyticsPage() {
             </div>
 
             {/* NPS Deep Dive */}
-            <NpsSection nps={analytics?.nps ?? null} isLoading={isLoadingAnalytics} />
+            <NpsSection nps={nps} isLoading={isLoadingAnalytics} />
 
             {/* Core Funnel and Distribution */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

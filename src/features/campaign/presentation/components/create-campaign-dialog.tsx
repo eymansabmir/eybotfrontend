@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-import { useCreateCampaign, useStartCampaign } from "../../api/campaign-queries";
+import { useCreateCampaign } from "../../api/campaign-queries";
 import type { ExecutionMode } from "../../types";
 
 import { StepperSidebar, type StepConfig } from "./wizard/stepper-sidebar";
@@ -37,7 +37,6 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
     const [executeAt, setExecuteAt] = useState("");
 
     const createMutation = useCreateCampaign();
-    const startMutation = useStartCampaign();
 
     const resetForm = useCallback(() => {
         setStep(0);
@@ -67,24 +66,17 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
 
     const handleSubmit = async () => {
         try {
-            const campaign = await createMutation.mutateAsync({
-                title: title.trim(),
-                workspaceId: "default", // TODO: from context
-                botId: botId.trim(),
+            await createMutation.mutateAsync({
+                name: title.trim(),
+                flowId: botId.trim(),
                 filePath,
-                executionMode,
-                executedAt: executionMode === "SCHEDULED" ? new Date(executeAt).toISOString() : undefined,
+                scheduleTime: executionMode === "SCHEDULED" ? new Date(executeAt).toISOString() : undefined,
             });
-
-            // If NOW, auto-start
-            if (executionMode === "NOW" && campaign.id) {
-                await startMutation.mutateAsync(campaign.id);
-            }
-
-            handleClose();
         } catch {
-            // Errors handled in mutation hooks via toast
+            // Error handled via onError toast in mutation hook
+            return;
         }
+        handleClose();
     };
 
     return (

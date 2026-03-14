@@ -6,6 +6,7 @@ import { toast } from "sonner";
 const CAMPAIGN_KEYS = {
     all: ["campaigns"] as const,
     detail: (id: string) => ["campaigns", id] as const,
+    stats: (id: string) => ["campaigns", id, "stats"] as const,
 };
 
 export function useCampaigns() {
@@ -29,6 +30,15 @@ export function useCampaignPolling(id: string, enabled: boolean) {
         queryFn: () => campaignApi.getById(id),
         enabled,
         refetchInterval: enabled ? 15_000 : false,
+    });
+}
+
+export function useCampaignAnalytics(id: string | undefined) {
+    return useQuery({
+        queryKey: CAMPAIGN_KEYS.stats(id || ""),
+        queryFn: () => campaignApi.getAnalytics(id!),
+        enabled: !!id,
+        refetchInterval: 15_000,
     });
 }
 
@@ -87,19 +97,4 @@ export function useDeleteCampaign() {
         },
     });
 }
-export function useCampaignAnalytics(id: string) {
-    return useQuery({
-        queryKey: ["campaigns", id, "analytics"],
-        queryFn: () => campaignApi.getAnalytics(id),
-        enabled: !!id,
-    });
-}
 
-export function useAnalyticsPolling(id: string, enabled: boolean) {
-    return useQuery({
-        queryKey: ["campaigns", id, "analytics"],
-        queryFn: () => campaignApi.getAnalytics(id),
-        enabled: enabled && !!id,
-        refetchInterval: enabled ? 15_000 : false,
-    });
-}

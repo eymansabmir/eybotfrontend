@@ -66,8 +66,6 @@ function TableSkeleton() {
                     <Skeleton className="h-4 w-40" />
                     <Skeleton className="h-6 w-20 rounded-md" />
                     <Skeleton className="h-4 w-16" />
-                    <Skeleton className="h-4 w-12" />
-                    <Skeleton className="h-2 w-24 rounded-full" />
                     <Skeleton className="h-4 w-20" />
                     <Skeleton className="h-8 w-8 rounded-md" />
                 </div>
@@ -76,23 +74,6 @@ function TableSkeleton() {
     );
 }
 
-// ─── Progress Bar ────────────────────────────────────────────
-function ProgressBar({ sent, total }: { sent: number; total: number }) {
-    const pct = total > 0 ? Math.round((sent / total) * 100) : 0;
-    return (
-        <div className="flex items-center gap-2">
-            <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
-                <div
-                    className="h-full rounded-full bg-green-500 transition-all duration-500"
-                    style={{ width: `${pct}%` }}
-                />
-            </div>
-            <span className="text-xs tabular-nums text-muted-foreground">
-                {sent.toLocaleString()}/{total.toLocaleString()}
-            </span>
-        </div>
-    );
-}
 
 // ─── Main Table ──────────────────────────────────────────────
 interface CampaignTableProps {
@@ -117,13 +98,11 @@ export function CampaignTable({ campaigns, isLoading }: CampaignTableProps) {
                 <Table>
                     <TableHeader>
                         <TableRow className="hover:bg-transparent">
-                            <TableHead className="w-[28%]">Title</TableHead>
-                            <TableHead className="w-[12%]">Status</TableHead>
-                            <TableHead className="w-[10%]">Mode</TableHead>
-                            <TableHead className="w-[10%] text-right">Recipients</TableHead>
-                            <TableHead className="w-[20%]">Progress</TableHead>
-                            <TableHead className="w-[12%]">Created</TableHead>
-                            <TableHead className="w-[8%] text-right">Actions</TableHead>
+                            <TableHead className="w-[40%]">Title</TableHead>
+                            <TableHead className="w-[15%]">Status</TableHead>
+                            <TableHead className="w-[15%]">Mode</TableHead>
+                            <TableHead className="w-[18%]">Created</TableHead>
+                            <TableHead className="w-[12%] text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -133,18 +112,17 @@ export function CampaignTable({ campaigns, isLoading }: CampaignTableProps) {
                                 className="cursor-pointer group"
                                 onClick={() => navigate({ to: `/campaign/${c.id}/analytics` as string })}
                             >
-                                <TableCell className="font-medium">{c.title}</TableCell>
+                                <TableCell className="font-medium">
+                                    {c.name}
+                                    <div className="text-xs text-muted-foreground mt-1 font-mono">
+                                        Flow: {c.flowId.slice(0, 8)}
+                                    </div>
+                                </TableCell>
                                 <TableCell>
                                     <CampaignStatusBadge status={c.status} />
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">
-                                    {c.executionMode === "NOW" ? "Immediate" : "Scheduled"}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                    {c.totalRecipients.toLocaleString()}
-                                </TableCell>
-                                <TableCell>
-                                    <ProgressBar sent={c.sentCount} total={c.totalRecipients} />
+                                    {c.scheduleTime ? "Scheduled" : "Immediate"}
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">
                                     {format(new Date(c.createdAt), "MMM d, yyyy")}
@@ -168,13 +146,13 @@ export function CampaignTable({ campaigns, isLoading }: CampaignTableProps) {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                {(c.status === "DRAFT" || c.status === "SCHEDULED") && (
+                                                {(c.status === "draft" || c.status === "scheduled") && (
                                                     <DropdownMenuItem onClick={() => startMutation.mutate(c.id)}>
                                                         <Play className="size-4 mr-2" />
                                                         Start Campaign
                                                     </DropdownMenuItem>
                                                 )}
-                                                {(c.status === "RUNNING" || c.status === "PENDING") && (
+                                                {c.status === "running" && (
                                                     <DropdownMenuItem onClick={() => cancelMutation.mutate(c.id)}>
                                                         <Ban className="size-4 mr-2" />
                                                         Cancel
