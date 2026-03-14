@@ -74,7 +74,11 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <SidebarMenuButton
                       asChild
                       tooltip={item.label}
-                      isActive={pathname === item.to}
+                      isActive={
+                        item.to === "/"
+                          ? pathname === "/"
+                          : pathname === item.to || pathname.startsWith(item.to + "/")
+                      }
                     >
                       <Link to={item.to}>
                         <item.icon className="size-4" />
