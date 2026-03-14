@@ -4,6 +4,7 @@ import { videoNode } from "./video";
 import { audioNode } from "./audio";
 import { documentNode } from "./document";
 import { locationNode } from "./location";
+import { locationRequestNode } from "./location-request";
 import { buttonsNode } from "./buttons";
 import { listNode } from "./list";
 import { templateNode } from "./template";
@@ -23,6 +24,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [audioNode.config.type]: audioNode,
     [documentNode.config.type]: documentNode,
     [locationNode.config.type]: locationNode,
+    [locationRequestNode.config.type]: locationRequestNode,
     [buttonsNode.config.type]: buttonsNode,
     [listNode.config.type]: listNode,
     [templateNode.config.type]: templateNode,
