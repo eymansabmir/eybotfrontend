@@ -10,6 +10,7 @@ import { UsersPage } from "@/features/users/presentation/pages/users-page"
 import { SettingsPage } from "@/features/settings/presentation/pages/settings-page"
 import { BotEditorPage } from "@/features/bots/presentation/pages/bot-editor-page"
 import { BotTestPage } from "@/features/bots/presentation/pages/bot-test-page"
+import { EmailOtpLoginPage } from "@/features/auth/presentation/pages/email-otp-login-page"
 
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -57,6 +58,12 @@ const botTestRoute = createRoute({
   component: BotTestPage,
 })
 
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "login",
+  component: EmailOtpLoginPage,
+})
+
 const routeTree = rootRoute.addChildren([
   dashboardRoute,
   botsRoute,
@@ -65,6 +72,7 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
   botEditorRoute,
   botTestRoute,
+  loginRoute,
 ])
 
 const router = createRouter({

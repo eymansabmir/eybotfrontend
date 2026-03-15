@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react"
+import { Link } from "@tanstack/react-router"
 
 import { Spinner } from "@/components/ui/spinner"
-
-const TOKEN_STORAGE_KEY = "jwt_token"
 
 interface ProtectedLayoutProps {
   children: React.ReactNode
@@ -10,22 +9,33 @@ interface ProtectedLayoutProps {
 
 export function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const [isReady, setIsReady] = useState(false)
-  const [hasToken, setHasToken] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    const readToken = () => {
-      if (typeof window === "undefined") {
-        return false
+    const checkSession = async () => {
+      const authBaseUrl = import.meta.env.VITE_AUTH_URL || "http://localhost:3000/api/auth"
+
+      try {
+        const response = await fetch(`${authBaseUrl}/get-session`, {
+          method: "GET",
+          credentials: "include",
+        })
+
+        if (!response.ok) {
+          setIsAuthenticated(false)
+          return
+        }
+
+        const payload = await response.json()
+        setIsAuthenticated(Boolean(payload?.session || payload?.data?.session))
+      } catch {
+        setIsAuthenticated(false)
+      } finally {
+        setIsReady(true)
       }
-      return Boolean(window.localStorage.getItem(TOKEN_STORAGE_KEY))
     }
 
-    setHasToken(readToken())
-    setIsReady(true)
-
-    const handleStorage = () => setHasToken(readToken())
-    window.addEventListener("storage", handleStorage)
-    return () => window.removeEventListener("storage", handleStorage)
+    void checkSession()
   }, [])
 
   if (!isReady) {
@@ -36,16 +46,18 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
     )
   }
 
-  if (!hasToken) {
+  if (!isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/40 px-6">
         <div className="max-w-md space-y-4 rounded-xl border bg-card p-6 text-center shadow-sm">
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold tracking-tight">Authentication required</h1>
             <p className="text-sm text-muted-foreground">
-              Please add your JWT token to <code className="rounded bg-muted px-2 py-1">localStorage</code> using the key
-              <code className="ml-1 rounded bg-muted px-2 py-1">{TOKEN_STORAGE_KEY}</code> and refresh the page.
+              Please sign in with your email OTP to continue.
             </p>
+            <Link to="/login" className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+              Go to login
+            </Link>
           </div>
         </div>
       </div>
