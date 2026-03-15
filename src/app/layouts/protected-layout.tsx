@@ -36,21 +36,22 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
     )
   }
 
-  if (!hasToken) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/40 px-6">
-        <div className="max-w-md space-y-4 rounded-xl border bg-card p-6 text-center shadow-sm">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Authentication required</h1>
-            <p className="text-sm text-muted-foreground">
-              Please add your JWT token to <code className="rounded bg-muted px-2 py-1">localStorage</code> using the key
-              <code className="ml-1 rounded bg-muted px-2 py-1">{TOKEN_STORAGE_KEY}</code> and refresh the page.
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // TODO: TEMPORARY DISABLED AUTH
+  // if (!hasToken) {
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center bg-muted/40 px-6">
+  //       <div className="max-w-md space-y-4 rounded-xl border bg-card p-6 text-center shadow-sm">
+  //         <div className="space-y-2">
+  //           <h1 className="text-2xl font-semibold tracking-tight">Authentication required</h1>
+  //           <p className="text-sm text-muted-foreground">
+  //             Please add your JWT token to <code className="rounded bg-muted px-2 py-1">localStorage</code> using the key
+  //             <code className="ml-1 rounded bg-muted px-2 py-1">{TOKEN_STORAGE_KEY}</code> and refresh the page.
+  //           </p>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   return <>{children}</>
 }
