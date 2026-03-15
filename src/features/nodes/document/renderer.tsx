@@ -4,7 +4,7 @@ import { FileText as FileTextIcon, Link as LinkIcon, Type } from "lucide-react";
 import type { DocumentNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
-import { MediaUploader } from "@/components/MediaUploader";
+import { MediaUploader } from "@/lib/storage";
 
 export function DocumentNodeRenderer({ id, data, selected }: NodeProps & { data: DocumentNodeData }) {
     const { setNodes } = useReactFlow();
@@ -56,7 +56,7 @@ export function DocumentNodeRenderer({ id, data, selected }: NodeProps & { data:
                             onChange={(e) => updateData({ url: e.target.value })}
                         />
                     </div>
-                    <MediaUploader onUploadSuccess={(url) => updateData({ url })} folder="workspaces" />
+                    <MediaUploader onUploadSuccess={(path) => updateData({ url: path })} purpose="document" />
                 </div>
 
                 <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-3 py-2.5">

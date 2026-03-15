@@ -1,14 +1,10 @@
 import { apiClient } from "@/lib/api-client";
-import type {
-    AllowedFolder,
-    ApiResponse,
-    UploadResult,
-    PresignedUrlResult,
-} from "./storage.types";
+import type { UploadPurpose, UploadResult, UploadPolicy } from "../domain/storage.types";
+import type { ApiResponse, PresignedUrlResult } from "./storage-api.types";
 
 /**
  * Storage API client — thin wrapper around /api/storage endpoints.
- * Follows the same object-with-methods pattern as chat-session-api.ts.
+ * Uses purpose-based uploads: the backend maps purpose → folder + MIME policy.
  */
 export const storageApi = {
     /**
@@ -17,12 +13,12 @@ export const storageApi = {
      */
     uploadFile: async (
         file: File,
-        folder: AllowedFolder,
+        purpose: UploadPurpose,
         onUploadProgress?: (percent: number) => void,
     ): Promise<UploadResult> => {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("folder", folder);
+        formData.append("purpose", purpose);
 
         const { data } = await apiClient.post<ApiResponse<UploadResult>>(
             "/storage/upload",
@@ -49,11 +45,11 @@ export const storageApi = {
     getPresignedUrl: async (
         fileName: string,
         contentType: string,
-        folder: AllowedFolder,
+        purpose: UploadPurpose,
     ): Promise<PresignedUrlResult> => {
         const { data } = await apiClient.get<ApiResponse<PresignedUrlResult>>(
             "/storage/presigned-url",
-            { params: { fileName, contentType, folder } },
+            { params: { fileName, contentType, purpose } },
         );
 
         return data.data;
@@ -64,6 +60,32 @@ export const storageApi = {
         const { data } = await apiClient.get<ApiResponse<{ url: string }>>(
             "/storage/signed-url",
             { params: { filePath } },
+        );
+
+        return data.data.url;
+    },
+
+    /**
+     * Get the upload policy for a given purpose.
+     * Returns allowed MIME types, max size, and HTML accept string.
+     */
+    getUploadPolicy: async (purpose: UploadPurpose): Promise<UploadPolicy> => {
+        const { data } = await apiClient.get<ApiResponse<UploadPolicy>>(
+            "/storage/upload-policy",
+            { params: { purpose } },
+        );
+
+        return data.data;
+    },
+
+    /**
+     * Resolve a stored file path to a consumable URL.
+     * Public bucket → direct URL. Private bucket → short-lived signed URL.
+     */
+    resolveUrl: async (filePath: string, bucket: "public" | "private" = "public"): Promise<string> => {
+        const { data } = await apiClient.get<ApiResponse<{ url: string }>>(
+            "/storage/resolve-url",
+            { params: { filePath, bucket } },
         );
 
         return data.data.url;

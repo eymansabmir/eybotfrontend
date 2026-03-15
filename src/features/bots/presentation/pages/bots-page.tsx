@@ -59,7 +59,7 @@ export function BotsPage() {
         </Link>
 
         {(bots || []).map((bot) => (
-          <Link key={bot._id} to="/bot/$id" params={{ id: bot._id }} className="group">
+          <Link key={bot.id} to="/bot/$id" params={{ id: bot.id }} className="group">
             <Card className="h-full transition-all duration-300 hover:shadow-xl hover:border-primary/30 relative overflow-hidden group-hover:-translate-y-1">
               <div className="absolute top-0 right-0 p-4">
                 <Badge variant={bot.status === "published" ? "secondary" : "outline"} className="capitalize">

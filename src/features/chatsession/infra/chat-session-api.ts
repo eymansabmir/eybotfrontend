@@ -14,7 +14,7 @@ export interface ResumeFlowInput {
 }
 
 export interface ChatSession {
-  _id: string;
+  id: string;
   flowId: string;
   flowVersion: number;
   waId: string;

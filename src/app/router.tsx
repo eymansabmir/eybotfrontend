@@ -6,6 +6,7 @@ import { RootLayout } from "@/app/routes/root-layout"
 import { DashboardPage } from "@/features/dashboard/presentation/pages/dashboard-page"
 import { BotsPage } from "@/features/bots/presentation/pages/bots-page"
 import { CampaignPage } from "@/features/campaign/presentation/pages/campaign-page"
+import { CampaignAnalyticsPage } from "@/features/campaign/presentation/pages/campaign-analytics-page"
 import { UsersPage } from "@/features/users/presentation/pages/users-page"
 import { SettingsPage } from "@/features/settings/presentation/pages/settings-page"
 import { BotEditorPage } from "@/features/bots/presentation/pages/bot-editor-page"
@@ -32,6 +33,12 @@ const campaignRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "campaign",
   component: CampaignPage,
+})
+
+const campaignAnalyticsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "campaign/$id/analytics",
+  component: CampaignAnalyticsPage,
 })
 
 const usersRoute = createRoute({
@@ -68,6 +75,7 @@ const routeTree = rootRoute.addChildren([
   dashboardRoute,
   botsRoute,
   campaignRoute,
+  campaignAnalyticsRoute,
   usersRoute,
   settingsRoute,
   botEditorRoute,

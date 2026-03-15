@@ -4,10 +4,20 @@ import { Image as ImageIcon, Link as LinkIcon, Type } from "lucide-react";
 import type { ImageNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
-import { MediaUploader } from "@/components/MediaUploader";
+import { MediaUploader, useResolveUrl } from "@/lib/storage";
+
+/** Returns true if the value looks like an absolute URL (not a storage path). */
+function isAbsoluteUrl(value: string) {
+    return /^https?:\/\//i.test(value);
+}
 
 export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: ImageNodeData }) {
     const { setNodes } = useReactFlow();
+
+    // Resolve storage path → displayable URL (skipped when the value is already a URL)
+    const isPath = !!data.url && !isAbsoluteUrl(data.url);
+    const { data: resolvedUrl } = useResolveUrl(isPath ? data.url : undefined, "public");
+    const previewSrc = data.url ? (isPath ? resolvedUrl : data.url) : undefined;
 
     const updateData = (newData: Partial<ImageNodeData>) => {
         setNodes((nds) =>
@@ -46,7 +56,7 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
             </div>
 
             <div className="p-4 space-y-4">
-                {/* URL Input */}
+                {/* URL / Path Input */}
                 <div className="space-y-3">
                     <div className="space-y-1.5">
                         <div className="flex items-center gap-1.5">
@@ -61,14 +71,14 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
                             onChange={(e) => updateData({ url: e.target.value })}
                         />
                     </div>
-                    <MediaUploader onUploadSuccess={(url) => updateData({ url })} folder="bot-media" />
+                    <MediaUploader onUploadSuccess={(path) => updateData({ url: path })} purpose="image" />
                 </div>
 
                 {/* Preview */}
-                {data.url ? (
+                {previewSrc ? (
                     <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted/50 group/img">
                         <img
-                            src={data.url}
+                            src={previewSrc}
                             alt={data.caption || "Node Image"}
                             className="h-full w-full object-cover transition-transform group-hover/img:scale-105"
                             onError={(e) => {

@@ -1,9 +1,22 @@
 import { useCallback, useRef, useState } from "react";
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X } from "lucide-react";
-import { useFileUpload } from "@/lib/storage/use-file-upload";
+import { useFileUpload, useUploadPolicy } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-const CSV_ACCEPT = ".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel";
+const ALLOWED_EXTENSIONS = [".csv", ".xls", ".xlsx"];
+const ALLOWED_MIME_TYPES = new Set([
+    "text/csv",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
+
+function isValidCampaignFile(file: File): boolean {
+    const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+    return ALLOWED_EXTENSIONS.includes(ext) || ALLOWED_MIME_TYPES.has(file.type);
+}
+
+
 
 interface CsvUploaderProps {
     /** Called with the uploaded file URL on success */
@@ -14,7 +27,7 @@ interface CsvUploaderProps {
 
 /**
  * Campaign-specific CSV / Excel file uploader.
- * Uses the shared useFileUpload hook with folder = "campaigns".
+ * Uses the shared useFileUpload hook with purpose = "campaign_csv".
  */
 export function CsvUploader({
     onUploadSuccess,
@@ -24,17 +37,24 @@ export function CsvUploader({
     const [isDragOver, setIsDragOver] = useState(false);
     const [fileName, setFileName] = useState<string | null>(null);
 
+    const { data: policy } = useUploadPolicy("campaign_csv");
+
     const { upload, state, reset } = useFileUpload({
-        folder: "campaigns",
+        purpose: "campaign_csv",
         onSuccess: (url) => onUploadSuccess(url),
     });
 
     const handleFile = useCallback(
         (file: File | undefined) => {
-            if (file) {
-                setFileName(file.name);
-                upload(file);
+            if (!file) return;
+
+            if (!isValidCampaignFile(file)) {
+                toast.error("Please upload a CSV or Excel file (.csv, .xls, .xlsx)");
+                return;
             }
+
+            setFileName(file.name);
+            upload(file);
         },
         [upload],
     );
@@ -92,7 +112,7 @@ export function CsvUploader({
                     ref={inputRef}
                     type="file"
                     className="hidden"
-                    accept={CSV_ACCEPT}
+                    accept={policy?.acceptString ?? ".csv,.xls,.xlsx"}
                     onChange={(e) => handleFile(e.target.files?.[0])}
                 />
             </div>

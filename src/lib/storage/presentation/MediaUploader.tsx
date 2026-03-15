@@ -1,36 +1,39 @@
 import { useCallback, useRef, useState } from "react";
 import { Upload, CheckCircle2, AlertCircle, Loader2, X } from "lucide-react";
-import { useFileUpload } from "@/lib/storage/use-file-upload";
-import type { AllowedFolder } from "@/lib/storage/storage.types";
+import { useFileUpload } from "../application/use-file-upload";
+import { useUploadPolicy } from "../application/storage-queries";
+import type { UploadPurpose } from "../domain/storage.types";
 import { cn } from "@/lib/utils";
 
 interface MediaUploaderProps {
-    /** Called with the uploaded file URL on success */
-    onUploadSuccess: (url: string) => void;
-    /** Target folder determines which MIME types the backend accepts */
-    folder: AllowedFolder;
+    /** Called with the stored file path on success */
+    onUploadSuccess: (path: string) => void;
+    /** Upload purpose — determines accepted MIME types and backend storage policy */
+    purpose: UploadPurpose;
     /** Optional label override */
     label?: string;
-    /** Optional accepted MIME types (for the file input filter) */
-    accept?: string;
 }
 
 /**
  * Drag-and-drop + click-to-browse file uploader.
  * Used by node renderers (image, audio, video, document) to upload media.
+ *
+ * File type restrictions are derived from the backend upload policy
+ * based on the provided `purpose` — no hardcoded MIME lists on the frontend.
  */
 export function MediaUploader({
     onUploadSuccess,
-    folder,
+    purpose,
     label = "Upload file",
-    accept,
 }: MediaUploaderProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const [isDragOver, setIsDragOver] = useState(false);
 
+    const { data: policy } = useUploadPolicy(purpose);
+
     const { upload, state, reset } = useFileUpload({
-        folder,
-        onSuccess: (url) => onUploadSuccess(url),
+        purpose,
+        onSuccess: (path) => onUploadSuccess(path),
     });
 
     const handleFile = useCallback(
@@ -81,7 +84,7 @@ export function MediaUploader({
                     ref={inputRef}
                     type="file"
                     className="hidden"
-                    accept={accept}
+                    accept={policy?.acceptString}
                     onChange={(e) => handleFile(e.target.files?.[0])}
                 />
             </div>
