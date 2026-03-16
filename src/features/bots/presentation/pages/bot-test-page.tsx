@@ -19,6 +19,7 @@ export function BotTestPage() {
     const [userReply, setUserReply] = useState("");
     const [isReplying, setIsReplying] = useState(false);
 
+    console.log("SESSION RESULT", sessionResult)
     if (isLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
@@ -103,7 +104,7 @@ export function BotTestPage() {
             });
 
             setSessionResult(result);
-            toast.success(`Flow started! Session ID: ${result.session._id}`);
+            toast.success(`Flow started! Session ID: ${result.session.id}`);
         } catch (error: any) {
             console.error("Failed to start flow:", error);
             toast.error(error?.response?.data?.message || "Failed to trigger flow");
@@ -113,11 +114,11 @@ export function BotTestPage() {
     };
 
     const handleSendReply = async () => {
-        if (!userReply.trim() || !sessionResult?.session._id) return;
+        if (!userReply.trim() || !sessionResult?.session.id) return;
 
         setIsReplying(true);
         try {
-            const result = await chatSessionApi.resumeFlow(sessionResult.session._id, {
+            const result = await chatSessionApi.resumeFlow(sessionResult.session.id, {
                 userInput: userReply.trim(),
             });
 
@@ -250,7 +251,7 @@ export function BotTestPage() {
                                         <div className="flex-1">
                                             <h3 className="font-semibold">{phoneNumber}</h3>
                                             <p className="text-xs text-muted-foreground">
-                                                Session: {sessionResult.session._id.slice(-8)}
+                                                Session: {sessionResult.session.id.slice(-8)}
                                             </p>
                                         </div>
                                         <div className={`size-2 rounded-full ${

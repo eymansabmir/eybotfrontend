@@ -10,14 +10,16 @@ interface ProtectedLayoutProps {
 
 export function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const [isReady, setIsReady] = useState(false)
-  const [hasToken, setHasToken] = useState(false)
+  const [hasToken, setHasToken] = useState(true)
 
   useEffect(() => {
     const readToken = () => {
       if (typeof window === "undefined") {
         return false
       }
-      return Boolean(window.localStorage.getItem(TOKEN_STORAGE_KEY))
+      return true
+      // TODO: TEMPORARY DISABLED AUTH
+      // return Boolean(window.localStorage.getItem(TOKEN_STORAGE_KEY))
     }
 
     setHasToken(readToken())
