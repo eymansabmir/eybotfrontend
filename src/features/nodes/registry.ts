@@ -14,6 +14,7 @@ import { randomSplitNode } from "./random-split";
 import { startNode } from "./start";
 import { inputNode } from "./input";
 import { endNode } from "./end";
+import { openAINode } from "./openai";
 import type { NodeDefinition } from "./types";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
@@ -33,6 +34,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [randomSplitNode.config.type]: randomSplitNode,
     [inputNode.config.type]: inputNode,
     [endNode.config.type]: endNode,
+    [openAINode.config.type]: openAINode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(
