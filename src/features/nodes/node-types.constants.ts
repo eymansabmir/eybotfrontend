@@ -14,6 +14,7 @@ export const NodeType = {
   SEND_BUTTONS: 'send_buttons',
   SEND_LIST: 'send_list',
   SEND_TEMPLATE: 'send_template',
+  SEND_CAROUSEL: 'send_carousel',
   LOCATION_REQUEST: 'location_request',
   ASK_QUESTION: 'ask_question',
   CONDITION: 'condition',

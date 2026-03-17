@@ -71,6 +71,18 @@ export function BotEditorPage() {
                 branches = [{ key: "default", label: "Default" }];
             } else if (n.type === "end") {
                 branches = []; // End nodes theoretically have no outbound branches
+            } else if (n.type === "send_carousel") {
+                const cards = (n.data.cards as any[]) || [];
+                const allQuickReplies = cards.flatMap(card =>
+                    card.buttonType === 'quick_reply' ? (card.quickReplyButtons || []) : []
+                );
+
+                if (!branches.length || branches.some(b => b.key === 'default')) {
+                    branches = [
+                        ...allQuickReplies.map(btn => ({ key: btn.id, label: btn.title })),
+                        { key: "timeout", label: "Timeout" }
+                    ];
+                }
             } else {
                 // send_text, send_image, etc. Use existing branches if renderer supplied them
                 if (!branches.length) {
