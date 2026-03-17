@@ -20,6 +20,7 @@ export function NodePalette() {
         const outputTypes = new Set<NodeTypeValue>([
             NodeType.SEND_TEXT,
             NodeType.SEND_IMAGE,
+            NodeType.SEND_STICKER,
             NodeType.SEND_VIDEO,
             NodeType.SEND_AUDIO,
             NodeType.SEND_DOCUMENT,
