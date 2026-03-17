@@ -25,6 +25,7 @@ export const NodeType = {
   WEBHOOK: 'webhook',
   GOOGLE_SHEETS: 'google_sheets',
   NOCODB: 'nocodb',
+  NPS: 'nps',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];

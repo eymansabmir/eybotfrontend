@@ -32,6 +32,7 @@ export function NodePalette() {
         const inputTypes = new Set<NodeTypeValue>([
             NodeType.ASK_QUESTION,
             NodeType.LOCATION_REQUEST,
+            NodeType.NPS,
         ]);
 
         return Object.values(nodeRegistry).reduce(
