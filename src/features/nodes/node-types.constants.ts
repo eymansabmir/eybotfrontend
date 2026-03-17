@@ -26,6 +26,7 @@ export const NodeType = {
   GOOGLE_SHEETS: 'google_sheets',
   NOCODB: 'nocodb',
   NPS: 'nps',
+  SEND_CARDS: 'send_cards',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];

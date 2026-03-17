@@ -16,6 +16,7 @@ import { inputNode } from "./input";
 import { endNode } from "./end";
 import { stickerNode } from "./sticker";
 import { npsNode } from "./nps";
+import { cardsNode } from "./cards";
 import type { NodeDefinition } from "./types";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
@@ -37,6 +38,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [endNode.config.type]: endNode,
     [stickerNode.config.type]: stickerNode,
     [npsNode.config.type]: npsNode,
+    [cardsNode.config.type]: cardsNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(

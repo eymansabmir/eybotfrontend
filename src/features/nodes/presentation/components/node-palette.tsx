@@ -28,6 +28,7 @@ export function NodePalette() {
             NodeType.SEND_BUTTONS,
             NodeType.SEND_LIST,
             NodeType.SEND_TEMPLATE,
+            NodeType.SEND_CARDS,
         ]);
         const inputTypes = new Set<NodeTypeValue>([
             NodeType.ASK_QUESTION,
