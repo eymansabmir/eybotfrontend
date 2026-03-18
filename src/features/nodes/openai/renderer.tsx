@@ -37,7 +37,11 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
   const [draft, dispatch] = useReducer(openAIConfigReducer, createOpenAIConfigDraft(data));
 
   const credentialsQuery = useOpenAICredentials(DEFAULT_ORG_ID);
-  const modelsQuery = useOpenAIModels(DEFAULT_ORG_ID, draft.credentialId);
+  const modelsQuery = useOpenAIModels(
+    DEFAULT_ORG_ID,
+    draft.mode === "agent" ? draft.credentialId : undefined,
+    "agent",
+  );
   const voiceQueries = useOpenAIVoiceMutations(
     DEFAULT_ORG_ID,
     draft.credentialId,

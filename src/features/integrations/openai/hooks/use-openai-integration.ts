@@ -3,12 +3,13 @@ import { openAICredentialsApi } from "../api/openai-credentials.api";
 import { openAIModelsApi } from "../api/openai-models.api";
 import { openAIPreviewApi } from "../api/openai-preview.api";
 import { openAITestApi } from "../api/openai-test.api";
-import type { CreateOpenAICredentialInput, OpenAIPreviewInput } from "../domain/openai.types";
+import type { CreateOpenAICredentialInput, OpenAIModelActionMode, OpenAIPreviewInput } from "../domain/openai.types";
 
 const openAIKeys = {
   all: ["integrations", "openai"] as const,
   credentials: (orgId: string) => [...openAIKeys.all, "credentials", orgId] as const,
-  models: (orgId: string, credentialId: string) => [...openAIKeys.all, "models", orgId, credentialId] as const,
+  models: (orgId: string, credentialId: string, actionMode?: OpenAIModelActionMode) =>
+    [...openAIKeys.all, "models", orgId, credentialId, actionMode ?? "all"] as const,
 };
 
 export function useOpenAICredentials(orgId: string) {
@@ -18,14 +19,14 @@ export function useOpenAICredentials(orgId: string) {
   });
 }
 
-export function useOpenAIModels(orgId: string, credentialId?: string) {
+export function useOpenAIModels(orgId: string, credentialId?: string, actionMode?: OpenAIModelActionMode) {
   return useQuery({
-    queryKey: openAIKeys.models(orgId, credentialId ?? ""),
-    queryFn: () => openAIModelsApi.list(orgId, credentialId!),
+    queryKey: openAIKeys.models(orgId, credentialId ?? "", actionMode),
+    queryFn: () => openAIModelsApi.list(orgId, credentialId!, actionMode),
     enabled: Boolean(credentialId),
     retry: (failureCount, error: unknown) => {
       const maybeStatus = (error as { response?: { status?: number } })?.response?.status;
-      if (maybeStatus === 401 || maybeStatus === 403) return false;
+      if (maybeStatus === 401 || maybeStatus === 403 || maybeStatus === 404) return false;
       return failureCount < 1;
     },
   });

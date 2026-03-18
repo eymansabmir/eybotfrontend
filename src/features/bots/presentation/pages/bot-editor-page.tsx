@@ -20,12 +20,17 @@ export function BotEditorPage() {
 
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
 
-    const hasInvalidOpenAINodes = () => {
+    const hasInvalidIntegrationNodes = () => {
         const flowState = flowBuilderRef.current?.getFlowState();
         const sourceNodes = flowState?.nodes ?? initialNodes;
         return sourceNodes.some((node) => {
-            if (node.type !== NodeType.OPENAI) return false;
+            if (node.type !== NodeType.OPENAI && node.type !== NodeType.ELEVENLABS) return false;
             const nodeData = node.data as Record<string, unknown>;
+
+            if (node.type === NodeType.ELEVENLABS) {
+                return !nodeData["credentialId"] || !nodeData["voiceId"] || !nodeData["text"] || !nodeData["resultVariable"];
+            }
+
             const mode = (nodeData["mode"] as string | undefined) ?? "agent";
             const voiceAction = (nodeData["voiceAction"] as string | undefined) ?? "create_speech";
 
@@ -212,8 +217,8 @@ export function BotEditorPage() {
                             size="sm"
                             className="gap-2 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
                             onClick={() => {
-                                if (hasInvalidOpenAINodes()) {
-                                    toast.error("OpenAI nodes require credential/model and mode-specific required fields before publish");
+                                if (hasInvalidIntegrationNodes()) {
+                                    toast.error("Integration nodes require required credentials and fields before publish");
                                     return;
                                 }
                                 publishBotMutation.mutate(id, {

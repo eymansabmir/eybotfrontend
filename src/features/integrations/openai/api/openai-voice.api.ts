@@ -1,9 +1,9 @@
 import { apiClient } from "@/lib/api-client";
 import {
-  mapOpenAICreateSpeechResult,
-  mapOpenAICreateTranscriptionResult,
-  mapOpenAIVoiceModel,
-} from "../domain/openai.mappers";
+  OpenAICreateSpeechResultSchema,
+  OpenAICreateTranscriptionResultSchema,
+  OpenAIVoiceModelsListSchema,
+} from "../domain/openai.schemas";
 import type {
   OpenAICreateSpeechInput,
   OpenAICreateSpeechResult,
@@ -23,7 +23,7 @@ export const openAIVoiceApi = {
         timeoutMs: input.timeoutMs,
       },
     });
-    return (data as unknown[]).map(mapOpenAIVoiceModel);
+    return OpenAIVoiceModelsListSchema.parse(data);
   },
 
   async createSpeech(input: OpenAICreateSpeechInput): Promise<OpenAICreateSpeechResult> {
@@ -37,7 +37,7 @@ export const openAIVoiceApi = {
       speed: input.speed,
       timeoutMs: input.timeoutMs,
     });
-    return mapOpenAICreateSpeechResult(data);
+    return OpenAICreateSpeechResultSchema.parse(data);
   },
 
   async createTranscription(input: OpenAICreateTranscriptionInput): Promise<OpenAICreateTranscriptionResult> {
@@ -67,6 +67,6 @@ export const openAIVoiceApi = {
       },
     });
 
-    return mapOpenAICreateTranscriptionResult(data);
+    return OpenAICreateTranscriptionResultSchema.parse(data);
   },
 };

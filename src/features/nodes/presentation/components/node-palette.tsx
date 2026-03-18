@@ -34,6 +34,7 @@ export function NodePalette() {
         ]);
         const integrationTypes = new Set<NodeTypeValue>([
             NodeType.OPENAI,
+            NodeType.ELEVENLABS,
         ]);
 
         return Object.values(nodeRegistry).reduce(

@@ -31,6 +31,8 @@ export interface OpenAIModel {
   ownedBy?: string;
 }
 
+export type OpenAIModelActionMode = "agent";
+
 export interface OpenAIPreviewInput {
   orgId: string;
   credentialId: string;

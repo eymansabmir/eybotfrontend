@@ -15,6 +15,7 @@ import { startNode } from "./start";
 import { inputNode } from "./input";
 import { endNode } from "./end";
 import { openAINode } from "./openai";
+import { elevenLabsNode } from "./elevenlabs";
 import type { NodeDefinition } from "./types";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
@@ -35,6 +36,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [inputNode.config.type]: inputNode,
     [endNode.config.type]: endNode,
     [openAINode.config.type]: openAINode,
+    [elevenLabsNode.config.type]: elevenLabsNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(

@@ -25,6 +25,7 @@ export const NodeType = {
   GOOGLE_SHEETS: 'google_sheets',
   NOCODB: 'nocodb',
   OPENAI: 'openai',
+  ELEVENLABS: 'elevenlabs',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];
