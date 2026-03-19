@@ -79,8 +79,8 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
       return;
     }
 
-    if (draft.mode === "voice" && draft.voiceAction === "create_transcription" && !draft.prompt) {
-      toast.error("Audio URL/input is required for create transcription");
+    if (draft.mode === "voice" && draft.voiceAction === "create_transcription" && !draft.audioUrl.trim()) {
+      toast.error("Audio URL is required for create transcription");
       return;
     }
 

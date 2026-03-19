@@ -33,6 +33,7 @@ export function NodePalette() {
             NodeType.LOCATION_REQUEST,
         ]);
         const integrationTypes = new Set<NodeTypeValue>([
+            NodeType.HTTP_REQUEST,
             NodeType.OPENAI,
             NodeType.ELEVENLABS,
         ]);

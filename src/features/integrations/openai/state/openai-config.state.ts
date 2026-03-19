@@ -7,6 +7,7 @@ export interface OpenAIConfigDraft {
   model: string;
   voice: string;
   prompt: string;
+  audioUrl: string;
   systemPrompt: string;
   resultVariable: string;
   resultScope: "session" | "contact";
@@ -27,13 +28,20 @@ export function openAIConfigReducer(state: OpenAIConfigDraft, action: Action): O
 }
 
 export function createOpenAIConfigDraft(input: Partial<OpenAIConfigDraft>): OpenAIConfigDraft {
+  const mode = input.mode ?? "agent";
+  const voiceAction = input.voiceAction ?? "create_speech";
+  const legacyPromptAsAudioUrl = mode === "voice" && voiceAction === "create_transcription"
+    ? (input.prompt ?? "")
+    : "";
+
   return {
-    mode: input.mode ?? "agent",
-    voiceAction: input.voiceAction ?? "create_speech",
+    mode,
+    voiceAction,
     credentialId: input.credentialId ?? "",
     model: input.model ?? "",
     voice: input.voice ?? "alloy",
     prompt: input.prompt ?? "",
+    audioUrl: input.audioUrl ?? legacyPromptAsAudioUrl,
     systemPrompt: input.systemPrompt ?? "",
     resultVariable: input.resultVariable ?? "openai_response",
     resultScope: input.resultScope ?? "session",
