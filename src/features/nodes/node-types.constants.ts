@@ -16,6 +16,7 @@ export const NodeType = {
   SEND_TEMPLATE: 'send_template',
   LOCATION_REQUEST: 'location_request',
   ASK_QUESTION: 'ask_question',
+  ASK_FILE: 'ask_file',
   CONDITION: 'condition',
   SET_VARIABLE: 'set_variable',
   RANDOM_SPLIT: 'random_split',
