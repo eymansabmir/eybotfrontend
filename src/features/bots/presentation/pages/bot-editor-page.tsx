@@ -79,6 +79,19 @@ export function BotEditorPage() {
                     { key: "default", label: "Success" },
                     { key: "error", label: "Error / Timeout" }
                 ];
+            } else if (n.type === "nps") {
+                backendData = {
+                    message: n.data.message || "How likely are you to recommend us?",
+                    variableName: n.data.variable || "nps_score",
+                    variableScope: n.data.variableScope || "session",
+                    length: n.data.length ?? 10,
+                    startsAt: n.data.startsAt ?? 1,
+                    leftLabel: n.data.leftLabel,
+                    rightLabel: n.data.rightLabel,
+                    buttonLabel: n.data.buttonLabel || "Rate",
+                    timeoutSeconds: n.data.timeoutSeconds || 3600
+                };
+                branches = [{ key: "default", label: "Default" }];
             } else if (n.type === "send_buttons") {
                 backendData = {
                     ...backendData,
@@ -183,6 +196,18 @@ export function BotEditorPage() {
                 question: n.data.message || "",
                 variable: n.data.variableName || "var",
                 validationType: n.data.inputType || "text",
+                timeoutSeconds: n.data.timeoutSeconds || 3600
+            };
+        } else if (n.type === "nps") {
+            frontendData = {
+                message: n.data.message || "",
+                variable: n.data.variableName || "nps_score",
+                variableScope: n.data.variableScope || "session",
+                length: n.data.length ?? 10,
+                startsAt: n.data.startsAt ?? 1,
+                leftLabel: n.data.leftLabel,
+                rightLabel: n.data.rightLabel,
+                buttonLabel: n.data.buttonLabel || "Rate",
                 timeoutSeconds: n.data.timeoutSeconds || 3600
             };
         }

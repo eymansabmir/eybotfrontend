@@ -15,6 +15,9 @@ import { startNode } from "./start";
 import { inputNode } from "./input";
 import { carouselNode } from "./carousel";
 import { endNode } from "./end";
+import { stickerNode } from "./sticker";
+import { npsNode } from "./nps";
+import { cardsNode } from "./cards";
 import { openAINode } from "./openai";
 import { elevenLabsNode } from "./elevenlabs";
 import { httpRequestNode } from "./http-request";
@@ -38,6 +41,9 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [inputNode.config.type]: inputNode,
     [carouselNode.config.type]: carouselNode,
     [endNode.config.type]: endNode,
+    [stickerNode.config.type]: stickerNode,
+    [npsNode.config.type]: npsNode,
+    [cardsNode.config.type]: cardsNode,
     [openAINode.config.type]: openAINode,
     [elevenLabsNode.config.type]: elevenLabsNode,
     [httpRequestNode.config.type]: httpRequestNode,
