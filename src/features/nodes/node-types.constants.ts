@@ -23,9 +23,11 @@ export const NodeType = {
   JUMP_TO_FLOW: 'jump_to_flow',
   HUMAN_HANDOFF: 'human_handoff',
   WEBHOOK: 'webhook',
+  HTTP_REQUEST: 'http_request',
   GOOGLE_SHEETS: 'google_sheets',
   NOCODB: 'nocodb',
   OPENAI: 'openai',
+  ELEVENLABS: 'elevenlabs',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];

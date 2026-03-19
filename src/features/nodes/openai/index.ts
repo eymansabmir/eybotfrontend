@@ -10,7 +10,7 @@ export const openAINode: NodeDefinition<OpenAINodeData> = {
   renderer: OpenAINodeRenderer,
   handler: OpenAINodeHandler,
   defaultData: {
-    mode: "agent",
+    mode: "chat_completion",
     voiceAction: "create_speech",
     credentialId: "",
     model: "",

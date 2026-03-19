@@ -30,6 +30,14 @@ export const OpenAIModelSchema = z.object({
 
 export const OpenAIModelsListSchema = z.array(OpenAIModelSchema);
 
+export const OpenAIAssistantSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  model: z.string(),
+});
+
+export const OpenAIAssistantsListSchema = z.array(OpenAIAssistantSchema);
+
 export const OpenAIPreviewSchema = z.object({
   id: z.string(),
   model: z.string(),
