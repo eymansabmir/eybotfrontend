@@ -18,6 +18,7 @@ export const NodeType = {
   SEND_CAROUSEL: 'send_carousel',
   LOCATION_REQUEST: 'location_request',
   ASK_QUESTION: 'ask_question',
+  ASK_FILE: 'ask_file',
   CONDITION: 'condition',
   SET_VARIABLE: 'set_variable',
   RANDOM_SPLIT: 'random_split',

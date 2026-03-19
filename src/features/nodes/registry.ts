@@ -13,6 +13,7 @@ import { setVariableNode } from "./set-variable";
 import { randomSplitNode } from "./random-split";
 import { startNode } from "./start";
 import { inputNode } from "./input";
+import { fileNode } from "./file";
 import { carouselNode } from "./carousel";
 import { endNode } from "./end";
 import { stickerNode } from "./sticker";
@@ -39,6 +40,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [setVariableNode.config.type]: setVariableNode,
     [randomSplitNode.config.type]: randomSplitNode,
     [inputNode.config.type]: inputNode,
+    [fileNode.config.type]: fileNode,
     [carouselNode.config.type]: carouselNode,
     [endNode.config.type]: endNode,
     [stickerNode.config.type]: stickerNode,
