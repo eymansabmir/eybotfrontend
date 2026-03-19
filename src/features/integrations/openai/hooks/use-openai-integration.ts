@@ -3,6 +3,7 @@ import { openAICredentialsApi } from "../api/openai-credentials.api";
 import { openAIModelsApi } from "../api/openai-models.api";
 import { openAIPreviewApi } from "../api/openai-preview.api";
 import { openAITestApi } from "../api/openai-test.api";
+import { openAIAssistantsApi } from "../api/openai-assistants.api";
 import type { CreateOpenAICredentialInput, OpenAIModelActionMode, OpenAIPreviewInput } from "../domain/openai.types";
 
 const openAIKeys = {
@@ -10,7 +11,22 @@ const openAIKeys = {
   credentials: (orgId: string) => [...openAIKeys.all, "credentials", orgId] as const,
   models: (orgId: string, credentialId: string, actionMode?: OpenAIModelActionMode) =>
     [...openAIKeys.all, "models", orgId, credentialId, actionMode ?? "all"] as const,
+  assistants: (orgId: string, credentialId: string) =>
+    [...openAIKeys.all, "assistants", orgId, credentialId] as const,
 };
+
+export function useOpenAIAssistants(orgId: string, credentialId?: string) {
+  return useQuery({
+    queryKey: openAIKeys.assistants(orgId, credentialId ?? ""),
+    queryFn: () => openAIAssistantsApi.list(orgId, credentialId!),
+    enabled: Boolean(credentialId),
+    retry: (failureCount, error: unknown) => {
+      const maybeStatus = (error as { response?: { status?: number } })?.response?.status;
+      if (maybeStatus === 401 || maybeStatus === 403 || maybeStatus === 404) return false;
+      return failureCount < 1;
+    },
+  });
+}
 
 export function useOpenAICredentials(orgId: string) {
   return useQuery({

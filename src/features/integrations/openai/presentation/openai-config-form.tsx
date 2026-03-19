@@ -1,4 +1,4 @@
-import { Plus, TestTube2, MessageSquare, Volume2, Mic, Settings } from "lucide-react";
+import { Plus, TestTube2, MessageSquare, Trash2 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,53 +6,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import type { OpenAICredential, OpenAIModel, OpenAITestConnectionResult, OpenAIVoiceModel } from "../domain/openai.types";
+import type { OpenAICredential, OpenAIModel, OpenAITestConnectionResult, OpenAIVoiceModel, OpenAIAssistant } from "../domain/openai.types";
 import type { OpenAIConfigDraft } from "../state/openai-config.state";
 import { OpenAIModelSelector } from "./openai-model-selector";
 import { OpenAIStatusPanel } from "./openai-status-panel";
-
-interface ActionCardProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  isSelected: boolean;
-  onClick: () => void;
-}
-
-function ActionCard({ title, description, icon, isSelected, onClick }: ActionCardProps) {
-  return (
-    <div
-      role="button"
-      onClick={onClick}
-      className={cn(
-        "flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all hover:bg-accent cursor-pointer",
-        isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-card"
-      )}
-    >
-      <div
-        className={cn(
-          "rounded-lg p-2.5",
-          isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-        )}
-      >
-        {icon}
-      </div>
-      <div>
-        <h4 className="font-semibold text-sm">{title}</h4>
-        <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{description}</p>
-      </div>
-    </div>
-  );
-}
 
 interface OpenAIConfigFormProps {
   draft: OpenAIConfigDraft;
   credentials: OpenAICredential[];
   models: OpenAIModel[];
+  assistants: OpenAIAssistant[];
   voiceModels: OpenAIVoiceModel[];
   modelsLoading: boolean;
+  assistantsLoading: boolean;
   voiceModelsLoading: boolean;
   lastTestResult?: OpenAITestConnectionResult | null;
   onDraftChange: (patch: Partial<OpenAIConfigDraft>) => void;
@@ -65,12 +32,23 @@ interface OpenAIConfigFormProps {
   modelLoadError?: string;
 }
 
+const TASK_OPTIONS = [
+  { value: "chat_completion", label: "Create chat completion" },
+  { value: "assistant", label: "Ask Assistant" },
+  { value: "generate_variables", label: "Generate variables" },
+  { value: "create_speech", label: "Create speech" },
+  { value: "create_transcription", label: "Create transcription" },
+  { value: "image", label: "Create image" },
+];
+
 export function OpenAIConfigForm({
   draft,
   credentials,
   models,
+  assistants,
   voiceModels,
   modelsLoading,
+  assistantsLoading,
   voiceModelsLoading,
   lastTestResult,
   onDraftChange,
@@ -89,327 +67,253 @@ export function OpenAIConfigForm({
     : models;
   const openAIModelLoading = draft.mode === "voice" ? voiceModelsLoading : modelsLoading;
 
-  const isAgent = draft.mode === "agent";
-  const isSpeech = draft.mode === "voice" && draft.voiceAction === "create_speech";
-  const isTranscription = draft.mode === "voice" && draft.voiceAction === "create_transcription";
+  const currentTask = draft.mode === "voice" ? draft.voiceAction : draft.mode;
 
-  const onSelectAction = (action: "agent" | "create_speech" | "create_transcription") => {
-    if (action === "agent") {
-      onDraftChange({ mode: "agent", model: "" });
+  const handleTaskChange = (val: string) => {
+    if (val === "create_speech" || val === "create_transcription") {
+      onDraftChange({ mode: "voice", voiceAction: val, model: "" });
     } else {
-      onDraftChange({ mode: "voice", voiceAction: action, model: "" });
+      onDraftChange({ mode: val as any, model: "" });
     }
   };
 
-  return (
-    <div className="space-y-8">
-      {/* Step 1: Account Connection */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <Label className="text-base font-semibold">1. Account Details</Label>
-            <p className="text-xs text-muted-foreground">Select or connect your OpenAI account</p>
-          </div>
-          {!draft.credentialId && (
-            <Button variant="outline" size="sm" onClick={onConnectAccount} className="h-8 gap-1.5">
-              <Plus className="size-3.5" />
-              Add Account
-            </Button>
-          )}
-        </div>
+  const isChatCompletion = draft.mode === "chat_completion";
+  const isAssistant = draft.mode === "assistant";
+  const isGenerateVariables = draft.mode === "generate_variables";
+  const isImage = draft.mode === "image";
+  const isSpeech = draft.mode === "voice" && draft.voiceAction === "create_speech";
+  const isTranscription = draft.mode === "voice" && draft.voiceAction === "create_transcription";
 
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <Select
-            value={draft.credentialId}
-            onValueChange={(value) => onDraftChange({ credentialId: value, model: "" })}
-          >
+  return (
+    <div className="flex flex-col gap-5 pt-2">
+      {/* Account Selection */}
+      <div className="space-y-4">
+        {draft.credentialId && (
+          <div className="flex justify-between items-center mb-1">
+            <OpenAIStatusPanel credential={selectedCredential} lastTestResult={lastTestResult} />
+            <Button variant="ghost" size="sm" onClick={onTestConnection} disabled={testingConnection} className="h-8 gap-1 text-xs">
+              <TestTube2 className="size-3" />
+              {testingConnection ? "Testing..." : "Test"}
+            </Button>
+          </div>
+        )}
+        <Select value={draft.credentialId} onValueChange={(value) => onDraftChange({ credentialId: value, model: "" })}>
+          <SelectTrigger className="w-full bg-background transition-colors hover:bg-accent/50">
+            <SelectValue placeholder="Select OpenAI account" />
+          </SelectTrigger>
+          <SelectContent>
+            {credentials.map((credential) => (
+              <SelectItem key={credential.id} value={credential.id}>{credential.name}</SelectItem>
+            ))}
+            <div className="p-2 border-t mt-1">
+              <Button variant="ghost" size="sm" className="w-full justify-start text-xs font-medium text-primary hover:text-primary hover:bg-primary/5" onClick={(e) => { e.preventDefault(); onConnectAccount(); }}>
+                <Plus className="size-3 mr-2" />
+                Add New Account
+              </Button>
+            </div>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {draft.credentialId && (
+        <>
+          <Select value={currentTask} onValueChange={handleTaskChange}>
             <SelectTrigger className="w-full bg-background transition-colors hover:bg-accent/50">
-              <SelectValue placeholder="Select OpenAI Account" />
+              <SelectValue placeholder="Select task" />
             </SelectTrigger>
             <SelectContent>
-              {credentials.map((credential) => (
-                <SelectItem key={credential.id} value={credential.id}>
-                  {credential.name}
-                </SelectItem>
+              {TASK_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
               ))}
-              <div className="p-2 border-t mt-1">
-                <Button 
-                   variant="ghost" 
-                   size="sm" 
-                   className="w-full justify-start text-xs font-medium text-primary hover:text-primary hover:bg-primary/5" 
-                   onClick={(e) => {
-                     e.preventDefault();
-                     onConnectAccount();
-                   }}
-                >
-                  <Plus className="size-3 mr-2" />
-                  Add New Account
-                </Button>
-              </div>
             </SelectContent>
           </Select>
 
-          {draft.credentialId && (
-            <div className="mt-4 flex items-center justify-between border-t pt-4">
-              <OpenAIStatusPanel credential={selectedCredential} lastTestResult={lastTestResult} />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onTestConnection}
-                disabled={testingConnection}
-                className="gap-1.5 ml-auto"
-              >
-                <TestTube2 className="size-3.5" />
-                {testingConnection ? "Testing..." : "Test Connection"}
-              </Button>
+          {!isAssistant && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground">Model</Label>
+              <OpenAIModelSelector
+                value={draft.model}
+                onValueChange={(value) => onDraftChange({ model: value })}
+                models={openAIModelOptions}
+                isLoading={openAIModelLoading}
+                disabled={!draft.credentialId}
+              />
+              {modelLoadError && <p className="text-xs text-destructive mt-1">{modelLoadError}</p>}
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Step 2: Action Selection */}
-      {draft.credentialId && (
-        <>
-          <Separator />
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <Label className="text-base font-semibold">2. Choose Action</Label>
-              <p className="text-xs text-muted-foreground">What do you want OpenAI to do?</p>
+          {isAssistant && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">Assistant ID</Label>
+                <Select value={draft.assistantId ?? ""} onValueChange={(val) => onDraftChange({ assistantId: val })}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder={assistantsLoading ? "Loading..." : "Select an assistant"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {assistants.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name ?? a.id} ({a.model})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">Thread ID (Variable)</Label>
+                <Input value={draft.threadId ?? ""} onChange={(e) => onDraftChange({ threadId: e.target.value })} placeholder="{{session.thread_id}}" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground">Message</Label>
+                <Textarea value={draft.prompt ?? ""} onChange={(e) => onDraftChange({ prompt: e.target.value })} placeholder="Your message..." rows={3} className="bg-background" />
+              </div>
             </div>
+          )}
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <ActionCard
-                title="Chat Completion"
-                description="Generate intelligent responses from prompt"
-                icon={<MessageSquare className="size-5" />}
-                isSelected={isAgent}
-                onClick={() => onSelectAction("agent")}
-              />
-              <ActionCard
-                title="Text to Speech"
-                description="Convert text into lifelike spoken audio"
-                icon={<Volume2 className="size-5" />}
-                isSelected={isSpeech}
-                onClick={() => onSelectAction("create_speech")}
-              />
-              <ActionCard
-                title="Transcription"
-                description="Transcribe audio into text"
-                icon={<Mic className="size-5" />}
-                isSelected={isTranscription}
-                onClick={() => onSelectAction("create_transcription")}
-              />
+          {(isChatCompletion || isGenerateVariables) && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground">Message Template</Label>
+              <Textarea value={draft.prompt} onChange={(e) => onDraftChange({ prompt: e.target.value })} rows={4} className="bg-background" />
             </div>
-          </div>
+          )}
 
-          {/* Step 3: Configuration */}
-          {(isAgent || isSpeech || isTranscription) && (
-            <>
-              <Separator />
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <Label className="text-base font-semibold">3. Configuration</Label>
-                  <p className="text-xs text-muted-foreground">Configure your selected action parameters</p>
-                </div>
-
-                <div className="space-y-5 rounded-xl border border-border bg-card p-5 shadow-sm">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Model</Label>
-                    <OpenAIModelSelector
-                      value={draft.model}
-                      onValueChange={(value) => onDraftChange({ model: value })}
-                      models={openAIModelOptions}
-                      isLoading={openAIModelLoading}
-                      disabled={!draft.credentialId}
-                    />
-                    {modelLoadError && <p className="text-xs text-destructive mt-1">{modelLoadError}</p>}
-                  </div>
-
-                  {isSpeech && (
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Voice</Label>
-                      <Select value={draft.voice ?? "alloy"} onValueChange={(value) => onDraftChange({ voice: value })}>
-                        <SelectTrigger className="w-full bg-background">
-                          <SelectValue placeholder="Select voice" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="alloy">alloy (Neutral)</SelectItem>
-                          <SelectItem value="ash">ash (Gentle)</SelectItem>
-                          <SelectItem value="ballad">ballad (Expressive)</SelectItem>
-                          <SelectItem value="coral">coral (Clear)</SelectItem>
-                          <SelectItem value="sage">sage (Warm)</SelectItem>
-                          <SelectItem value="verse">verse (Dynamic)</SelectItem>
-                        </SelectContent>
-                      </Select>
+          {isGenerateVariables && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="variables" className="border rounded-lg bg-background">
+                <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline">Variables to extract</AccordionTrigger>
+                <AccordionContent className="p-4 pt-0 space-y-4">
+                  {(draft.variablesToExtract ?? []).map((v, i) => (
+                    <div key={i} className="space-y-2 p-3 border rounded-md relative bg-muted/20">
+                      <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => onDraftChange({ variablesToExtract: draft.variablesToExtract!.filter((_, idx) => idx !== i) })}>
+                        <Trash2 className="size-3" />
+                      </Button>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input placeholder="Name (e.g. email)" value={v.name} onChange={(e) => { const newVars = [...draft.variablesToExtract!]; newVars[i].name = e.target.value; onDraftChange({ variablesToExtract: newVars }); }} />
+                        <Select value={v.type ?? "string"} onValueChange={(val: any) => { const newVars = [...draft.variablesToExtract!]; newVars[i].type = val; onDraftChange({ variablesToExtract: newVars }); }}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="string">String</SelectItem>
+                            <SelectItem value="number">Number</SelectItem>
+                            <SelectItem value="boolean">Boolean</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Input placeholder="Description" value={v.description ?? ""} onChange={(e) => { const newVars = [...draft.variablesToExtract!]; newVars[i].description = e.target.value; onDraftChange({ variablesToExtract: newVars }); }} />
                     </div>
-                  )}
+                  ))}
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => onDraftChange({ variablesToExtract: [...(draft.variablesToExtract ?? []), { name: "", type: "string" }] })}>+ Add variable</Button>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
 
-                  {!isTranscription && (
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        {isAgent ? "Prompt Template" : "Text to Convert"}
-                      </Label>
-                      <Textarea
-                        rows={isAgent ? 5 : 4}
-                        value={draft.prompt}
-                        onChange={(e) => onDraftChange({ prompt: e.target.value })}
-                        placeholder={
-                          isAgent
-                            ? "Summarize this: {{session.last_user_message}}"
-                            : "Convert this text to speech"
-                        }
-                        className="resize-y bg-background"
-                      />
+          {isVoiceSettings(isSpeech, isTranscription, draft, onDraftChange)}
+          {isImageSettings(isImage, draft, onDraftChange)}
+
+          {/* Assistant Functions Accordion */}
+          {isAssistant && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="functions" className="border rounded-lg bg-background">
+                <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline">Functions</AccordionTrigger>
+                <AccordionContent className="p-4 pt-0 space-y-4">
+                  {(draft.functions ?? []).map((f, i) => (
+                    <div key={i} className="space-y-2 p-3 border rounded-md relative bg-muted/20">
+                      <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => onDraftChange({ functions: draft.functions!.filter((_, idx) => idx !== i) })}>
+                        <Trash2 className="size-3" />
+                      </Button>
+                      <Input placeholder="Function Name" value={f.name} onChange={(e) => { const newFuncs = [...draft.functions!]; newFuncs[i].name = e.target.value; onDraftChange({ functions: newFuncs }); }} />
+                      <Textarea placeholder="return { result: true };" value={f.code} onChange={(e) => { const newFuncs = [...draft.functions!]; newFuncs[i].code = e.target.value; onDraftChange({ functions: newFuncs }); }} className="font-mono text-xs" rows={3} />
                     </div>
-                  )}
+                  ))}
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => onDraftChange({ functions: [...(draft.functions ?? []), { name: "", code: "return {};" }] })}>+ Add function</Button>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
 
-                  {isTranscription && (
+          {/* Advanced Settings */}
+          {(isChatCompletion || isAssistant) && (
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="advanced" className="border rounded-lg bg-background">
+                <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline">Advanced settings</AccordionTrigger>
+                <AccordionContent className="p-4 pt-0 space-y-4">
+                  {isChatCompletion && (
                     <>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Audio URL</Label>
-                        <Input
-                          value={draft.audioUrl}
-                          onChange={(e) => onDraftChange({ audioUrl: e.target.value })}
-                          placeholder="{{session.audio_url}} or https://storage.googleapis.com/bucket/file.mp3"
-                          className="bg-background"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-muted-foreground">Temperature</Label>
+                          <Input type="number" min={0} max={2} step={0.1} value={draft.temperature ?? ""} onChange={(e) => onDraftChange({ temperature: e.target.value ? Number(e.target.value) : undefined })} placeholder="1" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-muted-foreground">Max Tokens</Label>
+                          <Input type="number" min={1} value={draft.maxTokens ?? ""} onChange={(e) => onDraftChange({ maxTokens: e.target.value ? Number(e.target.value) : undefined })} placeholder="Unlimited" />
+                        </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Transcription Prompt (Optional)</Label>
-                        <Textarea
-                          rows={3}
-                          value={draft.systemPrompt}
-                          onChange={(e) => onDraftChange({ systemPrompt: e.target.value })}
-                          placeholder="Focus on specific vocabulary or punctuation rules..."
-                          className="resize-y bg-background"
-                        />
+                        <Label className="text-xs text-muted-foreground">System Prompt</Label>
+                        <Textarea rows={3} value={draft.systemPrompt} onChange={(e) => onDraftChange({ systemPrompt: e.target.value })} placeholder="You are a helpful assistant." />
                       </div>
                     </>
                   )}
-
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="advanced" className="border rounded-lg overflow-hidden shrink-0 shadow-sm bg-muted/20">
-                      <AccordionTrigger className="flex w-full items-center justify-between px-4 py-3 text-sm hover:no-underline hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center gap-2 font-semibold">
-                          <Settings className="size-4" />
-                          Advanced Settings & Output
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="p-4 space-y-5 border-t bg-card">
-                        {isAgent && (
-                          <>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Temperature</Label>
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  max={2}
-                                  step={0.1}
-                                  value={draft.temperature ?? ""}
-                                  onChange={(e) => onDraftChange({ temperature: e.target.value ? Number(e.target.value) : undefined })}
-                                  placeholder="0.7"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Max Tokens</Label>
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  value={draft.maxTokens ?? ""}
-                                  onChange={(e) => onDraftChange({ maxTokens: e.target.value ? Number(e.target.value) : undefined })}
-                                  placeholder="1000"
-                                />
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">System Prompt</Label>
-                              <Textarea
-                                rows={3}
-                                value={draft.systemPrompt}
-                                onChange={(e) => onDraftChange({ systemPrompt: e.target.value })}
-                                placeholder="You are a helpful assistant."
-                                className="bg-background"
-                              />
-                            </div>
-                          </>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Result Variable</Label>
-                            <Input
-                              value={draft.resultVariable}
-                              onChange={(e) => onDraftChange({ resultVariable: e.target.value })}
-                              placeholder={isAgent ? "openai_response" : "voice_output"}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Scope</Label>
-                            <Select
-                              value={draft.resultScope}
-                              onValueChange={(value) => onDraftChange({ resultScope: value as "session" | "contact" })}
-                            >
-                              <SelectTrigger className="bg-background">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="session">Session</SelectItem>
-                                <SelectItem value="contact">Contact</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-
-                        {isAgent && (
-                          <div className="flex items-center justify-between rounded-lg border border-border p-3 bg-background">
-                            <Label htmlFor="send-to-user" className="text-sm font-medium cursor-pointer">
-                              Send response to user automatically
-                            </Label>
-                            <Switch
-                              id="send-to-user"
-                              checked={draft.sendResponseToUser}
-                              onCheckedChange={(checked) => onDraftChange({ sendResponseToUser: checked })}
-                            />
-                          </div>
-                        )}
-
-                        <div className="space-y-2">
-                          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fallback Text (Optional)</Label>
-                          <Input
-                            value={draft.fallbackText}
-                            onChange={(e) => onDraftChange({ fallbackText: e.target.value })}
-                            placeholder="Sorry, I could not process this right now."
-                          />
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-
-                  {isAgent && (
-                    <div className="mt-4 flex flex-col gap-3 border-t pt-4">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={onTestPrompt}
-                        disabled={!draft.credentialId || !draft.model || !draft.prompt || testingPrompt}
-                        className="w-full sm:w-auto self-start gap-1.5"
-                      >
-                        <MessageSquare className="size-3.5" />
-                        {testingPrompt ? "Evaluating Response..." : "Preview Response"}
-                      </Button>
-
-                      {promptPreview && (
-                        <div className="space-y-2 rounded-xl border border-border bg-muted/20 p-4">
-                          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Preview Result</Label>
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed">{promptPreview}</p>
-                        </div>
-                      )}
+                  {isAssistant && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Additional Instructions</Label>
+                      <Textarea rows={3} value={draft.additionalInstructions ?? ""} onChange={(e) => onDraftChange({ additionalInstructions: e.target.value })} />
                     </div>
                   )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
+
+          {/* Save Response */}
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="save" className="border rounded-lg bg-background">
+              <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline">Save response</AccordionTrigger>
+              <AccordionContent className="p-4 pt-0 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Result Variable</Label>
+                    <Input value={draft.resultVariable} onChange={(e) => onDraftChange({ resultVariable: e.target.value })} placeholder="openai_response" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Scope</Label>
+                    <Select value={draft.resultScope} onValueChange={(value: "session" | "contact") => onDraftChange({ resultScope: value })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="session">Session</SelectItem>
+                        <SelectItem value="contact">Contact</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
-            </>
+
+                {isChatCompletion && (
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <Label htmlFor="send-to-user" className="text-xs cursor-pointer">Send response to user automatically</Label>
+                    <Switch id="send-to-user" checked={draft.sendResponseToUser} onCheckedChange={(c) => onDraftChange({ sendResponseToUser: c })} />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Fallback Text (Optional)</Label>
+                  <Input value={draft.fallbackText} onChange={(e) => onDraftChange({ fallbackText: e.target.value })} placeholder="Action failed." />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          {/* Preview Button */}
+          {isChatCompletion && (
+            <div className="mt-2 flex flex-col gap-3">
+              <Button variant="outline" size="sm" onClick={onTestPrompt} disabled={!draft.credentialId || !draft.model || !draft.prompt || testingPrompt} className="self-start gap-1.5 h-8">
+                <MessageSquare className="size-3.5" />
+                {testingPrompt ? "Evaluating..." : "Preview Response"}
+              </Button>
+              {promptPreview && (
+                <div className="rounded-xl border bg-muted/20 p-4">
+                  <p className="whitespace-pre-wrap text-sm">{promptPreview}</p>
+                </div>
+              )}
+            </div>
           )}
         </>
       )}
@@ -417,3 +321,74 @@ export function OpenAIConfigForm({
   );
 }
 
+function isVoiceSettings(isSpeech: boolean, isTranscription: boolean, draft: OpenAIConfigDraft, onDraftChange: any) {
+  if (isSpeech) {
+    return (
+      <>
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground">Voice</Label>
+          <Select value={draft.voice ?? "alloy"} onValueChange={(value) => onDraftChange({ voice: value })}>
+            <SelectTrigger className="w-full bg-background"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {["alloy", "echo", "fable", "onyx", "nova", "shimmer"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground">Text to Convert</Label>
+          <Textarea rows={4} value={draft.prompt} onChange={(e) => onDraftChange({ prompt: e.target.value })} />
+        </div>
+      </>
+    );
+  }
+  if (isTranscription) {
+    return (
+      <>
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground">Audio URL</Label>
+          <Input value={draft.audioUrl} onChange={(e) => onDraftChange({ audioUrl: e.target.value })} placeholder="{{session.audio_url}}" />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground">Transcription Prompt (Optional)</Label>
+          <Textarea rows={3} value={draft.systemPrompt} onChange={(e) => onDraftChange({ systemPrompt: e.target.value })} />
+        </div>
+      </>
+    );
+  }
+  return null;
+}
+
+function isImageSettings(isImage: boolean, draft: OpenAIConfigDraft, onDraftChange: any) {
+  if (!isImage) return null;
+  return (
+    <>
+      <div className="space-y-2">
+        <Label className="text-xs font-medium text-muted-foreground">Prompt</Label>
+        <Textarea rows={3} value={draft.prompt} onChange={(e) => onDraftChange({ prompt: e.target.value })} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground">Size</Label>
+          <Select value={draft.imageSize ?? "1024x1024"} onValueChange={(val) => onDraftChange({ imageSize: val })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="256x256">256x256</SelectItem>
+              <SelectItem value="512x512">512x512</SelectItem>
+              <SelectItem value="1024x1024">1024x1024</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground">Quality</Label>
+          <Select value={draft.imageQuality ?? "standard"} onValueChange={(val) => onDraftChange({ imageQuality: val })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="standard">Standard</SelectItem>
+              <SelectItem value="hd">HD</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </>
+  );
+}

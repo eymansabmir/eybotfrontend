@@ -1,17 +1,17 @@
 import { useReducer, useState } from "react";
 import { Handle, Position, useReactFlow } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { Bot, Settings2, Plus, Save } from "lucide-react";
+import { Bot, Settings2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { DEFAULT_ORG_ID } from "@/features/integrations/openai/domain/openai.constants";
-import { useOpenAICredentials, useOpenAIModels, useOpenAIPreview, useTestOpenAICredential } from "@/features/integrations/openai/hooks/use-openai-integration";
+import { useOpenAICredentials, useOpenAIModels, useOpenAIAssistants, useOpenAIPreview, useTestOpenAICredential } from "@/features/integrations/openai/hooks/use-openai-integration";
 import { useOpenAIVoiceMutations } from "@/features/integrations/openai/hooks/use-openai-voice";
 import { OpenAICredentialsDialog } from "@/features/integrations/openai/presentation/openai-credentials-dialog";
 import { OpenAIConfigForm } from "@/features/integrations/openai/presentation/openai-config-form";
-import { IntegrationShell } from "@/features/integrations/presentation/integration-shell";
+
 import { createOpenAIConfigDraft, openAIConfigReducer } from "@/features/integrations/openai/state/openai-config.state";
 import type { OpenAITestConnectionResult } from "@/features/integrations/openai/domain/openai.types";
 import type { OpenAINodeData } from "./schema";
@@ -37,14 +37,21 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
   const [draft, dispatch] = useReducer(openAIConfigReducer, createOpenAIConfigDraft(data));
 
   const credentialsQuery = useOpenAICredentials(DEFAULT_ORG_ID);
+  
   const modelsQuery = useOpenAIModels(
     DEFAULT_ORG_ID,
-    draft.mode === "agent" ? draft.credentialId : undefined,
-    "agent",
+    draft.mode !== "voice" ? draft.credentialId : undefined,
+    draft.mode === "voice" || draft.mode === "assistant" ? undefined : (draft.mode as any)
   );
+
+  const assistantsQuery = useOpenAIAssistants(
+    DEFAULT_ORG_ID,
+    draft.mode === "assistant" ? draft.credentialId : undefined
+  );
+
   const voiceQueries = useOpenAIVoiceMutations(
     DEFAULT_ORG_ID,
-    draft.credentialId,
+    draft.mode === "voice" ? draft.credentialId : undefined,
     draft.mode === "voice" ? draft.voiceAction : undefined,
   );
   const testCredential = useTestOpenAICredential(DEFAULT_ORG_ID);
@@ -69,8 +76,8 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
       return;
     }
 
-    if (draft.mode === "agent" && !draft.prompt) {
-      toast.error("Prompt is required in agent mode");
+    if (draft.mode === "chat_completion" && !draft.prompt) {
+      toast.error("Prompt is required in chat completion mode");
       return;
     }
 
@@ -129,7 +136,7 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
     }
   };
 
-  const selectedCredential = credentialsQuery.data?.find((item) => item.id === data.credentialId);
+
   const modelLoadError = draft.mode === "voice"
     ? (voiceQueries.modelsQuery.error ? toErrorMessage(voiceQueries.modelsQuery.error) : undefined)
     : (modelsQuery.error ? toErrorMessage(modelsQuery.error) : undefined);
@@ -147,35 +154,48 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
         className="h-4 w-4 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
       />
 
-      <IntegrationShell
-        title="OpenAI"
-        subtitle={
-          data.model
-            ? `${data.mode === "voice" ? "Voice" : "Agent"} • ${data.model}`
-            : "Configure model and prompts"
-        }
-        icon={<Bot className="size-4" />}
-        actions={
-          <Button variant="ghost" size="sm" className="h-8 gap-1.5" onClick={openConfig}>
-            <Settings2 className="size-3.5" />
-            Configure...
-          </Button>
-        }
-        className="border-0 shadow-none"
+      <div 
+        className="flex flex-col w-full min-h-16"
+        onDoubleClick={openConfig}
       >
-        <div className="space-y-3">
-          {data.credentialId ? (
-            <p className="text-xs text-muted-foreground">
-              {selectedCredential ? `Credential: ${selectedCredential.name}` : "Credential configured"}
-            </p>
-          ) : (
-            <Button variant="secondary" className="w-full justify-start gap-2" onClick={() => setCredentialsOpen(true)}>
-              <Plus className="size-4" />
-              Add OpenAI account
-            </Button>
+        {/* Node Header */}
+        <div className="flex items-center gap-2 border-b border-border/50 bg-muted/30 px-3 py-2">
+          <Bot className="size-4 text-primary" />
+          <span className="text-xs font-semibold text-foreground tracking-wide">
+            {data.mode === "voice" ? "ElevenLabs" : "OpenAI"}
+          </span>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="ml-auto size-5 opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5"
+            onClick={(e) => {
+              e.stopPropagation();
+              openConfig();
+            }}
+          >
+            <Settings2 className="size-3 text-muted-foreground" />
+          </Button>
+        </div>
+
+        {/* Node Body (Mimicking OpenAINodeBody) */}
+        <div className="flex flex-col gap-2 p-3">
+          <p className="truncate text-sm text-foreground/80">
+            {data.mode === "chat_completion" ? "Create chat completion" :
+             data.mode === "assistant" ? "Ask Assistant" :
+             data.mode === "generate_variables" ? "Generate variables" :
+             data.mode === "image" ? "Create image" :
+             data.mode === "voice" ? (data.voiceAction === "create_speech" ? "Create speech" : "Create transcription") :
+             "Configure..."}
+          </p>
+          
+          {data.resultVariable && (
+            <div className="flex w-fit items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-1 shadow-sm text-xs font-medium text-muted-foreground">
+              <Save className="size-3" />
+              <span className="truncate max-w-[120px]">{data.resultVariable}</span>
+            </div>
           )}
         </div>
-      </IntegrationShell>
+      </div>
 
       <Handle
         type="source"
@@ -197,8 +217,10 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
               draft={draft}
               credentials={credentialsQuery.data ?? []}
               models={modelsQuery.data ?? []}
+              assistants={assistantsQuery.data ?? []}
               voiceModels={voiceQueries.modelsQuery.data ?? []}
               modelsLoading={modelsQuery.isLoading}
+              assistantsLoading={assistantsQuery.isLoading}
               voiceModelsLoading={voiceQueries.modelsQuery.isLoading}
               lastTestResult={lastTestResult}
               onDraftChange={(patch) => dispatch({ type: "set", payload: patch })}

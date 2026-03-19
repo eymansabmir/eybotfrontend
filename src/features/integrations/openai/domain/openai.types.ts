@@ -31,7 +31,13 @@ export interface OpenAIModel {
   ownedBy?: string;
 }
 
-export type OpenAIModelActionMode = "agent";
+export interface OpenAIAssistant {
+  id: string;
+  name?: string;
+  model: string;
+}
+
+export type OpenAIModelActionMode = "chat_completion" | "assistant" | "generate_variables" | "image";
 
 export interface OpenAIPreviewInput {
   orgId: string;
