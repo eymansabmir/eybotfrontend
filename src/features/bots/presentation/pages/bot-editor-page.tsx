@@ -6,6 +6,7 @@ import { useBot, useUpdateBot, useCreateBot, usePublishBot, useArchiveBot } from
 import { toast } from "sonner";
 import { useRef } from "react";
 import type { Node, Edge } from "@xyflow/react";
+import { NodeType } from "@/features/nodes/node-types.constants";
 
 export function BotEditorPage() {
     const { id } = useParams({ from: "/bot/$id" });
@@ -18,6 +19,35 @@ export function BotEditorPage() {
     const archiveBotMutation = useArchiveBot();
 
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
+
+    const hasInvalidOpenAINodes = () => {
+        const flowState = flowBuilderRef.current?.getFlowState();
+        const sourceNodes = flowState?.nodes ?? initialNodes;
+        return sourceNodes.some((node) => {
+            if (node.type !== NodeType.OPENAI) return false;
+            const nodeData = node.data as Record<string, unknown>;
+            const mode = (nodeData["mode"] as string | undefined) ?? "agent";
+            const voiceAction = (nodeData["voiceAction"] as string | undefined) ?? "create_speech";
+
+            if (!nodeData["credentialId"] || !nodeData["model"]) {
+                return true;
+            }
+
+            if (mode === "agent") {
+                return !nodeData["prompt"];
+            }
+
+            if (mode === "voice" && voiceAction === "create_speech") {
+                return !nodeData["prompt"] || !nodeData["voice"];
+            }
+
+            if (mode === "voice" && voiceAction === "create_transcription") {
+                return !nodeData["prompt"];
+            }
+
+            return false;
+        });
+    };
 
     const handleSave = async () => {
         if (!flowBuilderRef.current) return;
@@ -71,6 +101,18 @@ export function BotEditorPage() {
                 branches = [{ key: "default", label: "Default" }];
             } else if (n.type === "end") {
                 branches = []; // End nodes theoretically have no outbound branches
+            } else if (n.type === "send_carousel") {
+                const cards = (n.data.cards as any[]) || [];
+                const allQuickReplies = cards.flatMap(card =>
+                    card.buttonType === 'quick_reply' ? (card.quickReplyButtons || []) : []
+                );
+
+                if (!branches.length || branches.some(b => b.key === 'default')) {
+                    branches = [
+                        ...allQuickReplies.map(btn => ({ key: btn.id, label: btn.title })),
+                        { key: "timeout", label: "Timeout" }
+                    ];
+                }
             } else {
                 // send_text, send_image, etc. Use existing branches if renderer supplied them
                 if (!branches.length) {
@@ -181,10 +223,16 @@ export function BotEditorPage() {
                             variant="outline"
                             size="sm"
                             className="gap-2 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
-                            onClick={() => publishBotMutation.mutate(id, {
-                                onSuccess: () => toast.success("Bot published successfully!"),
-                                onError: () => toast.error("Failed to publish bot"),
-                            })}
+                            onClick={() => {
+                                if (hasInvalidOpenAINodes()) {
+                                    toast.error("OpenAI nodes require credential/model and mode-specific required fields before publish");
+                                    return;
+                                }
+                                publishBotMutation.mutate(id, {
+                                    onSuccess: () => toast.success("Bot published successfully!"),
+                                    onError: () => toast.error("Failed to publish bot"),
+                                });
+                            }}
                             disabled={publishBotMutation.isPending}
                         >
                             {publishBotMutation.isPending ? (
