@@ -13,10 +13,14 @@ import { setVariableNode } from "./set-variable";
 import { randomSplitNode } from "./random-split";
 import { startNode } from "./start";
 import { inputNode } from "./input";
+import { carouselNode } from "./carousel";
 import { endNode } from "./end";
 import { stickerNode } from "./sticker";
 import { npsNode } from "./nps";
 import { cardsNode } from "./cards";
+import { openAINode } from "./openai";
+import { elevenLabsNode } from "./elevenlabs";
+import { httpRequestNode } from "./http-request";
 import type { NodeDefinition } from "./types";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
@@ -35,10 +39,14 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [setVariableNode.config.type]: setVariableNode,
     [randomSplitNode.config.type]: randomSplitNode,
     [inputNode.config.type]: inputNode,
+    [carouselNode.config.type]: carouselNode,
     [endNode.config.type]: endNode,
     [stickerNode.config.type]: stickerNode,
     [npsNode.config.type]: npsNode,
     [cardsNode.config.type]: cardsNode,
+    [openAINode.config.type]: openAINode,
+    [elevenLabsNode.config.type]: elevenLabsNode,
+    [httpRequestNode.config.type]: httpRequestNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(

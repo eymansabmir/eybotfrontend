@@ -15,6 +15,7 @@ export const NodeType = {
   SEND_LIST: 'send_list',
   SEND_TEMPLATE: 'send_template',
   SEND_STICKER: 'send_sticker',
+  SEND_CAROUSEL: 'send_carousel',
   LOCATION_REQUEST: 'location_request',
   ASK_QUESTION: 'ask_question',
   CONDITION: 'condition',
@@ -23,10 +24,13 @@ export const NodeType = {
   JUMP_TO_FLOW: 'jump_to_flow',
   HUMAN_HANDOFF: 'human_handoff',
   WEBHOOK: 'webhook',
+  HTTP_REQUEST: 'http_request',
   GOOGLE_SHEETS: 'google_sheets',
   NOCODB: 'nocodb',
   NPS: 'nps',
   SEND_CARDS: 'send_cards',
+  OPENAI: 'openai',
+  ELEVENLABS: 'elevenlabs',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];

@@ -29,11 +29,17 @@ export function NodePalette() {
             NodeType.SEND_LIST,
             NodeType.SEND_TEMPLATE,
             NodeType.SEND_CARDS,
+            NodeType.SEND_CAROUSEL,
         ]);
         const inputTypes = new Set<NodeTypeValue>([
             NodeType.ASK_QUESTION,
             NodeType.LOCATION_REQUEST,
             NodeType.NPS,
+        ]);
+        const integrationTypes = new Set<NodeTypeValue>([
+            NodeType.HTTP_REQUEST,
+            NodeType.OPENAI,
+            NodeType.ELEVENLABS,
         ]);
 
         return Object.values(nodeRegistry).reduce(
@@ -43,12 +49,14 @@ export function NodePalette() {
                     acc.output.push(node);
                 } else if (inputTypes.has(type)) {
                     acc.input.push(node);
+                } else if (integrationTypes.has(type)) {
+                    acc.integration.push(node);
                 } else {
                     acc.logical.push(node);
                 }
                 return acc;
             },
-            { output: [] as NodeDefinition[], input: [] as NodeDefinition[], logical: [] as NodeDefinition[] }
+            { output: [] as NodeDefinition[], input: [] as NodeDefinition[], integration: [] as NodeDefinition[], logical: [] as NodeDefinition[] }
         );
     }, []);
 
@@ -58,10 +66,11 @@ export function NodePalette() {
         accent: string;
         nodes: NodeDefinition[];
     }> = [
-            { key: "output", title: "Output Nodes", accent: "text-sky-500", nodes: groupedNodes.output },
-            { key: "input", title: "Input Nodes", accent: "text-emerald-500", nodes: groupedNodes.input },
-            { key: "logical", title: "Logical Nodes", accent: "text-amber-500", nodes: groupedNodes.logical },
-        ];
+        { key: "output", title: "Output Nodes", accent: "text-sky-500", nodes: groupedNodes.output },
+        { key: "input", title: "Input Nodes", accent: "text-emerald-500", nodes: groupedNodes.input },
+        { key: "integration", title: "Integration Nodes", accent: "text-violet-500", nodes: groupedNodes.integration },
+        { key: "logical", title: "Logical Nodes", accent: "text-amber-500", nodes: groupedNodes.logical },
+    ];
 
     return (
         <TooltipProvider delayDuration={0}>
