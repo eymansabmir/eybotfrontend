@@ -36,6 +36,7 @@ export function NodePalette() {
             NodeType.HTTP_REQUEST,
             NodeType.OPENAI,
             NodeType.ELEVENLABS,
+            NodeType.GOOGLE_SHEETS,
         ]);
 
         return Object.values(nodeRegistry).reduce(

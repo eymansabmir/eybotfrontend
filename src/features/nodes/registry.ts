@@ -17,6 +17,7 @@ import { endNode } from "./end";
 import { openAINode } from "./openai";
 import { elevenLabsNode } from "./elevenlabs";
 import { httpRequestNode } from "./http-request";
+import { googleSheetsNode } from "./google-sheets";
 import type { NodeDefinition } from "./types";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
@@ -39,6 +40,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [openAINode.config.type]: openAINode,
     [elevenLabsNode.config.type]: elevenLabsNode,
     [httpRequestNode.config.type]: httpRequestNode,
+    [googleSheetsNode.config.type]: googleSheetsNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(

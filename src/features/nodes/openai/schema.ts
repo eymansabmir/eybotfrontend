@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 export const OpenAINodeSchema = z.object({
-  mode: z.enum(["chat_completion", "voice", "assistant", "generate_variables", "image"]).default("chat_completion"),
+  mode: z.enum(["agent", "voice"]).default("agent"),
   voiceAction: z.enum(["create_speech", "create_transcription"]).default("create_speech"),
   credentialId: z.string().min(1, "Credential is required"),
-  model: z.string().optional(),
+  model: z.string().min(1, "Model is required"),
   voice: z.string().optional(),
   prompt: z.string().optional(),
   audioUrl: z.string().optional(),
@@ -19,16 +19,6 @@ export const OpenAINodeSchema = z.object({
   resultScope: z.enum(["session", "contact"]).default("session"),
   sendResponseToUser: z.boolean().default(true),
   fallbackText: z.string().optional(),
-  // Assistant mode
-  assistantId: z.string().optional(),
-  threadId: z.string().optional(),
-  additionalInstructions: z.string().optional(),
-  functions: z.array(z.object({ name: z.string(), code: z.string() })).optional(),
-  // Generate Variables mode
-  variablesToExtract: z.array(z.object({ name: z.string(), description: z.string().optional(), type: z.enum(["string", "number", "boolean"]).optional() })).optional(),
-  // Image mode
-  imageSize: z.string().optional(),
-  imageQuality: z.string().optional(),
 });
 
 export type OpenAINodeData = z.infer<typeof OpenAINodeSchema>;
