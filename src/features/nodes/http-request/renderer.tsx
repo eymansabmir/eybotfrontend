@@ -1,14 +1,13 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Handle, Position, useReactFlow } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { Globe, Plus, Save, Settings2 } from "lucide-react";
+import { Save, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { DEFAULT_ORG_ID } from "@/features/integrations/openai/domain/openai.constants";
-import { IntegrationShell } from "@/features/integrations/presentation/integration-shell";
 import { useHttpRequestCredentials } from "@/features/integrations/http-request/hooks/use-http-request-integration";
 import { HttpRequestConfigForm } from "@/features/integrations/http-request/presentation/http-request-config-form";
 import { HttpRequestCredentialsDialog } from "@/features/integrations/http-request/presentation/http-request-credentials-dialog";
@@ -23,11 +22,6 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
   const [draft, setDraft] = useState<HttpRequestConfigDraft>(() => createHttpRequestConfigDraft(data));
 
   const credentialsQuery = useHttpRequestCredentials(DEFAULT_ORG_ID);
-
-  const selectedCredential = useMemo(
-    () => credentialsQuery.data?.find((item) => item.id === data.credentialId),
-    [credentialsQuery.data, data.credentialId],
-  );
 
   const openConfig = () => {
     setDraft(createHttpRequestConfigDraft(data));
@@ -75,61 +69,69 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
     toast.success("HTTP Request node updated");
   };
 
+  const isConfigured = !!data.url;
+  
   return (
     <div
+      onClick={openConfig}
       className={cn(
-        "group relative min-w-72.5 rounded-2xl border bg-card p-0 transition-all hover:shadow-xl",
-        selected ? "border-primary shadow-lg ring-4 ring-primary/10" : "border-border",
+        "group relative flex min-w-40 max-w-[240px] cursor-pointer rounded-lg border bg-background p-3 transition-all hover:shadow-md",
+        selected ? "border-primary ring-1 ring-primary" : "border-border shadow-sm",
       )}
     >
       <Handle
         type="target"
         position={Position.Top}
-        className="h-4 w-4 border-2 border-background bg-muted-foreground shadow-sm transition-transform hover:scale-125"
+        className="size-2 border-2 border-background bg-muted-foreground !transition-transform group-hover:scale-125"
       />
 
-      <IntegrationShell
-        title="HTTP Request"
-        subtitle={data.url ? `${data.method} • ${data.url}` : "Configure outbound API call"}
-        icon={<Globe className="size-4" />}
-        actions={
-          <Button variant="ghost" size="sm" className="h-8 gap-1.5" onClick={openConfig}>
-            <Settings2 className="size-3.5" />
-            Configure...
-          </Button>
-        }
-        className="border-0 shadow-none"
-      >
-        <div className="space-y-3">
-          {data.credentialId ? (
-            <p className="text-xs text-muted-foreground">
-              {selectedCredential ? `Credential: ${selectedCredential.name}` : "Credential configured"}
+      <div className="flex w-full flex-col gap-2">
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 shrink-0 rounded bg-gray-100 p-1 dark:bg-zinc-800">
+            <Zap className="size-3.5 fill-current" />
+          </div>
+          <div className="flex-1 overflow-hidden">
+             <p className={cn(
+              "p-0 text-sm font-medium",
+              isConfigured ? "text-foreground" : "text-muted-foreground"
+            )}>
+              {isConfigured ? `${data.method} ${data.url}` : "Configure HTTP Request"}
             </p>
-          ) : (
-            <Button variant="secondary" className="w-full justify-start gap-2" onClick={() => setCredentialsOpen(true)}>
-              <Plus className="size-4" />
-              Add HTTP credential
-            </Button>
-          )}
+          </div>
         </div>
-      </IntegrationShell>
+
+        {isConfigured && data.responseMapping && data.responseMapping.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1 overflow-hidden border-t pt-2">
+             <span className="shrink-0 text-[10px] font-medium italic text-muted-foreground">Set</span>
+             {data.responseMapping.map((mapping, i) => (
+                <span key={i} className="truncate rounded-md bg-purple-100 px-1.5 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                  {mapping.variableName}
+                </span>
+             ))}
+          </div>
+        )}
+      </div>
 
       <Handle
         type="source"
         position={Position.Bottom}
         id="default"
-        className="h-4 w-4 border-2 border-background bg-primary shadow-sm transition-transform hover:scale-125"
+        className="size-2 border-2 border-background bg-primary !transition-transform group-hover:scale-125"
       />
 
       <Dialog open={configOpen} onOpenChange={setConfigOpen}>
-        <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col overflow-hidden p-0">
-          <DialogHeader>
-            <DialogTitle className="px-6 pt-6">Configure HTTP Request node</DialogTitle>
-            <DialogDescription className="px-6">
-              Configure request details, credential references, and variable mappings from response payload.
+        <DialogContent className="flex max-h-[85vh] max-w-sm flex-col overflow-hidden p-0">
+          <DialogHeader className="px-5 pt-5">
+            <DialogTitle className="flex items-center gap-2">
+               <Zap className="size-5" />
+               HTTP Request
+            </DialogTitle>
+            <DialogDescription>
+              Configure the outbound API call settings.
             </DialogDescription>
           </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+          
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
             <HttpRequestConfigForm
               draft={draft}
               credentials={credentialsQuery.data ?? []}
@@ -137,8 +139,9 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
               onConnectAccount={() => setCredentialsOpen(true)}
             />
           </div>
-          <div className="flex justify-end border-t px-6 py-4">
-            <Button onClick={onSaveConfig} className="gap-1.5">
+          
+          <div className="flex justify-end border-t px-5 py-3">
+            <Button onClick={onSaveConfig} size="sm" className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground">
               <Save className="size-3.5" />
               Save config
             </Button>
@@ -232,3 +235,4 @@ function parseMapping(text: string): Array<{ jsonPath: string; variableName: str
 
   return output.length > 0 ? output : undefined;
 }
+
