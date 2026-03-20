@@ -23,6 +23,11 @@ export const BotSchema = z.object({
         timeoutSeconds: z.number().default(300),
         maxSteps: z.number().default(100),
         fallbackMessage: z.string().optional(),
+        localization: z.object({
+            isEnabled: z.boolean().default(false),
+            languages: z.array(z.string()).default([]),
+            defaultLanguage: z.string().optional(),
+        }).optional(),
     }),
     createdAt: z.string(),
     updatedAt: z.string(),

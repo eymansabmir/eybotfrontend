@@ -32,6 +32,7 @@ export const NodeType = {
   SEND_CARDS: 'send_cards',
   OPENAI: 'openai',
   ELEVENLABS: 'elevenlabs',
+  LANGUAGE: 'language',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];

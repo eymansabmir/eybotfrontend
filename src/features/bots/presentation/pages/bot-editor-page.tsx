@@ -4,9 +4,12 @@ import { ArrowLeft, Save, Play, Settings, Loader2, Rocket, Archive } from "lucid
 import { Button } from "@/components/ui/button";
 import { useBot, useUpdateBot, useCreateBot, usePublishBot, useArchiveBot } from "../../data/queries/use-bots";
 import { toast } from "sonner";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import type { Node, Edge } from "@xyflow/react";
 import { NodeType } from "@/features/nodes/node-types.constants";
+import { useState } from "react";
+import { BotSettingsDialog } from "@/features/settings/presentation/components/bot-settings-dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function BotEditorPage() {
     const { id } = useParams({ from: "/bot/$id" });
@@ -17,8 +20,14 @@ export function BotEditorPage() {
     const createBotMutation = useCreateBot();
     const publishBotMutation = usePublishBot();
     const archiveBotMutation = useArchiveBot();
-
+    const [settingsOpen, setSettingsOpen] = useState(false);
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
+
+    useEffect(() => {
+        const handleOpenSettings = () => setSettingsOpen(true);
+        window.addEventListener('open-bot-settings', handleOpenSettings);
+        return () => window.removeEventListener('open-bot-settings', handleOpenSettings);
+    }, []);
 
     const hasInvalidIntegrationNodes = () => {
         const flowState = flowBuilderRef.current?.getFlowState();
@@ -130,6 +139,31 @@ export function BotEditorPage() {
                         ...allQuickReplies.map(btn => ({ key: btn.id, label: btn.title })),
                         { key: "timeout", label: "Timeout" }
                     ];
+                }
+            } else if (n.type === "send_cards") {
+                // SEND_CARDS in interactive mode: each card can have buttons with IDs
+                // that become branch keys on the edges. In the renderer, it specifically
+                // uses 'branchKey' as the handle ID.
+                const items = (n.data.items as any[]) || [];
+                const interaction = n.data.interaction as any;
+                if (interaction?.mode === 'input') {
+                    const buttonBranches = items.flatMap((item: any) =>
+                        (item.buttons || []).map((b: any) => ({ key: b.branchKey || b.id, label: b.text || b.id }))
+                    );
+                    // Deduplicate by key
+                    const seen = new Set<string>();
+                    branches = [];
+                    for (const b of buttonBranches) {
+                        if (!seen.has(b.key)) { seen.add(b.key); branches.push(b); }
+                    }
+                    if (!branches.length) {
+                        branches = [{ key: "default", label: "Default" }];
+                    }
+                    if (!branches.some(b => b.key === "timeout")) {
+                        branches.push({ key: "timeout", label: "Timeout" });
+                    }
+                } else {
+                    branches = [{ key: "default", label: "Default" }];
                 }
             } else {
                 // send_text, send_image, etc. Use existing branches if renderer supplied them
@@ -292,7 +326,12 @@ export function BotEditorPage() {
                             Unpublish
                         </Button>
                     )}
-                    <Button variant="outline" size="sm" className="gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => setSettingsOpen(true)}
+                    >
                         <Settings className="size-3.5" />
                         Settings
                     </Button>
@@ -334,6 +373,22 @@ export function BotEditorPage() {
                     initialEdges={bot ? initialEdges : undefined}
                 />
             </main>
+
+            {bot && (
+                <BotSettingsDialog
+                    open={settingsOpen}
+                    onOpenChange={setSettingsOpen}
+                    bot={bot}
+                    onSave={async (updates) => {
+                        try {
+                            await updateBotMutation.mutateAsync(updates);
+                            toast.success("Settings updated successfully!");
+                        } catch (error) {
+                            toast.error("Failed to update settings.");
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 }

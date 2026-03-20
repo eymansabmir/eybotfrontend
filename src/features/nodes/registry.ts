@@ -22,6 +22,7 @@ import { cardsNode } from "./cards";
 import { openAINode } from "./openai";
 import { elevenLabsNode } from "./elevenlabs";
 import { httpRequestNode } from "./http-request";
+import { languageNode } from "./language";
 import type { NodeDefinition } from "./types";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
@@ -49,6 +50,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [openAINode.config.type]: openAINode,
     [elevenLabsNode.config.type]: elevenLabsNode,
     [httpRequestNode.config.type]: httpRequestNode,
+    [languageNode.config.type]: languageNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(
