@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import type { OpenAICredential, OpenAIModel, OpenAITestConnectionResult, OpenAIVoiceModel, OpenAIAssistant } from "../domain/openai.types";
 import type { OpenAIConfigDraft } from "../state/openai-config.state";
 import { OpenAIModelSelector } from "./openai-model-selector";
