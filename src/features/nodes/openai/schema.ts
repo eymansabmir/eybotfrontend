@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const OpenAINodeSchema = z.object({
-  mode: z.enum(["chat_completion", "voice", "assistant", "generate_variables", "image"]).default("chat_completion"),
-  voiceAction: z.enum(["create_speech", "create_transcription"]).default("create_speech"),
-  credentialId: z.string().min(1, "Credential is required"),
+  mode: z.enum(["chat_completion", "voice", "assistant", "generate_variables", "image"]).optional(),
+  voiceAction: z.enum(["create_speech", "create_transcription"]).optional(),
+  credentialId: z.string().optional(),
   model: z.string().optional(),
   voice: z.string().optional(),
   prompt: z.string().optional(),
@@ -15,9 +15,9 @@ export const OpenAINodeSchema = z.object({
   frequencyPenalty: z.number().min(-2).max(2).optional(),
   presencePenalty: z.number().min(-2).max(2).optional(),
   timeoutMs: z.number().int().positive().optional(),
-  resultVariable: z.string().min(1),
-  resultScope: z.enum(["session", "contact"]).default("session"),
-  sendResponseToUser: z.boolean().default(true),
+  resultVariable: z.string().optional(),
+  resultScope: z.enum(["session", "contact"]).optional(),
+  sendResponseToUser: z.boolean().optional(),
   fallbackText: z.string().optional(),
   // Assistant mode
   assistantId: z.string().optional(),

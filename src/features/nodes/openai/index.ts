@@ -9,19 +9,7 @@ export const openAINode: NodeDefinition<OpenAINodeData> = {
   schema: OpenAINodeSchema,
   renderer: OpenAINodeRenderer,
   handler: OpenAINodeHandler,
-  defaultData: {
-    mode: "chat_completion",
-    voiceAction: "create_speech",
-    credentialId: "",
-    model: "",
-    voice: "alloy",
-    prompt: "",
-    systemPrompt: "",
-    resultVariable: "openai_response",
-    resultScope: "session",
-    sendResponseToUser: true,
-    fallbackText: "",
-  },
+  defaultData: {},
   defaultBranches: [{ key: "default", label: "Default" }],
 };
 

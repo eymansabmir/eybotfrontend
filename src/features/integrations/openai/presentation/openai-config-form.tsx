@@ -59,51 +59,52 @@ export function OpenAIConfigForm({
   modelLoadError,
 }: OpenAIConfigFormProps) {
   const openAIModelOptions = useMemo(() => {
+    if (!draft.mode) {
+      return [];
+    }
+
     const isSpeech = draft.mode === "voice" && draft.voiceAction === "create_speech";
     const isTranscription = draft.mode === "voice" && draft.voiceAction === "create_transcription";
 
     if (isSpeech) {
-      return voiceModels.map((item) => ({ id: item.id, ownedBy: item.ownedBy }));
+      return voiceModels
+        .filter((item) => item.mode === "create_speech")
+        .map((item) => ({ id: item.id, ownedBy: item.ownedBy }));
     }
     
     if (isTranscription) {
-      return models.filter(m => m.id.toLowerCase().includes("whisper"));
+      const transcriptionModels = voiceModels
+        .filter((item) => item.mode === "create_transcription")
+        .map((item) => ({ id: item.id, ownedBy: item.ownedBy }));
+
+      const whisperOnly = transcriptionModels.filter((m) => m.id.toLowerCase().includes("whisper"));
+      return whisperOnly.length > 0 ? whisperOnly : transcriptionModels;
     }
 
     if (draft.mode === "image") {
-      return models.filter(m => m.id.toLowerCase().includes("dall-e"));
+      return models.filter((m) => {
+        const id = m.id.toLowerCase();
+        return id.includes("dall-e") || id.includes("gpt-image");
+      });
     }
 
     // chat_completion, assistant, generate_variables
-    return models.filter(m => {
-      const id = m.id.toLowerCase();
-      // Exclude special models from general chat list
-      if (id.includes("whisper") || id.includes("dall-e") || id.includes("tts") || id.includes("canary")) {
-        return false;
-      }
-      return (
-        id.startsWith("gpt") || 
-        id.startsWith("o1") || 
-        id.startsWith("o3") || 
-        id.startsWith("o4") || 
-        id.includes("chatgpt")
-      );
-    });
+    return models.filter((m) => isReliableTextModel(m.id));
   }, [draft.mode, draft.voiceAction, models, voiceModels]);
 
   const openAIModelLoading = draft.mode === "voice" ? voiceModelsLoading : modelsLoading;
 
-  const currentTask = draft.mode === "voice" ? draft.voiceAction : draft.mode;
+  const currentTask = draft.mode === "voice" ? draft.voiceAction : draft.mode || undefined;
 
   const handleTaskChange = (val: string) => {
     if (val === "create_speech") {
-      onDraftChange({ mode: "voice", voiceAction: "create_speech", model: "tts-1" });
+      onDraftChange({ mode: "voice", voiceAction: "create_speech", model: "" });
     } else if (val === "create_transcription") {
       onDraftChange({ mode: "voice", voiceAction: "create_transcription", model: "whisper-1" });
     } else if (val === "image") {
-      onDraftChange({ mode: "image", model: "dall-e-3", imageSize: "1024x1024" });
+      onDraftChange({ mode: "image", model: "", imageSize: "1024x1024" });
     } else if (val === "chat_completion") {
-      onDraftChange({ mode: "chat_completion", model: "gpt-4o-mini" });
+      onDraftChange({ mode: "chat_completion", model: "" });
     } else {
       onDraftChange({ mode: val as any, model: "" });
     }
@@ -177,7 +178,7 @@ export function OpenAIConfigForm({
             </Select>
           </div>
 
-          {!isAssistant && (
+          {draft.mode && !isAssistant && (
             <div className="space-y-1.5">
               <Label className={SECTION_LABEL_CLASS}>Model</Label>
               <OpenAIModelSelector
@@ -377,6 +378,30 @@ export function OpenAIConfigForm({
         </>
       )}
     </div>
+  );
+}
+
+function isReliableTextModel(modelId: string): boolean {
+  const id = modelId.toLowerCase();
+
+  if (
+    id.includes("whisper") ||
+    id.includes("transcribe") ||
+    id.includes("audio") ||
+    id.includes("tts") ||
+    id.includes("dall-e") ||
+    id.includes("gpt-image") ||
+    id.includes("embedding") ||
+    id.includes("moderation")
+  ) {
+    return false;
+  }
+
+  return (
+    id === "gpt-3.5-turbo" ||
+    id.startsWith("gpt-4") ||
+    id.startsWith("gpt-5") ||
+    id.includes("chatgpt")
   );
 }
 

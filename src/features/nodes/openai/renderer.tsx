@@ -27,11 +27,17 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
   const [previewText, setPreviewText] = useState("");
   const [draft, dispatch] = useReducer(openAIConfigReducer, createOpenAIConfigDraft(data));
 
+  const modelActionMode = draft.mode && draft.mode !== "voice" ? draft.mode : undefined;
+  const modelsCredentialId = draft.mode && draft.mode !== "voice" ? draft.credentialId : undefined;
   const credentialsQuery = useOpenAICredentials(DEFAULT_ORG_ID);
-  const modelsQuery = useOpenAIModels(DEFAULT_ORG_ID, draft.credentialId);
+  const modelsQuery = useOpenAIModels(DEFAULT_ORG_ID, modelsCredentialId, modelActionMode);
   const assistantsQuery = useOpenAIAssistants(DEFAULT_ORG_ID, draft.credentialId);
   const voiceQueries = {
-    modelsQuery: useOpenAIVoiceModels(DEFAULT_ORG_ID, draft.credentialId),
+    modelsQuery: useOpenAIVoiceModels(
+      DEFAULT_ORG_ID,
+      draft.credentialId,
+      draft.mode === "voice" ? draft.voiceAction : undefined,
+    ),
   };
 
   const testCredential = useTestOpenAICredential(DEFAULT_ORG_ID);
@@ -50,7 +56,63 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
   };
 
   const onSaveConfig = () => {
-    updateNodeData(draft);
+    if (!draft.credentialId) {
+      toast.error("Select an OpenAI account");
+      return;
+    }
+
+    if (!draft.mode) {
+      toast.error("Select a task");
+      return;
+    }
+
+    if (!draft.resultVariable.trim()) {
+      toast.error("Result variable is required");
+      return;
+    }
+
+    if (draft.mode !== "assistant" && !draft.model.trim()) {
+      toast.error("Select a model");
+      return;
+    }
+
+    if (draft.mode === "chat_completion" && !draft.prompt.trim()) {
+      toast.error("Message template is required for chat completion");
+      return;
+    }
+
+    if (draft.mode === "voice" && draft.voiceAction === "create_speech" && !draft.prompt.trim()) {
+      toast.error("Text input is required for speech generation");
+      return;
+    }
+
+    if (draft.mode === "voice" && draft.voiceAction === "create_transcription" && !draft.audioUrl.trim()) {
+      toast.error("Audio URL is required for transcription");
+      return;
+    }
+
+    if (draft.mode === "assistant" && (!draft.assistantId?.trim() || !draft.prompt.trim())) {
+      toast.error("Assistant ID and message are required for assistant mode");
+      return;
+    }
+
+    if (draft.mode === "generate_variables" && (!draft.prompt.trim() || !draft.variablesToExtract?.length)) {
+      toast.error("Prompt and at least one variable are required for generate variables mode");
+      return;
+    }
+
+    if (draft.mode === "image" && !draft.prompt.trim()) {
+      toast.error("Prompt is required for image generation");
+      return;
+    }
+
+    const newData: Partial<OpenAINodeData> = {
+      ...draft,
+      mode: draft.mode,
+      resultVariable: draft.resultVariable.trim(),
+    };
+
+    updateNodeData(newData);
     setConfigOpen(false);
     toast.success("OpenAI node updated");
   };
@@ -72,12 +134,13 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
   const onTestPrompt = async () => {
     try {
       const result = await previewPrompt.mutateAsync({
+        orgId: DEFAULT_ORG_ID,
         credentialId: draft.credentialId,
         model: draft.model,
         prompt: draft.prompt,
         systemPrompt: draft.systemPrompt,
       });
-      setPreviewText(result.text);
+      setPreviewText(result.content);
     } catch (err) {
       toast.error(toErrorMessage(err));
     }
@@ -172,6 +235,11 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
               testingConnection={testCredential.isPending}
               testingPrompt={previewPrompt.isPending}
               promptPreview={previewText}
+              modelLoadError={
+                modelsQuery.error || voiceQueries.modelsQuery.error
+                  ? toErrorMessage(modelsQuery.error ?? voiceQueries.modelsQuery.error)
+                  : undefined
+              }
             />
           </div>
           <div className="flex justify-end border-t border-border/50 px-5 py-3 bg-muted/20">
