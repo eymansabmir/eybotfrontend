@@ -18,6 +18,7 @@ import {
 } from "@/features/integrations/google-sheets/hooks/use-google-sheets-integration";
 import { GoogleSheetsCredentialsDialog } from "@/features/integrations/google-sheets/presentation/google-sheets-credentials-dialog";
 import { GoogleSheetsConfigForm } from "@/features/integrations/google-sheets/presentation/google-sheets-config-form";
+import { GoogleSpreadsheetPicker } from "@/features/integrations/google-sheets/presentation/components/google-spreadsheet-picker";
 import { createGoogleSheetsConfigDraft, googleSheetsConfigReducer } from "@/features/integrations/google-sheets/state/google-sheets-config.state";
 import type { GoogleSheetsNodeData } from "./schema";
 import { GoogleSheetsLogo } from "./logo";
@@ -44,6 +45,7 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
   const queryClient = useQueryClient();
   const [configOpen, setConfigOpen] = useState(false);
   const [credentialsOpen, setCredentialsOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [draft, dispatch] = useReducer(googleSheetsConfigReducer, createGoogleSheetsConfigDraft(data));
 
   const credentialsQuery = useGoogleSheetsCredentials(DEFAULT_ORG_ID);
@@ -164,6 +166,35 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
     return token.accessToken;
   };
 
+  // Close config dialog → open native picker (avoids Radix focus trap)
+  const onPickSpreadsheet = () => {
+    setConfigOpen(false);
+    setPickerOpen(true);
+  };
+
+  // Picker completed → update draft, re-open config (no reset)
+  const onPickerResult = (spreadsheet: { id: string; name: string }) => {
+    dispatch({
+      type: "set",
+      payload: {
+        spreadsheetId: spreadsheet.id,
+        spreadsheetName: spreadsheet.name,
+        sheetId: "",
+        sheetName: "",
+      },
+    });
+    setPickerOpen(false);
+    setConfigOpen(true);
+  };
+
+  // Picker cancelled → re-open config (no reset)
+  const onPickerClose = (open: boolean) => {
+    if (!open) {
+      setPickerOpen(false);
+      setConfigOpen(true);
+    }
+  };
+
   const isConfigured = !!data.credentialId && !!data.spreadsheetId && !!data.sheetId;
   
   const getActionLabel = () => {
@@ -221,7 +252,12 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
       </div>
 
       <Dialog open={configOpen} onOpenChange={setConfigOpen}>
-        <DialogContent className="flex max-h-[85vh] max-w-sm flex-col overflow-hidden p-0 text-foreground" onClick={(e) => e.stopPropagation()}>
+        <DialogContent
+          className="flex max-h-[85vh] max-w-sm flex-col overflow-hidden p-0 text-foreground"
+          onClick={(e) => e.stopPropagation()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader className="px-5 pt-5 text-left">
             <DialogTitle className="flex items-center gap-2 text-base">
                <GoogleSheetsLogo className="size-5" />
@@ -242,7 +278,7 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
               columnsLoading={columnsQuery.isLoading}
               onDraftChange={(patch) => dispatch({ type: "set", payload: patch })}
               onConnectAccount={() => setCredentialsOpen(true)}
-              onGetSpreadsheetPickerAccessToken={onGetSpreadsheetPickerAccessToken}
+              onPickSpreadsheet={onPickSpreadsheet}
               onTestConnection={onTestConnection}
               testingConnection={testCredential.isPending}
             />
@@ -265,6 +301,13 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
           awaitingNewCredential.current = true;
           queryClient.invalidateQueries({ queryKey: ["integrations", "google-sheets", "credentials", DEFAULT_ORG_ID] });
         }}
+      />
+
+      <GoogleSpreadsheetPicker
+        open={pickerOpen}
+        onOpenChange={onPickerClose}
+        getAccessToken={onGetSpreadsheetPickerAccessToken}
+        onPick={onPickerResult}
       />
     </>
   );

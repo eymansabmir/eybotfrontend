@@ -1,6 +1,4 @@
 import { useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { GoogleSpreadsheetInfo } from "../../domain/google-sheets.types";
 
@@ -208,18 +206,7 @@ export function GoogleSpreadsheetPicker({
     };
   }, [open]);
 
-  if (!open) return null;
-
-  // Render a simple portal-based loading overlay instead of a Dialog
-  // to avoid nested Radix Dialog issues that cause the outer config dialog to close
-  return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/60 backdrop-blur-sm">
-      <div className="flex items-center gap-3 rounded-lg border bg-background px-5 py-4 shadow-lg">
-        <Loader2 className="size-4 animate-spin text-primary" />
-        <span className="text-sm text-muted-foreground">Opening Google Picker...</span>
-      </div>
-    </div>,
-    document.body,
-  );
+  // No UI needed — the native Google Picker provides its own modal
+  return null;
 }
 

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import type { GoogleSheetsCredential, GoogleSheetInfo } from "../domain/google-s
 import type { GoogleSheetsConfigDraft } from "../state/google-sheets-config.state";
 import { TableList } from "./components/table-list";
 import { CellWithValueStack, type CellItem } from "./components/cell-value-stack";
-import { GoogleSpreadsheetPicker } from "./components/google-spreadsheet-picker";
 
 interface GoogleSheetsConfigFormProps {
   draft: GoogleSheetsConfigDraft;
@@ -22,7 +20,7 @@ interface GoogleSheetsConfigFormProps {
   columnsLoading?: boolean;
   onDraftChange: (patch: Partial<GoogleSheetsConfigDraft>) => void;
   onConnectAccount: () => void;
-  onGetSpreadsheetPickerAccessToken: () => Promise<string>;
+  onPickSpreadsheet: () => void;
   onTestConnection: () => void;
   testingConnection?: boolean;
 }
@@ -36,11 +34,10 @@ export function GoogleSheetsConfigForm({
   columnsLoading,
   onDraftChange,
   onConnectAccount,
-  onGetSpreadsheetPickerAccessToken,
+  onPickSpreadsheet,
   onTestConnection,
   testingConnection,
 }: GoogleSheetsConfigFormProps) {
-  const [spreadsheetPickerOpen, setSpreadsheetPickerOpen] = useState(false);
 
   return (
     <div className="flex flex-col gap-5 pt-1">
@@ -124,7 +121,7 @@ export function GoogleSheetsConfigForm({
                   type="button"
                   variant="outline"
                   className="h-9 flex-1 justify-start truncate text-left font-normal"
-                  onClick={() => setSpreadsheetPickerOpen(true)}
+                  onClick={() => onPickSpreadsheet()}
                 >
                   {draft.spreadsheetName || draft.spreadsheetId || "Pick spreadsheet"}
                 </Button>
@@ -210,20 +207,6 @@ export function GoogleSheetsConfigForm({
           )}
         </>
       )}
-
-      <GoogleSpreadsheetPicker
-        open={spreadsheetPickerOpen}
-        onOpenChange={setSpreadsheetPickerOpen}
-        getAccessToken={onGetSpreadsheetPickerAccessToken}
-        onPick={(spreadsheet) =>
-          onDraftChange({
-            spreadsheetId: spreadsheet.id,
-            spreadsheetName: spreadsheet.name,
-            sheetId: "",
-            sheetName: "",
-          })
-        }
-      />
     </div>
   );
 }
