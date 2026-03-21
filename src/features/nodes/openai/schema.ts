@@ -19,6 +19,8 @@ export const OpenAINodeSchema = z.object({
   resultScope: z.enum(["session", "contact"]).optional(),
   sendResponseToUser: z.boolean().optional(),
   fallbackText: z.string().optional(),
+  messages: z.array(z.object({ role: z.enum(["system", "user", "assistant", "dialogue"]), content: z.string() })).optional(),
+  tools: z.array(z.object({ type: z.literal("function"), function: z.object({ name: z.string(), description: z.string().optional(), parameters: z.any() }) })).optional(),
   // Assistant mode
   assistantId: z.string().optional(),
   threadId: z.string().optional(),

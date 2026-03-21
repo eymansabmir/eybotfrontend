@@ -29,6 +29,8 @@ export interface OpenAIConfigDraft {
   // Image mode
   imageSize?: string;
   imageQuality?: string;
+  messages?: { role: "system" | "user" | "assistant" | "dialogue"; content: string }[];
+  tools?: { type: "function"; function: { name: string; description?: string; parameters?: any } }[];
 }
 
 type Action =
@@ -75,5 +77,7 @@ export function createOpenAIConfigDraft(input: Partial<OpenAIConfigDraft>): Open
     variablesToExtract: input.variablesToExtract,
     imageSize: input.imageSize,
     imageQuality: input.imageQuality,
+    messages: input.messages ?? (mode === "chat_completion" ? [{ role: "user", content: input.prompt ?? "" }] : []),
+    tools: input.tools ?? [],
   };
 }
