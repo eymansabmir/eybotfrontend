@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import type React from "react";
 import type { ReactNode } from "react";
 import type { NodeProps } from "@xyflow/react";
 
