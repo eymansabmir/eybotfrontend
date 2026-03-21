@@ -19,6 +19,7 @@ import { elevenLabsNode } from "./elevenlabs";
 import { httpRequestNode } from "./http-request";
 import { googleSheetsNode } from "./google-sheets";
 import { nocodbNode } from "./nocodb";
+import { anthropicNode } from "./anthropic";
 import type { NodeDefinition } from "./types";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
@@ -43,6 +44,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [httpRequestNode.config.type]: httpRequestNode,
     [googleSheetsNode.config.type]: googleSheetsNode,
     [nocodbNode.config.type]: nocodbNode,
+    [anthropicNode.config.type]: anthropicNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(

@@ -27,6 +27,7 @@ export const NodeType = {
   NOCODB: 'nocodb',
   OPENAI: 'openai',
   ELEVENLABS: 'elevenlabs',
+  ANTHROPIC: 'anthropic',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];

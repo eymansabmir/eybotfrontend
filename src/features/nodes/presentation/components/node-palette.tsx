@@ -38,6 +38,7 @@ export function NodePalette() {
             NodeType.ELEVENLABS,
             NodeType.GOOGLE_SHEETS,
             NodeType.NOCODB,
+            NodeType.ANTHROPIC,
         ]);
 
         return Object.values(nodeRegistry).reduce(
