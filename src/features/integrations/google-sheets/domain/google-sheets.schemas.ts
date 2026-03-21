@@ -30,6 +30,10 @@ export const GoogleSheetsTestConnectionSchema = z.object({
   errorMessage: z.string().optional(),
 });
 
+export const GoogleSheetsAccessTokenSchema = z.object({
+  accessToken: z.string().min(1),
+});
+
 export const GoogleSpreadsheetInfoSchema = z.object({
   id: z.string(),
   name: z.string(),

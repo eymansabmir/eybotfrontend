@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,6 @@ import { CellWithValueStack, type CellItem } from "./components/cell-value-stack
 import { GoogleSpreadsheetPicker } from "./components/google-spreadsheet-picker";
 
 interface GoogleSheetsConfigFormProps {
-  orgId: string;
   draft: GoogleSheetsConfigDraft;
   credentials: GoogleSheetsCredential[];
   sheets: GoogleSheetInfo[];
@@ -22,12 +22,12 @@ interface GoogleSheetsConfigFormProps {
   columnsLoading?: boolean;
   onDraftChange: (patch: Partial<GoogleSheetsConfigDraft>) => void;
   onConnectAccount: () => void;
+  onGetSpreadsheetPickerAccessToken: () => Promise<string>;
   onTestConnection: () => void;
   testingConnection?: boolean;
 }
 
 export function GoogleSheetsConfigForm({
-  orgId,
   draft,
   credentials,
   sheets,
@@ -36,19 +36,33 @@ export function GoogleSheetsConfigForm({
   columnsLoading,
   onDraftChange,
   onConnectAccount,
+  onGetSpreadsheetPickerAccessToken,
   onTestConnection,
   testingConnection,
 }: GoogleSheetsConfigFormProps) {
+  const [spreadsheetPickerOpen, setSpreadsheetPickerOpen] = useState(false);
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5 pt-1">
       {/* ── Step 1: Account ── */}
-      <div className="space-y-2">
-        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Account</Label>
+      <div className="space-y-1.5">
+        <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">1. Account</Label>
         {credentials.length > 0 ? (
           <div className="flex gap-2">
-            <Select value={draft.credentialId || "__none"} onValueChange={(value) => onDraftChange({ credentialId: value === "__none" ? "" : value })}>
-              <SelectTrigger className="w-full bg-background transition-colors hover:bg-accent/50 h-9">
-                <SelectValue placeholder="Select Account" />
+            <Select
+              value={draft.credentialId || "__none"}
+              onValueChange={(value) =>
+                onDraftChange({
+                  credentialId: value === "__none" ? "" : value,
+                  spreadsheetId: "",
+                  spreadsheetName: "",
+                  sheetId: "",
+                  sheetName: "",
+                })
+              }
+            >
+              <SelectTrigger className="w-full bg-background transition-colors hover:bg-accent/50 h-9 text-sm">
+                <SelectValue placeholder="Select Google Account" />
               </SelectTrigger>
               <SelectContent>
                 {credentials.map((credential) => (
@@ -75,7 +89,7 @@ export function GoogleSheetsConfigForm({
         ) : (
           <Button
             variant="outline"
-            className="w-full h-9 gap-2 text-xs"
+            className="w-full h-9 gap-2 text-xs border-dashed"
             onClick={(e) => { e.preventDefault(); onConnectAccount(); }}
           >
             <Plus className="size-3" />
@@ -84,84 +98,132 @@ export function GoogleSheetsConfigForm({
         )}
       </div>
 
-      {/* ── Step 2: Spreadsheet (only when account is selected) ── */}
       {draft.credentialId && (
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Spreadsheet</Label>
-          <GoogleSpreadsheetPicker
-            orgId={orgId}
-            credentialId={draft.credentialId}
-            spreadsheetId={draft.spreadsheetId}
-            spreadsheetName={draft.spreadsheetName}
-            onSpreadsheetSelect={(id, name) => onDraftChange({ spreadsheetId: id, spreadsheetName: name, sheetId: "" })}
-          />
-        </div>
-      )}
+        <>
+          {/* ── Step 2: Action ── */}
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">2. Action</Label>
+            <Select value={draft.action} onValueChange={(value) => onDraftChange({ action: value as GoogleSheetsConfigDraft["action"] })}>
+              <SelectTrigger className="w-full bg-background h-9 text-sm">
+                <SelectValue placeholder="Select an operation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="insert_row">Insert a row</SelectItem>
+                <SelectItem value="update_row">Update a row</SelectItem>
+                <SelectItem value="get_row">Get data from sheet</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      {/* ── Step 3: Worksheet (only when spreadsheet is selected) ── */}
-      {draft.spreadsheetId && (
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Worksheet</Label>
-          <Select
-            value={draft.sheetId}
-            onValueChange={(value) => onDraftChange({ sheetId: value })}
-            disabled={!draft.spreadsheetId || sheetsLoading}
-          >
-            <SelectTrigger className="w-full bg-background h-9">
-              <SelectValue placeholder={sheetsLoading ? "Loading..." : "Select Worksheet"} />
-            </SelectTrigger>
-            <SelectContent>
-              {sheets.map((sh) => (
-                <SelectItem key={sh.id} value={sh.id}>{sh.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+          {/* ── Step 3: Spreadsheet (only when action is selected) ── */}
+          {draft.action && (
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">3. Spreadsheet</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-9 flex-1 justify-start truncate text-left font-normal"
+                  onClick={() => setSpreadsheetPickerOpen(true)}
+                >
+                  {draft.spreadsheetName || draft.spreadsheetId || "Pick spreadsheet"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9"
+                  disabled={!draft.spreadsheetId}
+                  onClick={() =>
+                    onDraftChange({
+                      spreadsheetId: "",
+                      spreadsheetName: "",
+                      sheetId: "",
+                      sheetName: "",
+                    })
+                  }
+                >
+                  Clear
+                </Button>
+              </div>
+              {draft.spreadsheetId ? (
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {draft.spreadsheetName || draft.spreadsheetId}
+                </p>
+              ) : null}
+            </div>
+          )}
 
-      {/* ── Step 4: Action (only when worksheet is selected) ── */}
-      {draft.sheetId && (
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Action</Label>
-          <Select value={draft.action} onValueChange={(value) => onDraftChange({ action: value as GoogleSheetsConfigDraft["action"] })}>
-            <SelectTrigger className="w-full bg-background h-9">
-              <SelectValue placeholder="Select an operation" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="insert_row">Insert a row</SelectItem>
-              <SelectItem value="update_row">Update a row</SelectItem>
-              <SelectItem value="get_row">Get data from sheet</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+          {/* ── Step 4: Worksheet (only when spreadsheet is selected) ── */}
+          {draft.spreadsheetId && (
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">4. Worksheet</Label>
+              <Select
+                value={draft.sheetId}
+                onValueChange={(value) => {
+                  const selectedSheet = sheets.find(s => s.id === value);
+                  onDraftChange({ sheetId: value, sheetName: selectedSheet?.name || "" });
+                }}
+                disabled={!draft.spreadsheetId || sheetsLoading}
+              >
+                <SelectTrigger className="w-full bg-background h-9 text-sm">
+                  <SelectValue placeholder={sheetsLoading ? "Loading..." : "Select Worksheet"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {sheets.length === 0 ? (
+                    <p className="p-2 text-xs text-muted-foreground text-center">No worksheets found</p>
+                  ) : (
+                    sheets.map((sh) => (
+                      <SelectItem key={sh.id} value={sh.id}>{sh.name}</SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-      {/* ── Step 5: Action-specific options (Autobot-style TableList) ── */}
-      {draft.action && draft.sheetId && (
-        <ActionOptions
-          draft={draft}
-          columns={columns}
-          columnsLoading={columnsLoading}
-          onDraftChange={onDraftChange}
-        />
-      )}
-
-      {/* ── Response Mapping ── */}
-      {draft.action && draft.sheetId && (
-        <Accordion type="multiple" className="w-full space-y-1 mt-2">
-          <AccordionItem value="mapping" className="border rounded-md bg-muted/20 px-3">
-            <AccordionTrigger className="py-2.5 text-xs font-semibold hover:no-underline">Response Mapping</AccordionTrigger>
-            <AccordionContent className="pb-3 space-y-2">
-              <Textarea
-                className="font-mono text-[11px] min-h-[100px] bg-background"
-                value={draft.responseMappingText}
-                onChange={(e) => onDraftChange({ responseMappingText: e.target.value })}
-                placeholder={'[\n  {\n    "jsonPath": "$.success",\n    "variableName": "res",\n    "scope": "session"\n  }\n]'}
+          {/* ── Step 5: Action-specific options ── */}
+          {draft.action && draft.sheetId && (
+            <div className="mt-2">
+              <ActionOptions
+                draft={draft}
+                columns={columns}
+                columnsLoading={columnsLoading}
+                onDraftChange={onDraftChange}
               />
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+
+              {/* ── Response Mapping ── */}
+              <Accordion type="single" collapsible className="w-full mt-4">
+                <AccordionItem value="mapping" className="border rounded-lg bg-background">
+                  <AccordionTrigger className="px-4 py-3 text-sm hover:no-underline">Response Mapping</AccordionTrigger>
+                  <AccordionContent className="p-4 pt-0 space-y-4">
+                    <Textarea
+                      className="font-mono text-[11px] min-h-[100px] bg-background"
+                      value={draft.responseMappingText}
+                      onChange={(e) => onDraftChange({ responseMappingText: e.target.value })}
+                      placeholder={'[\n  {\n    "jsonPath": "$.success",\n    "variableName": "res",\n    "scope": "session"\n  }\n]'}
+                    />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          )}
+        </>
       )}
+
+      <GoogleSpreadsheetPicker
+        open={spreadsheetPickerOpen}
+        onOpenChange={setSpreadsheetPickerOpen}
+        getAccessToken={onGetSpreadsheetPickerAccessToken}
+        onPick={(spreadsheet) =>
+          onDraftChange({
+            spreadsheetId: spreadsheet.id,
+            spreadsheetName: spreadsheet.name,
+            sheetId: "",
+            sheetName: "",
+          })
+        }
+      />
     </div>
   );
 }

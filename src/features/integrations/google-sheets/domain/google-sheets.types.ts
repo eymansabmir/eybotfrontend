@@ -3,6 +3,7 @@ import type {
   GoogleSheetsCredentialMetadataSchema,
   GoogleSheetsCredentialSchema,
   GoogleSheetsTestConnectionSchema,
+  GoogleSheetsAccessTokenSchema,
   GoogleSpreadsheetInfoSchema,
   GoogleSheetInfoSchema,
 } from "./google-sheets.schemas";
@@ -18,6 +19,7 @@ export interface CreateGoogleSheetsCredentialInput {
 }
 
 export type GoogleSheetsTestConnectionResult = z.infer<typeof GoogleSheetsTestConnectionSchema>;
+export type GoogleSheetsAccessTokenResult = z.infer<typeof GoogleSheetsAccessTokenSchema>;
 export type GoogleSpreadsheetInfo = z.infer<typeof GoogleSpreadsheetInfoSchema>;
 export type GoogleSheetInfo = z.infer<typeof GoogleSheetInfoSchema>;
 

@@ -4,11 +4,13 @@ import {
   GoogleSpreadsheetInfoSchema,
   GoogleSheetInfoSchema,
   GoogleSheetsTestConnectionSchema,
+  GoogleSheetsAccessTokenSchema,
 } from "../domain/google-sheets.schemas";
 import type {
   GoogleSpreadsheetInfo,
   GoogleSheetInfo,
   GoogleSheetsTestConnectionResult,
+  GoogleSheetsAccessTokenResult,
 } from "../domain/google-sheets.types";
 
 export const googleSheetsApi = {
@@ -22,6 +24,13 @@ export const googleSheetsApi = {
       params: { orgId, credentialId },
     });
     return z.array(GoogleSpreadsheetInfoSchema).parse(data);
+  },
+
+  async getAccessToken(orgId: string, credentialId: string): Promise<GoogleSheetsAccessTokenResult> {
+    const { data } = await apiClient.get("/integrations/google-sheets/access-token", {
+      params: { orgId, credentialId },
+    });
+    return GoogleSheetsAccessTokenSchema.parse(data);
   },
 
   async listSheets(orgId: string, credentialId: string, spreadsheetId: string): Promise<GoogleSheetInfo[]> {
@@ -43,12 +52,5 @@ export const googleSheetsApi = {
       params: { orgId },
     });
     return z.string().parse(data.url);
-  },
-
-  async getAccessToken(orgId: string, credentialId: string): Promise<string> {
-    const { data } = await apiClient.get("/integrations/google-sheets/access-token", {
-      params: { orgId, credentialId },
-    });
-    return z.string().parse(data.accessToken);
   },
 };

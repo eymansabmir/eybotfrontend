@@ -12,6 +12,7 @@ import {
   useElevenLabsCredentials,
   useElevenLabsModels,
   useElevenLabsVoices,
+  useTestElevenLabsCredential,
 } from "@/features/integrations/elevenlabs/hooks/use-elevenlabs-integration";
 import { ElevenLabsConfigForm, type ElevenLabsConfigDraft } from "@/features/integrations/elevenlabs/presentation/elevenlabs-config-form";
 import { ElevenLabsCredentialsDialog } from "@/features/integrations/elevenlabs/presentation/elevenlabs-credentials-dialog";
@@ -45,6 +46,24 @@ export function ElevenLabsNodeRenderer({ id, data, selected }: NodeProps & { dat
   const selectedCredentialId = draft.credentialId || undefined;
   const modelsQuery = useElevenLabsModels(DEFAULT_ORG_ID, selectedCredentialId);
   const voicesQuery = useElevenLabsVoices(DEFAULT_ORG_ID, selectedCredentialId);
+  const testCredential = useTestElevenLabsCredential();
+
+  const onTestConnection = async () => {
+    if (!draft.credentialId) {
+      toast.error("Select an ElevenLabs credential first");
+      return;
+    }
+    try {
+      const result = await testCredential.mutateAsync({ 
+        orgId: DEFAULT_ORG_ID, 
+        credentialId: draft.credentialId 
+      });
+      if (result.ok) toast.success("Connection successful");
+      else toast.error(result.errorMessage ?? "Connection failed");
+    } catch {
+      toast.error("Connection test failed");
+    }
+  };
 
   const openConfig = () => {
     setDraft(toDraft(data));
@@ -146,8 +165,8 @@ export function ElevenLabsNodeRenderer({ id, data, selected }: NodeProps & { dat
               voiceLoadError={voicesQuery.error ? "Failed to load voices" : undefined}
               onDraftChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
               onConnectAccount={() => setCredentialsOpen(true)}
-              onTestConnection={() => {}}
-              testingConnection={false}
+              onTestConnection={onTestConnection}
+              testingConnection={testCredential.isPending}
             />
           </div>
           

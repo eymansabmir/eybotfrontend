@@ -1,3 +1,4 @@
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,38 +52,65 @@ export function ElevenLabsConfigForm({
   voiceLoadError,
   onDraftChange,
   onConnectAccount,
+  onTestConnection,
+  testingConnection,
 }: ElevenLabsConfigFormProps) {
   return (
-    <div className="space-y-6 flex flex-col pt-2">
+    <div className="flex flex-col gap-5 pt-1">
+      {/* Account Selection */}
       <div className="space-y-2">
-        <Select
-          value={draft.credentialId}
-          onValueChange={(value) => onDraftChange({ credentialId: value, modelId: "", voiceId: "" })}
-        >
-          <SelectTrigger className="w-full bg-background font-medium">
-            <SelectValue placeholder="Select an account" />
-          </SelectTrigger>
-          <SelectContent>
-            {credentials.map((credential) => (
-              <SelectItem key={credential.id} value={credential.id}>
-                {credential.name}
-              </SelectItem>
-            ))}
-            <div className="p-1 border-t mt-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-xs text-primary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onConnectAccount();
-                }}
-              >
-                Create new credentials
-              </Button>
-            </div>
-          </SelectContent>
-        </Select>
+        <Label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Account</Label>
+        {credentials.length > 0 ? (
+          <div className="flex gap-2">
+            <Select 
+              value={draft.credentialId || "__none"} 
+              onValueChange={(value) => onDraftChange({ credentialId: value === "__none" ? "" : value, modelId: "", voiceId: "" })}
+            >
+              <SelectTrigger className="w-full bg-background transition-colors hover:bg-accent/50 h-9 text-sm">
+                <SelectValue placeholder="Select an account" />
+              </SelectTrigger>
+              <SelectContent>
+                {credentials.map((credential) => (
+                  <SelectItem key={credential.id} value={credential.id}>
+                    {credential.name}
+                  </SelectItem>
+                ))}
+                <div className="p-1 border-t mt-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-[11px] font-medium text-primary hover:text-primary hover:bg-primary/5 h-8"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onConnectAccount();
+                    }}
+                  >
+                    <Plus className="size-3 mr-2" />
+                    Connect new
+                  </Button>
+                </div>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 whitespace-nowrap"
+              disabled={!draft.credentialId || draft.credentialId === "__none" || testingConnection}
+              onClick={onTestConnection}
+            >
+              {testingConnection ? "Testing..." : "Test"}
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full h-9 gap-2 text-xs border-dashed"
+            onClick={(e) => { e.preventDefault(); onConnectAccount(); }}
+          >
+            <Plus className="size-3" />
+            Connect new account
+          </Button>
+        )}
       </div>
 
       {draft.credentialId && (

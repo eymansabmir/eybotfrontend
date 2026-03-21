@@ -4,6 +4,7 @@ import type { NodeProps } from "@xyflow/react";
 import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -12,7 +13,8 @@ import {
   useGoogleSheetsCredentials, 
   useGoogleSheets, 
   useGoogleSheetsColumns,
-  useTestGoogleSheetsCredential 
+  useTestGoogleSheetsCredential,
+  useGoogleSheetsAccessToken,
 } from "@/features/integrations/google-sheets/hooks/use-google-sheets-integration";
 import { GoogleSheetsCredentialsDialog } from "@/features/integrations/google-sheets/presentation/google-sheets-credentials-dialog";
 import { GoogleSheetsConfigForm } from "@/features/integrations/google-sheets/presentation/google-sheets-config-form";
@@ -21,14 +23,20 @@ import type { GoogleSheetsNodeData } from "./schema";
 import { GoogleSheetsLogo } from "./logo";
 import type { CellItem } from "@/features/integrations/google-sheets/presentation/components/cell-value-stack";
 
-function cellItemsToJson(items: CellItem[]): string {
+const ResponseMappingSchema = z.object({
+  jsonPath: z.string().min(1),
+  variableName: z.string().min(1),
+  scope: z.enum(["session", "contact"]),
+});
+
+function cellItemsToRecord(items: CellItem[]): Record<string, string> | undefined {
   const obj: Record<string, string> = {};
   for (const item of items) {
     if (item.column) {
       obj[item.column] = item.value ?? "";
     }
   }
-  return JSON.stringify(obj);
+  return Object.keys(obj).length > 0 ? obj : undefined;
 }
 
 export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { data: GoogleSheetsNodeData }) {
@@ -53,7 +61,16 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )[0];
       if (newest) {
-        dispatch({ type: "set", payload: { credentialId: newest.id } });
+        dispatch({
+          type: "set",
+          payload: {
+            credentialId: newest.id,
+            spreadsheetId: "",
+            spreadsheetName: "",
+            sheetId: "",
+            sheetName: "",
+          },
+        });
       }
       awaitingNewCredential.current = false;
     }
@@ -74,6 +91,7 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
   );
 
   const testCredential = useTestGoogleSheetsCredential(DEFAULT_ORG_ID);
+  const pickerAccessToken = useGoogleSheetsAccessToken(DEFAULT_ORG_ID);
 
   const openConfig = () => {
     dispatch({ type: "reset", payload: createGoogleSheetsConfigDraft(data) });
@@ -94,12 +112,16 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
 
     let responseMapping;
     try {
-      responseMapping = JSON.parse(draft.responseMappingText);
-      if (!Array.isArray(responseMapping)) throw new Error();
+      const parsed = JSON.parse(draft.responseMappingText);
+      responseMapping = ResponseMappingSchema.array().parse(parsed);
     } catch {
       toast.error("Invalid Response Mapping JSON structure");
       return;
     }
+
+    const selectedSheet = (sheetsQuery.data ?? []).find(
+      (sheet) => sheet.id === draft.sheetId,
+    );
 
     const newData: Partial<GoogleSheetsNodeData> = {
       action: draft.action,
@@ -107,9 +129,10 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
       spreadsheetId: draft.spreadsheetId,
       spreadsheetName: draft.spreadsheetName,
       sheetId: draft.sheetId,
+      sheetName: draft.sheetName || selectedSheet?.name,
       rowId: draft.rowId,
-      values: cellItemsToJson(draft.valuesItems),
-      filter: cellItemsToJson(draft.filterItems),
+      values: cellItemsToRecord(draft.valuesItems),
+      filter: cellItemsToRecord(draft.filterItems),
       timeoutMs: draft.timeoutMs,
       responseMapping,
     };
@@ -133,6 +156,14 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
     }
   };
 
+  const onGetSpreadsheetPickerAccessToken = async (): Promise<string> => {
+    if (!draft.credentialId || draft.credentialId === "__none") {
+      throw new Error("Select a Google Sheets credential first");
+    }
+    const token = await pickerAccessToken.mutateAsync(draft.credentialId);
+    return token.accessToken;
+  };
+
   const isConfigured = !!data.credentialId && !!data.spreadsheetId && !!data.sheetId;
   
   const getActionLabel = () => {
@@ -146,57 +177,63 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
   };
 
   return (
-    <div
-      onClick={openConfig}
-      className={cn(
-        "group relative flex min-w-40 max-w-[240px] cursor-pointer rounded-lg border bg-background p-3 transition-all hover:shadow-md",
-        selected ? "border-primary ring-1 ring-primary" : "border-border shadow-sm",
-      )}
-    >
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="size-2 border-2 border-background bg-muted-foreground !transition-transform group-hover:scale-125"
-      />
+    <>
+      <div
+        onClick={openConfig}
+        className={cn(
+          "group relative flex min-w-40 max-w-[240px] cursor-pointer rounded-lg border bg-background p-3 transition-all hover:shadow-md",
+          selected ? "border-primary ring-1 ring-primary" : "border-border shadow-sm",
+        )}
+      >
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="size-2 border-2 border-background bg-muted-foreground !transition-transform group-hover:scale-125"
+        />
 
-      <div className="flex w-full flex-col gap-2">
-        <div className="flex items-start gap-2">
-          <div className="mt-0.5 shrink-0 rounded bg-emerald-100 p-1 dark:bg-emerald-950/40">
-            <GoogleSheetsLogo className="size-3.5" />
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <p className={cn(
-              "truncate text-sm font-medium",
-              isConfigured ? "text-foreground" : "text-muted-foreground"
-            )}>
-              {getActionLabel()}
-            </p>
+        <div className="flex w-full flex-col gap-2">
+          <div className="flex items-start gap-2">
+            <div className="mt-0.5 shrink-0 rounded bg-emerald-100 p-1 dark:bg-emerald-950/40">
+              <GoogleSheetsLogo className="size-3.5" />
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className={cn(
+                "truncate text-sm font-medium",
+                isConfigured ? "text-foreground" : "text-muted-foreground"
+              )}>
+                {getActionLabel()}
+              </p>
+              {(data.spreadsheetName || data.sheetName) && (
+                <p className="truncate text-[10px] text-muted-foreground">
+                  {data.spreadsheetName}{data.sheetName ? ` > ${data.sheetName}` : ""}
+                </p>
+              )}
+            </div>
           </div>
         </div>
+
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="default"
+          className="size-2 border-2 border-background bg-primary !transition-transform group-hover:scale-125"
+        />
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="default"
-        className="size-2 border-2 border-background bg-primary !transition-transform group-hover:scale-125"
-      />
-
       <Dialog open={configOpen} onOpenChange={setConfigOpen}>
-        <DialogContent className="flex max-h-[85vh] max-w-sm flex-col overflow-hidden p-0">
-          <DialogHeader className="px-5 pt-5">
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="flex max-h-[85vh] max-w-sm flex-col overflow-hidden p-0 text-foreground" onClick={(e) => e.stopPropagation()}>
+          <DialogHeader className="px-5 pt-5 text-left">
+            <DialogTitle className="flex items-center gap-2 text-base">
                <GoogleSheetsLogo className="size-5" />
                Google Sheets
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs text-muted-foreground">
               Configure the Google Sheets action parameters.
             </DialogDescription>
           </DialogHeader>
           
           <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
             <GoogleSheetsConfigForm
-              orgId={DEFAULT_ORG_ID}
               draft={draft}
               credentials={credentialsQuery.data ?? []}
               sheets={sheetsQuery.data ?? []}
@@ -205,13 +242,14 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
               columnsLoading={columnsQuery.isLoading}
               onDraftChange={(patch) => dispatch({ type: "set", payload: patch })}
               onConnectAccount={() => setCredentialsOpen(true)}
+              onGetSpreadsheetPickerAccessToken={onGetSpreadsheetPickerAccessToken}
               onTestConnection={onTestConnection}
               testingConnection={testCredential.isPending}
             />
           </div>
           
-          <div className="flex justify-end border-t px-5 py-3">
-            <Button onClick={onSaveConfig} size="sm" className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground">
+          <div className="flex justify-end border-t border-border/50 px-5 py-3 bg-muted/20">
+            <Button onClick={onSaveConfig} size="sm" className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium">
               <Save className="size-3.5" />
               Save config
             </Button>
@@ -224,12 +262,10 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
         open={credentialsOpen}
         onOpenChange={setCredentialsOpen}
         onCreated={() => {
-          // Signal that we should auto-select the new credential when it appears
           awaitingNewCredential.current = true;
-          // Invalidate credentials list to pick up newly created OAuth credential
           queryClient.invalidateQueries({ queryKey: ["integrations", "google-sheets", "credentials", DEFAULT_ORG_ID] });
         }}
       />
-    </div>
+    </>
   );
 }

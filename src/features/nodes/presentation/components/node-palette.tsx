@@ -37,6 +37,7 @@ export function NodePalette() {
             NodeType.OPENAI,
             NodeType.ELEVENLABS,
             NodeType.GOOGLE_SHEETS,
+            NodeType.NOCODB,
         ]);
 
         return Object.values(nodeRegistry).reduce(

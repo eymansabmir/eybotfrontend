@@ -12,9 +12,10 @@ export const GoogleSheetsNodeSchema = z.object({
   spreadsheetId: z.string().optional(),
   spreadsheetName: z.string().optional(),
   sheetId: z.string().optional(),
+  sheetName: z.string().optional(),
   rowId: z.number().int().positive().optional(),
-  values: z.string().optional(), // JSON string for values
-  filter: z.string().optional(), // JSON string for filter
+  values: z.record(z.string(), z.unknown()).optional(),
+  filter: z.record(z.string(), z.unknown()).optional(),
   timeoutMs: z.number().int().positive().optional(),
   responseMapping: z.array(MappingSchema).optional(),
 });

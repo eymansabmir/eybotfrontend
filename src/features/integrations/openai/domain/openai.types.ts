@@ -37,13 +37,13 @@ export interface OpenAIAssistant {
   model: string;
 }
 
-export type OpenAIModelActionMode = "chat_completion" | "assistant" | "generate_variables" | "image";
+export type OpenAIModelActionMode = "chat_completion" | "assistant" | "generate_variables" | "image" | "voice";
 
 export interface OpenAIPreviewInput {
-  orgId: string;
   credentialId: string;
   model: string;
-  messages: Array<{ role: "system" | "user" | "assistant" | "tool"; content: string }>;
+  prompt: string;
+  systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
 }
@@ -51,7 +51,7 @@ export interface OpenAIPreviewInput {
 export interface OpenAIPreviewResult {
   id: string;
   model: string;
-  content: string;
+  text: string;
   finishReason?: string;
 }
 

@@ -79,8 +79,17 @@ export function useTestOpenAICredential(orgId: string) {
   });
 }
 
+export function useOpenAIVoiceModels(orgId: string, credentialId?: string) {
+  return useOpenAIModels(orgId, credentialId, "voice");
+}
+
+export function useTestOpenAIPrompt() {
+  return useOpenAIPreview();
+}
+
 export function useOpenAIPreview() {
   return useMutation({
     mutationFn: (input: OpenAIPreviewInput) => openAIPreviewApi.run(input),
   });
 }
+

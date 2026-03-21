@@ -65,6 +65,12 @@ export function useGoogleSpreadsheets(orgId: string, credentialId?: string) {
   });
 }
 
+export function useGoogleSheetsAccessToken(orgId: string) {
+  return useMutation({
+    mutationFn: (credentialId: string) => googleSheetsApi.getAccessToken(orgId, credentialId),
+  });
+}
+
 export function useGoogleSheets(orgId: string, credentialId?: string, spreadsheetId?: string) {
   return useQuery({
     queryKey: googleSheetsKeys.sheets(orgId, credentialId ?? "", spreadsheetId ?? ""),

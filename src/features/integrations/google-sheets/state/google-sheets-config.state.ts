@@ -8,6 +8,7 @@ export interface GoogleSheetsConfigDraft {
   spreadsheetId: string;
   spreadsheetName?: string;
   sheetId: string;
+  sheetName?: string;
   rowId?: number;
   valuesItems: CellItem[];
   filterItems: CellItem[];
@@ -33,6 +34,7 @@ export function createGoogleSheetsConfigDraft(input: Partial<GoogleSheetsConfigD
     spreadsheetId: input.spreadsheetId ?? "",
     spreadsheetName: input.spreadsheetName,
     sheetId: input.sheetId ?? "",
+    sheetName: input.sheetName,
     rowId: input.rowId,
     valuesItems: parseItems(input.values),
     filterItems: parseItems(input.filter),
@@ -41,10 +43,11 @@ export function createGoogleSheetsConfigDraft(input: Partial<GoogleSheetsConfigD
   };
 }
 
-function parseItems(str: string | undefined): CellItem[] {
+function parseItems(input: unknown): CellItem[] {
   try {
-    if (!str) return [];
-    const parsed = JSON.parse(str);
+    if (!input) return [];
+
+    const parsed = typeof input === "string" ? JSON.parse(input) : input;
     if (typeof parsed !== "object" || parsed === null) return [];
     
     return Object.entries(parsed).map(([column, value]) => ({

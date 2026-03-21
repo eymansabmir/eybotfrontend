@@ -17,6 +17,8 @@ export function GoogleSheetsCredentialsDialog({
   onOpenChange,
   onCreated,
 }: GoogleSheetsCredentialsDialogProps) {
+  const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+  const expectedMessageOrigin = new URL(apiBaseUrl, window.location.origin).origin;
 
   const handleSignIn = useCallback(async () => {
     try {
@@ -42,6 +44,10 @@ export function GoogleSheetsCredentialsDialog({
     if (!open) return;
 
     const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== expectedMessageOrigin) {
+        return;
+      }
+
       if (event.data === "google-sheets-oauth-success") {
         toast.success("Google account connected successfully!");
         onCreated?.();
@@ -53,7 +59,7 @@ export function GoogleSheetsCredentialsDialog({
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [open, onCreated, onOpenChange]);
+  }, [open, onCreated, onOpenChange, expectedMessageOrigin]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
