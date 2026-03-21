@@ -16,7 +16,10 @@ export interface NocoDBConfigDraft {
   credentialId?: string;
   action: 'create_record' | 'update_record' | 'search_records';
   tableId: string;
-  rowId: string; // Used for "Select Records" or exact Row ID
+  viewId: string;
+  filter: string;
+  filterConditions: Array<{ field: string; operator: string; value: string }>;
+  returnType: 'All' | 'First' | 'Last' | 'Random';
   fields: NocoDBField[];
   responseMapping: ResponseMapping[];
   isValid: boolean;
@@ -34,7 +37,10 @@ export const createNocoDBConfigDraft = (data: Partial<NocoDBNodeData>): NocoDBCo
   credentialId: data.credentialId,
   action: data.action || 'create_record',
   tableId: data.tableId || '',
-  rowId: data.rowId || '',
+  viewId: data.viewId || '',
+  filter: data.filter || '',
+  filterConditions: data.filterConditions?.length ? data.filterConditions : [{ field: '', operator: 'eq', value: '' }],
+  returnType: data.returnType || 'All',
   fields: data.fields?.length ? data.fields : [{ key: '', value: '' }],
   responseMapping: data.responseMapping?.length ? data.responseMapping : [{ jsonPath: '', variableName: '', scope: 'session' }],
   isValid: true,
@@ -56,7 +62,8 @@ export const useNocoDBConfigState = create<NocoDBConfigState>((set, get) => ({
       
       let isValid = true;
       if (!next.tableId.trim()) isValid = false;
-      if (next.action === 'update_record' && !next.rowId.trim()) isValid = false;
+      // In Autobot, search and update need filter if we want records, 
+      // but let's keep it simple for now as per their schema which often marks them optional.
 
       return { draft: { ...next, isValid } };
     });
@@ -68,12 +75,16 @@ export const useNocoDBConfigState = create<NocoDBConfigState>((set, get) => ({
     // Filter out empty fields and mappings
     const fields = draft.fields.filter(f => f.key.trim() && f.value.trim());
     const responseMapping = draft.responseMapping.filter(r => r.variableName.trim() && r.jsonPath.trim());
+    const filterConditions = draft.filterConditions.filter(c => c.field.trim());
 
     return {
       credentialId: draft.credentialId,
       action: draft.action,
       tableId: draft.tableId,
-      rowId: draft.rowId,
+      viewId: draft.viewId,
+      filter: draft.filter,
+      filterConditions,
+      returnType: draft.returnType,
       fields,
       responseMapping,
     };

@@ -85,10 +85,10 @@ export function NocoDBNodeRenderer({ id, data, selected }: NodeProps & { data: N
             </div>
           </div>
 
-          {data.responseMapping && data.responseMapping.length > 0 && (
+          {data.responseMapping && data.responseMapping.some(m => m.variableName?.trim()) && (
             <div className="flex flex-wrap items-center gap-1.5 overflow-hidden border-t border-border/40 pt-2">
-              <span className="shrink-0 text-[10px] font-medium italic text-muted-foreground text-[8px]  tracking-wider">Set</span>
-              {data.responseMapping.map((m, i) => (
+              <span className="shrink-0 text-[10px] font-medium italic text-muted-foreground text-[8px]  tracking-wider uppercase">Set</span>
+              {data.responseMapping.filter(m => m.variableName?.trim()).map((m, i) => (
                 <span key={i} className="truncate rounded-md bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
                   {m.variableName}
                 </span>

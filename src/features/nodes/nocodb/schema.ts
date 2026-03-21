@@ -6,7 +6,14 @@ export const NocoDBNodeDataSchema = z.object({
   action: z.enum(['create_record', 'update_record', 'search_records']).default('create_record'),
   tableId: z.string().optional(),
   tableName: z.string().optional(),
-  rowId: z.string().optional(),
+  viewId: z.string().optional(),
+  filter: z.string().optional(),
+  filterConditions: z.array(z.object({
+    field: z.string(),
+    operator: z.string(),
+    value: z.string(),
+  })).optional(),
+  returnType: z.enum(['All', 'First', 'Last', 'Random']).optional(),
   fields: z.array(z.object({
     key: z.string(),
     value: z.string(),
