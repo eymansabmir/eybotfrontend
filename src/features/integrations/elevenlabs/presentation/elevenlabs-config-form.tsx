@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 import type {
   ElevenLabsCredential,
-  ElevenLabsModel,
   ElevenLabsTestConnectionResult,
   ElevenLabsVoice,
 } from "../domain/elevenlabs.types";
@@ -28,12 +27,9 @@ export interface ElevenLabsConfigDraft {
 interface ElevenLabsConfigFormProps {
   draft: ElevenLabsConfigDraft;
   credentials: ElevenLabsCredential[];
-  models: ElevenLabsModel[];
   voices: ElevenLabsVoice[];
-  modelsLoading: boolean;
   voicesLoading: boolean;
   lastTestResult?: ElevenLabsTestConnectionResult | null;
-  modelLoadError?: string;
   voiceLoadError?: string;
   onDraftChange: (patch: Partial<ElevenLabsConfigDraft>) => void;
   onConnectAccount: () => void;
@@ -44,11 +40,8 @@ interface ElevenLabsConfigFormProps {
 export function ElevenLabsConfigForm({
   draft,
   credentials,
-  models,
   voices,
-  modelsLoading,
   voicesLoading,
-  modelLoadError,
   voiceLoadError,
   onDraftChange,
   onConnectAccount,
@@ -64,31 +57,26 @@ export function ElevenLabsConfigForm({
           <div className="flex gap-2">
             <Select 
               value={draft.credentialId || "__none"} 
-              onValueChange={(value) => onDraftChange({ credentialId: value === "__none" ? "" : value, modelId: "", voiceId: "" })}
+              onValueChange={(value) => {
+                if (value === "__connect_new") {
+                  onConnectAccount();
+                  return;
+                }
+
+                onDraftChange({ credentialId: value === "__none" ? "" : value, modelId: "", voiceId: "" });
+              }}
             >
               <SelectTrigger className="w-full bg-background transition-colors hover:bg-accent/50 h-9 text-sm">
                 <SelectValue placeholder="Select an account" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__none">Select an account</SelectItem>
                 {credentials.map((credential) => (
                   <SelectItem key={credential.id} value={credential.id}>
                     {credential.name}
                   </SelectItem>
                 ))}
-                <div className="p-1 border-t mt-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start text-[11px] font-medium text-primary hover:text-primary hover:bg-primary/5 h-8"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onConnectAccount();
-                    }}
-                  >
-                    <Plus className="size-3 mr-2" />
-                    Connect new
-                  </Button>
-                </div>
+                <SelectItem value="__connect_new">+ Connect new account</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -156,27 +144,6 @@ export function ElevenLabsConfigForm({
               </SelectContent>
             </Select>
             {voiceLoadError && <p className="text-xs text-destructive mt-1">{voiceLoadError}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">Model</Label>
-            <Select
-              value={draft.modelId}
-              onValueChange={(value) => onDraftChange({ modelId: value })}
-              disabled={modelsLoading}
-            >
-              <SelectTrigger className="bg-background font-normal h-10">
-                <SelectValue placeholder={modelsLoading ? "Loading models..." : "Select a model"} />
-              </SelectTrigger>
-              <SelectContent>
-                {models.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    {model.name || model.id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {modelLoadError && <p className="text-xs text-destructive mt-1">{modelLoadError}</p>}
           </div>
 
           <div className="space-y-2">

@@ -81,15 +81,15 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
 
   const sheetsQuery = useGoogleSheets(
     DEFAULT_ORG_ID,
-    draft.credentialId && draft.credentialId !== "__none" ? draft.credentialId : undefined,
-    draft.spreadsheetId || undefined
+    configOpen && draft.credentialId && draft.credentialId !== "__none" ? draft.credentialId : undefined,
+    configOpen ? draft.spreadsheetId || undefined : undefined
   );
 
   const columnsQuery = useGoogleSheetsColumns(
     DEFAULT_ORG_ID,
-    draft.credentialId && draft.credentialId !== "__none" ? draft.credentialId : undefined,
-    draft.spreadsheetId || undefined,
-    draft.sheetId || undefined
+    configOpen && draft.credentialId && draft.credentialId !== "__none" ? draft.credentialId : undefined,
+    configOpen ? draft.spreadsheetId || undefined : undefined,
+    configOpen ? draft.sheetId || undefined : undefined
   );
 
   const testCredential = useTestGoogleSheetsCredential(DEFAULT_ORG_ID);

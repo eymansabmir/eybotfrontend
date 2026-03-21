@@ -47,6 +47,7 @@ export function createOpenAIConfigDraft(input: Partial<OpenAIConfigDraft>): Open
   const rawMode = input.mode === "agent" ? "chat_completion" : input.mode;
   const mode = rawMode ?? "";
   const voiceAction = input.voiceAction ?? "create_speech";
+  const shouldAutoSend = mode === "voice" && voiceAction === "create_speech";
   const legacyPromptAsAudioUrl = mode === "voice" && voiceAction === "create_transcription"
     ? (input.prompt ?? "")
     : "";
@@ -68,7 +69,7 @@ export function createOpenAIConfigDraft(input: Partial<OpenAIConfigDraft>): Open
     frequencyPenalty: input.frequencyPenalty,
     presencePenalty: input.presencePenalty,
     timeoutMs: input.timeoutMs,
-    sendResponseToUser: input.sendResponseToUser ?? false,
+    sendResponseToUser: input.sendResponseToUser ?? shouldAutoSend,
     fallbackText: input.fallbackText ?? "",
     assistantId: input.assistantId,
     threadId: input.threadId,

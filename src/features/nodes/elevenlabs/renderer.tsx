@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_ORG_ID } from "@/features/integrations/openai/domain/openai.constants";
 import {
   useElevenLabsCredentials,
-  useElevenLabsModels,
   useElevenLabsVoices,
   useTestElevenLabsCredential,
 } from "@/features/integrations/elevenlabs/hooks/use-elevenlabs-integration";
@@ -42,9 +41,8 @@ export function ElevenLabsNodeRenderer({ id, data, selected }: NodeProps & { dat
   const [draft, setDraft] = useState<ElevenLabsConfigDraft>(() => toDraft(data));
 
   const credentialsQuery = useElevenLabsCredentials(DEFAULT_ORG_ID);
-  
-  const selectedCredentialId = draft.credentialId || undefined;
-  const modelsQuery = useElevenLabsModels(DEFAULT_ORG_ID, selectedCredentialId);
+
+  const selectedCredentialId = configOpen && draft.credentialId ? draft.credentialId : undefined;
   const voicesQuery = useElevenLabsVoices(DEFAULT_ORG_ID, selectedCredentialId);
   const testCredential = useTestElevenLabsCredential();
 
@@ -68,6 +66,12 @@ export function ElevenLabsNodeRenderer({ id, data, selected }: NodeProps & { dat
   const openConfig = () => {
     setDraft(toDraft(data));
     setConfigOpen(true);
+  };
+
+  const handleNodeClick = () => {
+    // Prevent accidental re-open/reset while any dialog is currently open.
+    if (configOpen || credentialsOpen) return;
+    openConfig();
   };
 
   const updateNodeData = (newData: Partial<ElevenLabsNodeData>) => {
@@ -97,7 +101,7 @@ export function ElevenLabsNodeRenderer({ id, data, selected }: NodeProps & { dat
 
   return (
     <div
-      onClick={openConfig}
+      onClick={handleNodeClick}
       className={cn(
         "group relative flex min-w-40 max-w-[240px] cursor-pointer rounded-lg border bg-background p-3 transition-all hover:shadow-md",
         selected ? "border-primary ring-1 ring-primary" : "border-border shadow-sm",
@@ -142,7 +146,11 @@ export function ElevenLabsNodeRenderer({ id, data, selected }: NodeProps & { dat
       />
 
       <Dialog open={configOpen} onOpenChange={setConfigOpen}>
-        <DialogContent className="flex max-h-[85vh] max-w-sm flex-col overflow-hidden p-0">
+        <DialogContent
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+          className="flex max-h-[85vh] max-w-sm flex-col overflow-hidden p-0"
+        >
           <DialogHeader className="px-5 pt-5">
             <DialogTitle className="flex items-center gap-2">
                <ElevenLabsLogo className="size-5" />
@@ -157,11 +165,8 @@ export function ElevenLabsNodeRenderer({ id, data, selected }: NodeProps & { dat
             <ElevenLabsConfigForm
               draft={draft}
               credentials={credentialsQuery.data ?? []}
-              models={modelsQuery.data ?? []}
               voices={voicesQuery.data ?? []}
-              modelsLoading={modelsQuery.isLoading}
               voicesLoading={voicesQuery.isLoading}
-              modelLoadError={modelsQuery.error ? "Failed to load models" : undefined}
               voiceLoadError={voicesQuery.error ? "Failed to load voices" : undefined}
               onDraftChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
               onConnectAccount={() => setCredentialsOpen(true)}

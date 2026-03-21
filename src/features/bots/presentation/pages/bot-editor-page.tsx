@@ -20,42 +20,146 @@ export function BotEditorPage() {
 
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
 
-    const hasInvalidIntegrationNodes = () => {
+    const getIntegrationValidationError = () => {
         const flowState = flowBuilderRef.current?.getFlowState();
         const sourceNodes = flowState?.nodes ?? initialNodes;
-        return sourceNodes.some((node) => {
-            if (node.type !== NodeType.OPENAI && node.type !== NodeType.ELEVENLABS) return false;
+        for (const node of sourceNodes) {
+            if (
+                node.type !== NodeType.OPENAI &&
+                node.type !== NodeType.ELEVENLABS &&
+                node.type !== NodeType.GOOGLE_SHEETS &&
+                node.type !== NodeType.HTTP_REQUEST
+            ) {
+                continue;
+            }
+
             const nodeData = node.data as Record<string, unknown>;
+            const nodeLabel = `${node.type} (${node.id})`;
+
+            if (node.type === NodeType.HTTP_REQUEST) {
+                const url = typeof nodeData["url"] === "string" ? nodeData["url"].trim() : "";
+                const method = typeof nodeData["method"] === "string" ? nodeData["method"].trim() : "";
+
+                if (!url) {
+                    return `${nodeLabel}: URL is required.`;
+                }
+
+                try {
+                    // Mirror backend zod URL validation to avoid generic save failures.
+                    new URL(url);
+                } catch {
+                    return `${nodeLabel}: URL must be a valid absolute URL.`;
+                }
+
+                if (!method) {
+                    return `${nodeLabel}: HTTP method is required.`;
+                }
+
+                continue;
+            }
 
             if (node.type === NodeType.ELEVENLABS) {
-                return !nodeData["credentialId"] || !nodeData["voiceId"] || !nodeData["text"] || !nodeData["resultVariable"];
+                if (!nodeData["credentialId"] || !nodeData["voiceId"] || !nodeData["text"] || !nodeData["resultVariable"]) {
+                    return `${nodeLabel}: credential, voice, text, and result variable are required.`;
+                }
+                continue;
             }
 
-            const mode = (nodeData["mode"] as string | undefined) ?? "agent";
+            if (node.type === NodeType.GOOGLE_SHEETS) {
+                const action = (nodeData["action"] as string | undefined) ?? "insert_row";
+                const hasValues = typeof nodeData["values"] === "object" && nodeData["values"] !== null && Object.keys(nodeData["values"] as Record<string, unknown>).length > 0;
+
+                if (!nodeData["credentialId"] || !nodeData["spreadsheetId"] || !nodeData["sheetId"]) {
+                    return `${nodeLabel}: credential, spreadsheet, and worksheet are required.`;
+                }
+
+                if (action === "insert_row") {
+                    if (!hasValues) {
+                        return `${nodeLabel}: at least one column value is required for insert row.`;
+                    }
+                    continue;
+                }
+
+                if (action === "update_row") {
+                    const rowId = nodeData["rowId"];
+                    const validRowId = typeof rowId === "number" && Number.isInteger(rowId) && rowId > 0;
+                    if (!validRowId || !hasValues) {
+                        return `${nodeLabel}: row ID and at least one value are required for update row.`;
+                    }
+                }
+
+                continue;
+            }
+
+            const mode = (nodeData["mode"] as string | undefined) ?? "chat_completion";
             const voiceAction = (nodeData["voiceAction"] as string | undefined) ?? "create_speech";
 
-            if (!nodeData["credentialId"] || !nodeData["model"]) {
-                return true;
+            if (!nodeData["credentialId"]) {
+                return `${nodeLabel}: OpenAI credential is required.`;
             }
 
-            if (mode === "agent") {
-                return !nodeData["prompt"];
+            if (mode !== "assistant" && !nodeData["model"]) {
+                return `${nodeLabel}: model is required for mode ${mode}.`;
+            }
+
+            if (mode === "chat_completion") {
+                if (!nodeData["prompt"]) {
+                    return `${nodeLabel}: message template is required for chat completion.`;
+                }
+                continue;
             }
 
             if (mode === "voice" && voiceAction === "create_speech") {
-                return !nodeData["prompt"] || !nodeData["voice"];
+                if (!nodeData["prompt"] || !nodeData["voice"]) {
+                    return `${nodeLabel}: text and voice are required for speech generation.`;
+                }
+                continue;
             }
 
             if (mode === "voice" && voiceAction === "create_transcription") {
-                return !nodeData["prompt"];
+                if (!nodeData["audioUrl"] && !nodeData["prompt"]) {
+                    return `${nodeLabel}: audio URL or transcription prompt is required.`;
+                }
+                continue;
             }
 
-            return false;
-        });
+            if (mode === "assistant") {
+                if (!nodeData["assistantId"] || !nodeData["prompt"]) {
+                    return `${nodeLabel}: assistant ID and message are required for assistant mode.`;
+                }
+                continue;
+            }
+
+            if (mode === "generate_variables") {
+                const variables = Array.isArray(nodeData["variablesToExtract"])
+                    ? (nodeData["variablesToExtract"] as unknown[])
+                    : [];
+                if (!nodeData["prompt"] || variables.length === 0) {
+                    return `${nodeLabel}: prompt and at least one variable are required for generate variables mode.`;
+                }
+                continue;
+            }
+
+            if (mode === "image") {
+                if (!nodeData["prompt"]) {
+                    return `${nodeLabel}: prompt is required for image generation.`;
+                }
+            }
+
+            continue;
+        }
+
+        return null;
     };
 
     const handleSave = async () => {
         if (!flowBuilderRef.current) return;
+        const integrationValidationError = getIntegrationValidationError();
+        if (integrationValidationError) {
+            toast.error(integrationValidationError);
+            return;
+        }
+
         const { nodes: localNodes, edges: localEdges } = flowBuilderRef.current.getFlowState();
 
         const mapNodeToBackend = (n: Node & { branches?: { key: string; label: string }[] }) => {
@@ -254,8 +358,9 @@ export function BotEditorPage() {
                             size="sm"
                             className="gap-2 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
                             onClick={() => {
-                                if (hasInvalidIntegrationNodes()) {
-                                    toast.error("Integration nodes require required credentials and fields before publish");
+                                const integrationValidationError = getIntegrationValidationError();
+                                if (integrationValidationError) {
+                                    toast.error(integrationValidationError);
                                     return;
                                 }
                                 publishBotMutation.mutate(id, {

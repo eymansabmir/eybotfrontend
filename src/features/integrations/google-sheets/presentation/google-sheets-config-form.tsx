@@ -249,10 +249,10 @@ function ActionOptions({
       return (
         <Accordion type="multiple" defaultValue={["filter", "cells"]} className="w-full space-y-1">
           <AccordionItem value="filter" className="border rounded-md bg-muted/20 px-3">
-            <AccordionTrigger className="py-2.5 text-xs font-semibold hover:no-underline">Row(s) to update</AccordionTrigger>
+            <AccordionTrigger className="py-2.5 text-xs font-semibold hover:no-underline">Row to update</AccordionTrigger>
             <AccordionContent className="pb-3 space-y-3">
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Row ID (1-indexed)</Label>
+                <Label className="text-xs text-muted-foreground">Row ID (1-indexed, required)</Label>
                 <Input
                   type="number"
                   value={draft.rowId ?? ""}
@@ -261,20 +261,9 @@ function ActionOptions({
                   className="bg-background h-8 text-xs"
                 />
               </div>
-              <Label className="text-xs text-muted-foreground">Or filter by values:</Label>
-              {columnsLoading ? (
-                <p className="text-xs text-muted-foreground animate-pulse">Loading columns...</p>
-              ) : (
-                <TableList<CellItem>
-                  items={draft.filterItems}
-                  onItemsChange={(items) => onDraftChange({ filterItems: items })}
-                  addLabel="Add a filter"
-                >
-                  {({ item, onItemChange }) => (
-                    <CellWithValueStack item={item} onItemChange={onItemChange} columns={cols} />
-                  )}
-                </TableList>
-              )}
+              <p className="text-[11px] text-muted-foreground">
+                Update currently targets one explicit row ID. Use "Get data from sheet" first if you need to look up a row before updating.
+              </p>
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="cells" className="border rounded-md bg-muted/20 px-3">
@@ -328,6 +317,7 @@ function ActionOptions({
                   )}
                 </TableList>
               )}
+
             </AccordionContent>
           </AccordionItem>
         </Accordion>

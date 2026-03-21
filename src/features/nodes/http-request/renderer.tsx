@@ -52,6 +52,7 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
         queryParams,
         body: draft.body.trim() ? draft.body : undefined,
         timeoutMs: draft.timeoutMs,
+        fallbackText: draft.fallbackText.trim() ? draft.fallbackText : undefined,
         responseMapping,
         credentialId: draft.credentialId || undefined,
         proxyCredentialsId: draft.proxyCredentialsId || undefined,
@@ -71,14 +72,14 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
       <div
         onClick={openConfig}
         className={cn(
-          "group relative flex min-w-40 max-w-[240px] cursor-pointer rounded-lg border bg-background p-3 transition-all hover:shadow-md",
+          "group relative flex min-w-40 max-w-60 cursor-pointer rounded-lg border bg-background p-3 transition-all hover:shadow-md",
           selected ? "border-primary ring-1 ring-primary" : "border-border shadow-sm",
         )}
       >
         <Handle
           type="target"
           position={Position.Top}
-          className="size-2 border-2 border-background bg-muted-foreground !transition-transform group-hover:scale-125"
+          className="size-2 border-2 border-background bg-muted-foreground transition-transform! group-hover:scale-125"
         />
 
         <div className="flex w-full flex-col gap-2">
@@ -103,7 +104,7 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
 
           {data.responseMapping && data.responseMapping.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 overflow-hidden border-t border-border/40 pt-2">
-              <span className="shrink-0 text-[10px] font-medium italic text-muted-foreground text-[8px] tracking-wider">Set</span>
+              <span className="shrink-0 text-[8px] font-medium italic text-muted-foreground tracking-wider">Set</span>
               {data.responseMapping.map((m, i) => (
                 <span key={i} className="truncate rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
                   {m.variableName}
@@ -117,7 +118,7 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
           type="source"
           position={Position.Bottom}
           id="default"
-          className="size-2 border-2 border-background bg-primary !transition-transform group-hover:scale-125"
+          className="size-2 border-2 border-background bg-primary transition-transform! group-hover:scale-125"
         />
       </div>
 

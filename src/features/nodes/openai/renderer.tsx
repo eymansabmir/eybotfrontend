@@ -133,12 +133,23 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
 
   const onTestPrompt = async () => {
     try {
+      const timeoutMs =
+        typeof draft.timeoutMs === "number" && Number.isFinite(draft.timeoutMs) && draft.timeoutMs > 0
+          ? draft.timeoutMs
+          : 20000;
+
       const result = await previewPrompt.mutateAsync({
         orgId: DEFAULT_ORG_ID,
         credentialId: draft.credentialId,
         model: draft.model,
         prompt: draft.prompt,
         systemPrompt: draft.systemPrompt,
+        temperature: draft.temperature,
+        maxTokens: draft.maxTokens,
+        topP: draft.topP,
+        frequencyPenalty: draft.frequencyPenalty,
+        presencePenalty: draft.presencePenalty,
+        timeoutMs,
       });
       setPreviewText(result.content);
     } catch (err) {

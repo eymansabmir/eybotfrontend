@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Plus, MessageSquare, Trash2, GripVertical, Wrench } from "lucide-react";
+import { Plus, MessageSquare, Trash2, Wrench } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { OpenAICredential, OpenAIModel, OpenAIVoiceModel, OpenAIAssistant } from "../domain/openai.types";
+import { isReliableTextModel, usesMaxCompletionTokensParam } from "../domain/openai-model-capabilities";
 import type { OpenAIConfigDraft } from "../state/openai-config.state";
 import { OpenAIModelSelector } from "./openai-model-selector";
 
@@ -31,6 +32,10 @@ interface OpenAIConfigFormProps {
 }
 
 const SECTION_LABEL_CLASS = "text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1";
+type ChatMessage = NonNullable<OpenAIConfigDraft["messages"]>[number];
+type ChatRole = ChatMessage["role"];
+type VariableType = Exclude<NonNullable<NonNullable<OpenAIConfigDraft["variablesToExtract"]>[number]["type"]>, undefined>;
+
 const TASK_OPTIONS = [
   { value: "chat_completion", label: "Create chat completion" },
   { value: "assistant", label: "Ask Assistant" },
@@ -41,7 +46,7 @@ const TASK_OPTIONS = [
 ];
 
 
-const MESSAGE_ROLES = [
+const MESSAGE_ROLES: Array<{ value: ChatRole; label: string }> = [
   { value: "system", label: "System" },
   { value: "user", label: "User" },
   { value: "assistant", label: "Assistant" },
@@ -49,8 +54,8 @@ const MESSAGE_ROLES = [
 ];
 
 interface MessageCardProps {
-  message: { role: string; content: string };
-  onUpdate: (patch: Partial<{ role: string; content: string }>) => void;
+  message: ChatMessage;
+  onUpdate: (patch: Partial<ChatMessage>) => void;
   onRemove: () => void;
 }
 
@@ -61,9 +66,9 @@ function MessageCard({ message, onUpdate, onRemove }: MessageCardProps) {
         <div className="flex items-center gap-2">
           <Select
             value={message.role}
-            onValueChange={(val) => onUpdate({ role: val as any })}
+            onValueChange={(val) => onUpdate({ role: val as ChatRole })}
           >
-            <SelectTrigger className="h-7 w-[130px] bg-background text-[10px] font-bold uppercase tracking-wider border-none shadow-none focus:ring-0">
+            <SelectTrigger className="h-7 w-32.5 bg-background text-[10px] font-bold uppercase tracking-wider border-none shadow-none focus:ring-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -153,15 +158,17 @@ export function OpenAIConfigForm({
 
   const handleTaskChange = (val: string) => {
     if (val === "create_speech") {
-      onDraftChange({ mode: "voice", voiceAction: "create_speech", model: "" });
+      onDraftChange({ mode: "voice", voiceAction: "create_speech", model: "", sendResponseToUser: true });
     } else if (val === "create_transcription") {
       onDraftChange({ mode: "voice", voiceAction: "create_transcription", model: "whisper-1" });
     } else if (val === "image") {
       onDraftChange({ mode: "image", model: "", imageSize: "1024x1024" });
     } else if (val === "chat_completion") {
       onDraftChange({ mode: "chat_completion", model: "" });
+    } else if (val === "assistant" || val === "generate_variables") {
+      onDraftChange({ mode: val, model: "" });
     } else {
-      onDraftChange({ mode: val as any, model: "" });
+      onDraftChange({ mode: "chat_completion", model: "" });
     }
   };
 
@@ -171,6 +178,7 @@ export function OpenAIConfigForm({
   const isImage = draft.mode === "image";
   const isSpeech = draft.mode === "voice" && draft.voiceAction === "create_speech";
   const isTranscription = draft.mode === "voice" && draft.voiceAction === "create_transcription";
+  const usesCompletionTokens = usesMaxCompletionTokensParam(draft.model);
 
   return (
     <div className="flex flex-col gap-5 pt-1">
@@ -376,7 +384,7 @@ export function OpenAIConfigForm({
                       </Button>
                       <div className="grid grid-cols-2 gap-2">
                         <Input placeholder="Name (e.g. email)" value={v.name} onChange={(e) => { const newVars = [...draft.variablesToExtract!]; newVars[i].name = e.target.value; onDraftChange({ variablesToExtract: newVars }); }} />
-                        <Select value={v.type ?? "string"} onValueChange={(val: any) => { const newVars = [...draft.variablesToExtract!]; newVars[i].type = val; onDraftChange({ variablesToExtract: newVars }); }}>
+                        <Select value={v.type ?? "string"} onValueChange={(val) => { const newVars = [...draft.variablesToExtract!]; newVars[i].type = val as VariableType; onDraftChange({ variablesToExtract: newVars }); }}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="string">String</SelectItem>
@@ -432,7 +440,9 @@ export function OpenAIConfigForm({
                           <Input type="number" min={0} max={2} step={0.1} value={draft.temperature ?? ""} onChange={(e) => onDraftChange({ temperature: e.target.value ? Number(e.target.value) : undefined })} placeholder="1" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-xs text-muted-foreground">Max Tokens</Label>
+                          <Label className="text-xs text-muted-foreground">
+                            {usesCompletionTokens ? "Max Completion Tokens" : "Max Tokens"}
+                          </Label>
                           <Input type="number" min={1} value={draft.maxTokens ?? ""} onChange={(e) => onDraftChange({ maxTokens: e.target.value ? Number(e.target.value) : undefined })} placeholder="Unlimited" />
                         </div>
                       </div>
@@ -472,7 +482,7 @@ export function OpenAIConfigForm({
                   </div>
                 </div>
 
-                {isChatCompletion && (
+                {(isChatCompletion || isSpeech || isTranscription || isAssistant || isImage) && (
                   <div className="flex items-center justify-between rounded-lg border p-3">
                     <Label htmlFor="send-to-user" className="text-xs cursor-pointer">Send response to user automatically</Label>
                     <Switch id="send-to-user" checked={draft.sendResponseToUser} onCheckedChange={(c) => onDraftChange({ sendResponseToUser: c })} />
@@ -507,31 +517,12 @@ export function OpenAIConfigForm({
   );
 }
 
-function isReliableTextModel(modelId: string): boolean {
-  const id = modelId.toLowerCase();
-
-  if (
-    id.includes("whisper") ||
-    id.includes("transcribe") ||
-    id.includes("audio") ||
-    id.includes("tts") ||
-    id.includes("dall-e") ||
-    id.includes("gpt-image") ||
-    id.includes("embedding") ||
-    id.includes("moderation")
-  ) {
-    return false;
-  }
-
-  return (
-    id === "gpt-3.5-turbo" ||
-    id.startsWith("gpt-4") ||
-    id.startsWith("gpt-5") ||
-    id.includes("chatgpt")
-  );
-}
-
-function isVoiceSettings(isSpeech: boolean, isTranscription: boolean, draft: OpenAIConfigDraft, onDraftChange: any) {
+function isVoiceSettings(
+  isSpeech: boolean,
+  isTranscription: boolean,
+  draft: OpenAIConfigDraft,
+  onDraftChange: (patch: Partial<OpenAIConfigDraft>) => void,
+) {
   if (isSpeech) {
     return (
       <>
@@ -568,7 +559,11 @@ function isVoiceSettings(isSpeech: boolean, isTranscription: boolean, draft: Ope
   return null;
 }
 
-function isImageSettings(isImage: boolean, draft: OpenAIConfigDraft, onDraftChange: any) {
+function isImageSettings(
+  isImage: boolean,
+  draft: OpenAIConfigDraft,
+  onDraftChange: (patch: Partial<OpenAIConfigDraft>) => void,
+) {
   if (!isImage) return null;
 
   const isDallE3 = draft.model.toLowerCase().includes("dall-e-3");

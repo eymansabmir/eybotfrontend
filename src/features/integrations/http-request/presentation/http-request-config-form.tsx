@@ -108,6 +108,15 @@ export function HttpRequestConfigForm({
               <Label className={SECTION_LABEL_CLASS}>Mappings (JSON Array)</Label>
               <Textarea value={draft.responseMappingText} onChange={(e) => onDraftChange({ responseMappingText: e.target.value })} placeholder='[{"jsonPath": "data.id", "variableName": "id", "scope": "session"}]' className="font-mono text-xs bg-muted/20" rows={3} />
             </div>
+            <div className="space-y-1.5">
+              <Label className={SECTION_LABEL_CLASS}>Fallback Text (Optional)</Label>
+              <Input
+                value={draft.fallbackText}
+                onChange={(e) => onDraftChange({ fallbackText: e.target.value })}
+                placeholder="Continue flow when request fails"
+                className="bg-background"
+              />
+            </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
