@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import type {
   ElevenLabsCredential,
+  ElevenLabsModel,
   ElevenLabsTestConnectionResult,
   ElevenLabsVoice,
 } from "../domain/elevenlabs.types";
@@ -27,9 +28,12 @@ export interface ElevenLabsConfigDraft {
 interface ElevenLabsConfigFormProps {
   draft: ElevenLabsConfigDraft;
   credentials: ElevenLabsCredential[];
+  models: ElevenLabsModel[];
   voices: ElevenLabsVoice[];
+  modelsLoading: boolean;
   voicesLoading: boolean;
   lastTestResult?: ElevenLabsTestConnectionResult | null;
+  modelLoadError?: string;
   voiceLoadError?: string;
   onDraftChange: (patch: Partial<ElevenLabsConfigDraft>) => void;
   onConnectAccount: () => void;
@@ -40,14 +44,31 @@ interface ElevenLabsConfigFormProps {
 export function ElevenLabsConfigForm({
   draft,
   credentials,
+  models,
   voices,
+  modelsLoading,
   voicesLoading,
+  modelLoadError,
   voiceLoadError,
   onDraftChange,
   onConnectAccount,
   onTestConnection,
   testingConnection,
 }: ElevenLabsConfigFormProps) {
+  const voiceLabelById = new Map(
+    voices.map((voice) => {
+      const details = [voice.description, voice.category]
+        .filter((value): value is string => Boolean(value && value.trim().length > 0))
+        .join(", ");
+
+      return [voice.id, details ? `${voice.name} - ${details}` : voice.name];
+    }),
+  );
+
+  const modelLabelById = new Map(
+    models.map((model) => [model.id, model.name?.trim() ? model.name : model.id]),
+  );
+
   return (
     <div className="flex flex-col gap-5 pt-1">
       {/* Account Selection */}
@@ -128,22 +149,45 @@ export function ElevenLabsConfigForm({
           <div className="space-y-2">
             <Label className="text-sm font-medium text-foreground">Voice</Label>
             <Select
-              value={draft.voiceId}
-              onValueChange={(value) => onDraftChange({ voiceId: value })}
+              value={draft.voiceId || "__none"}
+              onValueChange={(value) => onDraftChange({ voiceId: value === "__none" ? "" : value })}
               disabled={voicesLoading}
             >
               <SelectTrigger className="bg-background font-normal h-10">
                 <SelectValue placeholder={voicesLoading ? "Loading voices..." : "Select a voice"} />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__none">Select a voice</SelectItem>
                 {voices.map((voice) => (
                   <SelectItem key={voice.id} value={voice.id}>
-                    {voice.name}
+                    {voiceLabelById.get(voice.id) ?? voice.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {voiceLoadError && <p className="text-xs text-destructive mt-1">{voiceLoadError}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-foreground">Model</Label>
+            <Select
+              value={draft.modelId || "__none"}
+              onValueChange={(value) => onDraftChange({ modelId: value === "__none" ? "" : value })}
+              disabled={modelsLoading}
+            >
+              <SelectTrigger className="bg-background font-normal h-10">
+                <SelectValue placeholder={modelsLoading ? "Loading models..." : "Select a model"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">Select a model</SelectItem>
+                {models.map((model) => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {modelLabelById.get(model.id) ?? model.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {modelLoadError && <p className="text-xs text-destructive mt-1">{modelLoadError}</p>}
           </div>
 
           <div className="space-y-2">

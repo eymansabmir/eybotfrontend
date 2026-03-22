@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_ORG_ID } from "@/features/integrations/openai/domain/openai.constants";
 import {
   useElevenLabsCredentials,
+  useElevenLabsModels,
   useElevenLabsVoices,
   useTestElevenLabsCredential,
 } from "@/features/integrations/elevenlabs/hooks/use-elevenlabs-integration";
@@ -43,6 +44,7 @@ export function ElevenLabsNodeRenderer({ id, data, selected }: NodeProps & { dat
   const credentialsQuery = useElevenLabsCredentials(DEFAULT_ORG_ID);
 
   const selectedCredentialId = configOpen && draft.credentialId ? draft.credentialId : undefined;
+  const modelsQuery = useElevenLabsModels(DEFAULT_ORG_ID, selectedCredentialId);
   const voicesQuery = useElevenLabsVoices(DEFAULT_ORG_ID, selectedCredentialId);
   const testCredential = useTestElevenLabsCredential();
 
@@ -165,8 +167,11 @@ export function ElevenLabsNodeRenderer({ id, data, selected }: NodeProps & { dat
             <ElevenLabsConfigForm
               draft={draft}
               credentials={credentialsQuery.data ?? []}
+              models={modelsQuery.data ?? []}
               voices={voicesQuery.data ?? []}
+              modelsLoading={modelsQuery.isLoading}
               voicesLoading={voicesQuery.isLoading}
+              modelLoadError={modelsQuery.error ? "Failed to load models" : undefined}
               voiceLoadError={voicesQuery.error ? "Failed to load voices" : undefined}
               onDraftChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
               onConnectAccount={() => setCredentialsOpen(true)}

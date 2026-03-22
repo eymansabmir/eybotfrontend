@@ -35,4 +35,5 @@ export interface ElevenLabsVoice {
   id: string;
   name: string;
   category?: string;
+  description?: string;
 }

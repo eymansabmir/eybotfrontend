@@ -34,6 +34,7 @@ export const ElevenLabsVoiceSchema = z.object({
   id: z.string(),
   name: z.string(),
   category: z.string().optional(),
+  description: z.string().optional(),
 });
 
 export const ElevenLabsVoicesListSchema = z.array(ElevenLabsVoiceSchema);
