@@ -43,9 +43,14 @@ export interface OpenAIPreviewInput {
   orgId: string;
   credentialId: string;
   model: string;
-  messages: Array<{ role: "system" | "user" | "assistant" | "tool"; content: string }>;
+  prompt: string;
+  systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  timeoutMs?: number;
 }
 
 export interface OpenAIPreviewResult {

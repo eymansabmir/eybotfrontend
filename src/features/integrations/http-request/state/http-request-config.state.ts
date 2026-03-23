@@ -9,6 +9,7 @@ export interface HttpRequestConfigDraft {
   queryParamsText: string;
   body: string;
   timeoutMs?: number;
+  fallbackText: string;
   responseMappingText: string;
 }
 
@@ -26,6 +27,7 @@ export function createHttpRequestConfigDraft(input: Partial<Record<string, unkno
     queryParamsText: queryParams ? JSON.stringify(queryParams, null, 2) : "{}",
     body: typeof input.body === "string" ? input.body : "",
     timeoutMs: typeof input.timeoutMs === "number" ? input.timeoutMs : 15000,
+    fallbackText: typeof input.fallbackText === "string" ? input.fallbackText : "",
     responseMappingText: responseMapping ? JSON.stringify(responseMapping, null, 2) : "[]",
   };
 }

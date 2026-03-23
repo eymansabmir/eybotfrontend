@@ -40,6 +40,10 @@ export function NodePalette() {
             NodeType.HTTP_REQUEST,
             NodeType.OPENAI,
             NodeType.ELEVENLABS,
+            NodeType.GOOGLE_SHEETS,
+            NodeType.NOCODB,
+            NodeType.ANTHROPIC,
+            NodeType.DEEPSEEK,
         ]);
 
         return Object.values(nodeRegistry).reduce(

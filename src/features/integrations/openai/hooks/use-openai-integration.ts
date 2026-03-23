@@ -1,16 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { openAICredentialsApi } from "../api/openai-credentials.api";
 import { openAIModelsApi } from "../api/openai-models.api";
+import { openAIVoiceApi } from "../api/openai-voice.api";
 import { openAIPreviewApi } from "../api/openai-preview.api";
 import { openAITestApi } from "../api/openai-test.api";
 import { openAIAssistantsApi } from "../api/openai-assistants.api";
-import type { CreateOpenAICredentialInput, OpenAIModelActionMode, OpenAIPreviewInput } from "../domain/openai.types";
+import type { CreateOpenAICredentialInput, OpenAIModelActionMode, OpenAIPreviewInput, OpenAIVoiceActionMode } from "../domain/openai.types";
 
 const openAIKeys = {
   all: ["integrations", "openai"] as const,
   credentials: (orgId: string) => [...openAIKeys.all, "credentials", orgId] as const,
   models: (orgId: string, credentialId: string, actionMode?: OpenAIModelActionMode) =>
     [...openAIKeys.all, "models", orgId, credentialId, actionMode ?? "all"] as const,
+  voiceModels: (orgId: string, credentialId: string, actionMode?: OpenAIVoiceActionMode) =>
+    [...openAIKeys.all, "voice-models", orgId, credentialId, actionMode ?? "all"] as const,
   assistants: (orgId: string, credentialId: string) =>
     [...openAIKeys.all, "assistants", orgId, credentialId] as const,
 };
@@ -79,8 +82,26 @@ export function useTestOpenAICredential(orgId: string) {
   });
 }
 
+export function useOpenAIVoiceModels(orgId: string, credentialId?: string, actionMode?: OpenAIVoiceActionMode) {
+  return useQuery({
+    queryKey: openAIKeys.voiceModels(orgId, credentialId ?? "", actionMode),
+    queryFn: () => openAIVoiceApi.listModels({ orgId, credentialId: credentialId!, actionMode }),
+    enabled: Boolean(credentialId),
+    retry: (failureCount, error: unknown) => {
+      const maybeStatus = (error as { response?: { status?: number } })?.response?.status;
+      if (maybeStatus === 401 || maybeStatus === 403 || maybeStatus === 404) return false;
+      return failureCount < 1;
+    },
+  });
+}
+
+export function useTestOpenAIPrompt() {
+  return useOpenAIPreview();
+}
+
 export function useOpenAIPreview() {
   return useMutation({
     mutationFn: (input: OpenAIPreviewInput) => openAIPreviewApi.run(input),
   });
 }
+
