@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { googleSheetsApi } from "../api/google-sheets.api";
+import { ENV } from "@/config/env";
 
 interface GoogleSheetsCredentialsDialogProps {
   orgId: string;
@@ -17,8 +18,7 @@ export function GoogleSheetsCredentialsDialog({
   onOpenChange,
   onCreated,
 }: GoogleSheetsCredentialsDialogProps) {
-  const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-  const expectedMessageOrigin = new URL(apiBaseUrl, window.location.origin).origin;
+  const expectedMessageOrigin = new URL(ENV.API_URL, window.location.origin).origin;
 
   const handleSignIn = useCallback(async () => {
     try {

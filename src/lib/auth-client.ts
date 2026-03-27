@@ -1,10 +1,9 @@
 import { createAuthClient } from "better-auth/client"
 import { emailOTPClient } from "better-auth/client/plugins"
-
-const authBaseUrl = `${import.meta.env.VITE_API_URL}/auth`
+import { ENV } from "@/config/env"
 
 export const authClient = createAuthClient({
-  baseURL: authBaseUrl,
+  baseURL: `${ENV.API_URL}/auth`,
   fetchOptions: {
     credentials: "include",
   },

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 
 import { Spinner } from "@/components/ui/spinner"
+import { ENV } from "@/config/env"
 
 interface ProtectedLayoutProps {
   children: React.ReactNode
@@ -14,10 +15,8 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
   useEffect(() => {
     const checkSession = async () => {
-      const authBaseUrl = import.meta.env.VITE_AUTH_URL || "http://localhost:3000/api/auth"
-
       try {
-        const response = await fetch(`${authBaseUrl}/get-session`, {
+        const response = await fetch(`${ENV.API_URL}/auth/get-session`, {
           method: "GET",
           credentials: "include",
         })
