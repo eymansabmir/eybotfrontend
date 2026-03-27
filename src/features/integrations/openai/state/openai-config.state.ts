@@ -30,7 +30,7 @@ export interface OpenAIConfigDraft {
   imageSize?: string;
   imageQuality?: string;
   messages?: { role: "system" | "user" | "assistant" | "dialogue"; content: string }[];
-  tools?: { type: "function"; function: { name: string; description?: string; parameters?: any } }[];
+  tools?: { type: "function"; function: { name: string; description?: string; parameters: any } }[];
 }
 
 type Action =

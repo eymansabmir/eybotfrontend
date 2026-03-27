@@ -1,7 +1,7 @@
 import { createAuthClient } from "better-auth/client"
 import { emailOTPClient } from "better-auth/client/plugins"
 
-const authBaseUrl = import.meta.env.VITE_AUTH_URL || "http://localhost:3000/api/auth"
+const authBaseUrl = `${import.meta.env.VITE_API_URL}/auth`
 
 export const authClient = createAuthClient({
   baseURL: authBaseUrl,
