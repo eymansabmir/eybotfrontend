@@ -1,5 +1,3 @@
-import type { AnthropicModelActionMode } from "../domain/anthropic.types";
-
 export interface AnthropicConfigDraft {
   mode: "" | "chat_completion" | "generate_variables";
   credentialId: string;

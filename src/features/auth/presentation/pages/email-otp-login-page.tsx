@@ -11,6 +11,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { authClient } from "@/lib/auth-client"
 
 type Stage = "request" | "verify"
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function EmailOtpLoginPage() {
   const navigate = useNavigate()
@@ -30,6 +31,11 @@ export function EmailOtpLoginPage() {
 
     if (!normalizedEmail) {
       setError("Email is required")
+      return
+    }
+
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      setError("Enter a valid email address")
       return
     }
 
@@ -59,6 +65,11 @@ export function EmailOtpLoginPage() {
 
     if (!normalizedEmail || !otp.trim()) {
       setError("Email and OTP are required")
+      return
+    }
+
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      setError("Enter a valid email address")
       return
     }
 
