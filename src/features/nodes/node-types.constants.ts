@@ -33,6 +33,7 @@ export const NodeType = {
   SEND_REACTION: 'send_reaction',
   OPENAI: 'openai',
   ELEVENLABS: 'elevenlabs',
+  SEND_REACTION: 'send_reaction',
   LANGUAGE: 'language',
   ANTHROPIC: 'anthropic',
   DEEPSEEK: 'deepseek',
