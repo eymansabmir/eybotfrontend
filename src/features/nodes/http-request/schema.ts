@@ -13,6 +13,7 @@ export const HttpRequestNodeSchema = z.object({
   queryParams: z.record(z.string(), z.string()).optional(),
   body: z.string().optional(),
   timeoutMs: z.number().int().positive().optional(),
+  fallbackText: z.string().optional(),
   responseMapping: z.array(MappingSchema).optional(),
   credentialId: z.string().optional(),
   proxyCredentialsId: z.string().optional(),

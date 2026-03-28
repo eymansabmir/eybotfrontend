@@ -23,6 +23,10 @@ import { openAINode } from "./openai";
 import { elevenLabsNode } from "./elevenlabs";
 import { httpRequestNode } from "./http-request";
 import { languageNode } from "./language";
+import { googleSheetsNode } from "./google-sheets";
+import { nocodbNode } from "./nocodb";
+import { anthropicNode } from "./anthropic";
+import { deepseekNode } from "./deepseek";
 import type { NodeDefinition } from "./types";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
@@ -51,6 +55,10 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [elevenLabsNode.config.type]: elevenLabsNode,
     [httpRequestNode.config.type]: httpRequestNode,
     [languageNode.config.type]: languageNode,
+    [googleSheetsNode.config.type]: googleSheetsNode,
+    [nocodbNode.config.type]: nocodbNode,
+    [anthropicNode.config.type]: anthropicNode,
+    [deepseekNode.config.type]: deepseekNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(

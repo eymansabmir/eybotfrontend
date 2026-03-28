@@ -30,9 +30,12 @@ export const NodeType = {
   NOCODB: 'nocodb',
   NPS: 'nps',
   SEND_CARDS: 'send_cards',
+  SEND_REACTION: 'send_reaction',
   OPENAI: 'openai',
   ELEVENLABS: 'elevenlabs',
   LANGUAGE: 'language',
+  ANTHROPIC: 'anthropic',
+  DEEPSEEK: 'deepseek',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];

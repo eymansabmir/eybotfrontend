@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
-import { Link } from "@tanstack/react-router"
+import { useNavigate } from "@tanstack/react-router"
 
 import { Spinner } from "@/components/ui/spinner"
+import { ENV } from "@/config/env"
 
 interface ProtectedLayoutProps {
   children: React.ReactNode
@@ -10,13 +11,12 @@ interface ProtectedLayoutProps {
 export function ProtectedLayout({ children }: ProtectedLayoutProps) {
   const [isReady, setIsReady] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const checkSession = async () => {
-      const authBaseUrl = import.meta.env.VITE_AUTH_URL || "http://localhost:3000/api/auth"
-
       try {
-        const response = await fetch(`${authBaseUrl}/get-session`, {
+        const response = await fetch(`${ENV.API_URL}/auth/get-session`, {
           method: "GET",
           credentials: "include",
         })
@@ -38,6 +38,11 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
     void checkSession()
   }, [])
 
+  useEffect(() => {
+    if (!isReady || isAuthenticated) return
+    void navigate({ to: "/login", replace: true })
+  }, [isReady, isAuthenticated, navigate])
+
   if (!isReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted">
@@ -48,18 +53,8 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/40 px-6">
-        <div className="max-w-md space-y-4 rounded-xl border bg-card p-6 text-center shadow-sm">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">Authentication required</h1>
-            <p className="text-sm text-muted-foreground">
-              Please sign in with your email OTP to continue.
-            </p>
-            <Link to="/login" className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
-              Go to login
-            </Link>
-          </div>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-muted">
+        <Spinner className="size-6 text-muted-foreground" />
       </div>
     )
   }

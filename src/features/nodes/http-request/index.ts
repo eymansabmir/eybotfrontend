@@ -17,6 +17,7 @@ export const httpRequestNode: NodeDefinition<HttpRequestNodeData> = {
     queryParams: {},
     body: "",
     timeoutMs: 15000,
+    fallbackText: "",
     responseMapping: [],
     credentialId: "",
     proxyCredentialsId: "",

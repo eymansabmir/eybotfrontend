@@ -1,7 +1,7 @@
 import type { OpenAIVoiceActionMode } from "../domain/openai.types";
 
 export interface OpenAIConfigDraft {
-  mode: "chat_completion" | "voice" | "assistant" | "generate_variables" | "image";
+  mode: "" | "chat_completion" | "voice" | "assistant" | "generate_variables" | "image";
   voiceAction: OpenAIVoiceActionMode;
   credentialId: string;
   model: string;
@@ -29,6 +29,8 @@ export interface OpenAIConfigDraft {
   // Image mode
   imageSize?: string;
   imageQuality?: string;
+  messages?: { role: "system" | "user" | "assistant" | "dialogue"; content: string }[];
+  tools?: { type: "function"; function: { name: string; description?: string; parameters: any } }[];
 }
 
 type Action =
@@ -43,8 +45,9 @@ export function openAIConfigReducer(state: OpenAIConfigDraft, action: Action): O
 export function createOpenAIConfigDraft(input: Partial<OpenAIConfigDraft>): OpenAIConfigDraft {
   // @ts-expect-error fallback mapping for old data where mode might be "agent"
   const rawMode = input.mode === "agent" ? "chat_completion" : input.mode;
-  const mode = rawMode ?? "chat_completion";
+  const mode = rawMode ?? "";
   const voiceAction = input.voiceAction ?? "create_speech";
+  const shouldAutoSend = mode === "voice" && voiceAction === "create_speech";
   const legacyPromptAsAudioUrl = mode === "voice" && voiceAction === "create_transcription"
     ? (input.prompt ?? "")
     : "";
@@ -58,7 +61,7 @@ export function createOpenAIConfigDraft(input: Partial<OpenAIConfigDraft>): Open
     prompt: input.prompt ?? "",
     audioUrl: input.audioUrl ?? legacyPromptAsAudioUrl,
     systemPrompt: input.systemPrompt ?? "",
-    resultVariable: input.resultVariable ?? "openai_response",
+    resultVariable: input.resultVariable ?? "",
     resultScope: input.resultScope ?? "session",
     temperature: input.temperature,
     maxTokens: input.maxTokens,
@@ -66,7 +69,7 @@ export function createOpenAIConfigDraft(input: Partial<OpenAIConfigDraft>): Open
     frequencyPenalty: input.frequencyPenalty,
     presencePenalty: input.presencePenalty,
     timeoutMs: input.timeoutMs,
-    sendResponseToUser: input.sendResponseToUser ?? true,
+    sendResponseToUser: input.sendResponseToUser ?? shouldAutoSend,
     fallbackText: input.fallbackText ?? "",
     assistantId: input.assistantId,
     threadId: input.threadId,
@@ -75,5 +78,7 @@ export function createOpenAIConfigDraft(input: Partial<OpenAIConfigDraft>): Open
     variablesToExtract: input.variablesToExtract,
     imageSize: input.imageSize,
     imageQuality: input.imageQuality,
+    messages: input.messages ?? (mode === "chat_completion" ? [{ role: "user", content: input.prompt ?? "" }] : []),
+    tools: input.tools ?? [],
   };
 }

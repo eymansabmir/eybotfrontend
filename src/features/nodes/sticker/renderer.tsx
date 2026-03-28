@@ -4,6 +4,7 @@ import { Sticker as StickerIcon, Link as LinkIcon } from "lucide-react";
 import type { StickerNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { MediaUploader, useResolveUrl } from "@/lib/storage";
+import { ENV } from "@/config/env";
 
 /** Returns true if the value looks like an absolute URL (not a storage path). */
 function isAbsoluteUrl(value: string) {
@@ -35,7 +36,7 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
         
         try {
             setIsUploadingToMeta(true);
-            const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3000/api"}/whatsapp/upload-media`, {
+            const response = await fetch(`${ENV.API_URL}/whatsapp/upload-media`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url, type: 'sticker' }),

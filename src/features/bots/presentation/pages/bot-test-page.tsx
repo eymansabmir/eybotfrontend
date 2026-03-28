@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, Send, Phone, Globe, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,11 @@ export function BotTestPage() {
     const [sessionResult, setSessionResult] = useState<StartFlowResult | null>(null);
     const [userReply, setUserReply] = useState("");
     const [isReplying, setIsReplying] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, [sessionResult?.outboundMessages, sessionResult?.session.history, sessionResult?.isFinished]);
 
     console.log("SESSION RESULT", sessionResult)
     if (isLoading) {
@@ -160,7 +165,7 @@ export function BotTestPage() {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-hidden p-6 max-w-5xl mx-auto w-full">
+            <main className="flex-1 overflow-y-auto p-6 max-w-5xl mx-auto w-full">
                 <Tabs defaultValue="web" className="w-full h-full flex flex-col">
                     <TabsList className="w-fit mb-6">
                         <TabsTrigger value="web" className="gap-2">
@@ -193,8 +198,8 @@ export function BotTestPage() {
                         />
                     </TabsContent>
 
-                    <TabsContent value="whatsapp" className="flex-1 m-0">
-                        <div className="flex items-center justify-center h-full">
+                    <TabsContent value="whatsapp" className="flex-1 m-0 overflow-y-auto">
+                        <div className="flex items-start justify-center min-h-full py-2">
                             {!sessionResult ? (
                                 <div className="max-w-md w-full border rounded-2xl p-8 bg-card shadow-sm space-y-6">
                                     <div className="text-center space-y-2">
@@ -242,7 +247,7 @@ export function BotTestPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="max-w-md w-full h-full flex flex-col border rounded-2xl bg-card shadow-sm overflow-hidden">
+                                <div className="max-w-md w-full min-h-[540px] max-h-[calc(100vh-220px)] flex flex-col border rounded-2xl bg-card shadow-sm overflow-hidden">
                                     {/* Chat Header */}
                                     <div className="p-4 border-b bg-emerald-500/10 flex items-center gap-3">
                                         <div className="bg-emerald-500 text-white size-10 rounded-full flex items-center justify-center">
@@ -316,6 +321,8 @@ export function BotTestPage() {
                                                 <p className="text-xs text-muted-foreground">Flow completed</p>
                                             </div>
                                         )}
+
+                                        <div ref={messagesEndRef} />
                                     </div>
 
                                     {/* Input */}
