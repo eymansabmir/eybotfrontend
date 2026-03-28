@@ -29,7 +29,7 @@ export function BotEditorPage() {
         return () => window.removeEventListener('open-bot-settings', handleOpenSettings);
     }, []);
 
-    const hasInvalidIntegrationNodes = () => {
+    const getIntegrationValidationError = () => {
         const flowState = flowBuilderRef.current?.getFlowState();
         const sourceNodes = flowState?.nodes ?? initialNodes;
         for (const node of sourceNodes) {
