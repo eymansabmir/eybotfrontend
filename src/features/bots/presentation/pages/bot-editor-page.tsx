@@ -9,7 +9,6 @@ import type { Node, Edge } from "@xyflow/react";
 import { NodeType } from "@/features/nodes/node-types.constants";
 import { useState } from "react";
 import { BotSettingsDialog } from "@/features/settings/presentation/components/bot-settings-dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function BotEditorPage() {
     const { id } = useParams({ from: "/bot/$id" });

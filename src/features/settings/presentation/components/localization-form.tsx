@@ -1,13 +1,10 @@
-import React from "react";
 import { SUPPORTED_LANGUAGES, COMMON_LANGUAGES, ISO_TO_NATIVE_NAME } from "@/features/i18n/languages";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { 
   Trash2, 
-  Plus, 
   Languages, 
-  Check, 
   ChevronsUpDown, 
   Star,
   StarOff,
