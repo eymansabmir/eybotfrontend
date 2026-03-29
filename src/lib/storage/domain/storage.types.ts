@@ -4,6 +4,7 @@ export type UploadPurpose = "image" | "video" | "audio" | "document" | "campaign
 /** Core upload result returned after a successful upload. Contains only the stored path — no URL. */
 export interface UploadResult {
     path: string;
+    url: string;
 }
 
 /** Backend-defined policy for a given upload purpose. */

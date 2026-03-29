@@ -31,7 +31,7 @@ export function useFileUpload({ purpose, onSuccess, onError }: UseFileUploadOpti
         onSuccess: (result) => {
             setProgress(100);
             toast.success("File uploaded successfully");
-            onSuccessRef.current?.(result.path, result);
+            onSuccessRef.current?.(result.url, result);
         },
         onError: (err: Error) => {
             setProgress(0);

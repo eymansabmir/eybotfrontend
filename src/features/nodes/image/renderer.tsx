@@ -33,7 +33,7 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
     return (
         <div
             className={cn(
-                "group relative min-w-[260px] rounded-2xl border bg-card p-0 transition-all hover:shadow-xl",
+                "group relative w-[280px] rounded-2xl border bg-card p-0 transition-all hover:shadow-xl",
                 selected ? "border-primary shadow-lg ring-4 ring-primary/10" : "border-border"
             )}
         >
@@ -80,7 +80,7 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
                         <img
                             src={previewSrc}
                             alt={data.caption || "Node Image"}
-                            className="h-full w-full object-cover transition-transform group-hover/img:scale-105"
+                            className="h-full w-full object-contain transition-transform group-hover/img:scale-105"
                             onError={(e) => {
                                 e.currentTarget.src = "https://placehold.co/400x225?text=Invalid+Image+URL";
                             }}
