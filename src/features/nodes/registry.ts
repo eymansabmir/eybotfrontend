@@ -22,6 +22,7 @@ import { cardsNode } from "./cards";
 import { openAINode } from "./openai";
 import { elevenLabsNode } from "./elevenlabs";
 import { httpRequestNode } from "./http-request";
+import { languageNode } from "./language";
 import { googleSheetsNode } from "./google-sheets";
 import { nocodbNode } from "./nocodb";
 import { anthropicNode } from "./anthropic";
@@ -53,6 +54,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [openAINode.config.type]: openAINode,
     [elevenLabsNode.config.type]: elevenLabsNode,
     [httpRequestNode.config.type]: httpRequestNode,
+    [languageNode.config.type]: languageNode,
     [googleSheetsNode.config.type]: googleSheetsNode,
     [nocodbNode.config.type]: nocodbNode,
     [anthropicNode.config.type]: anthropicNode,
