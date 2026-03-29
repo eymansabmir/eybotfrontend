@@ -353,7 +353,10 @@ export function BotEditorPage() {
             id: n.id,
             type: n.type,
             position: n.position,
-            data: frontendData
+            data: { 
+                ...frontendData,
+                branches: n.branches || []
+            }
         };
     }) || [];
 

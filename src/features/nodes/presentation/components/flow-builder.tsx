@@ -148,13 +148,15 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
                 ];
             }
 
-            const newNode: any = {
+            const newNode: Node = {
                 id: getId(),
                 type,
                 position,
-                data: defaultData,
-                branches: defaultBranches,
-                label: definition?.config.label || type,
+                data: { 
+                    ...defaultData, 
+                    branches: defaultBranches,
+                    label: definition?.config.label || type
+                },
             };
 
             setNodes((nds) => nds.concat(newNode));
