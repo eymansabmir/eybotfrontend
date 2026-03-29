@@ -88,6 +88,7 @@ export const storageApi = {
             { params: { filePath, bucket } },
         );
 
+        console.log("API" , data)
         return data.data.url;
     },
 };

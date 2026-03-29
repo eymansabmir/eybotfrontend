@@ -6,18 +6,13 @@ import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
 import { MediaUploader, useResolveUrl } from "@/lib/storage";
 
-/** Returns true if the value looks like an absolute URL (not a storage path). */
-function isAbsoluteUrl(value: string) {
-    return /^https?:\/\//i.test(value);
-}
+
 
 export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: ImageNodeData }) {
     const { setNodes } = useReactFlow();
 
-    // Resolve storage path → displayable URL (skipped when the value is already a URL)
-    const isPath = !!data.url && !isAbsoluteUrl(data.url);
-    const { data: resolvedUrl } = useResolveUrl(isPath ? data.url : undefined, "public");
-    const previewSrc = data.url ? (isPath ? resolvedUrl : data.url) : undefined;
+    // Resolve storage path or absolute URL → displayable preview URL
+    const { data: previewSrc } = useResolveUrl(data.url, "public");
 
     const updateData = (newData: Partial<ImageNodeData>) => {
         setNodes((nds) =>

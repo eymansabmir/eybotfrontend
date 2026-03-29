@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { storageApi } from "../infrastructure/storage-api";
 import type { UploadPurpose } from "../domain/storage.types";
+import { ENV } from "@/config/env";
 
 export const STORAGE_KEYS = {
     uploadPolicy: (purpose: UploadPurpose) => ["storage", "upload-policy", purpose] as const,
@@ -24,16 +25,30 @@ export function useUploadPolicy(purpose: UploadPurpose) {
 
 /**
  * Resolves a stored file path to a displayable URL.
- * Public files are cached longer; private signed URLs are refetched more often.
+ * Public bucket → Resolved locally via ENV.BASE_MEDIA_URL.
+ * Private bucket → Fetches a signed URL from the backend.
  */
 export function useResolveUrl(
     filePath: string | undefined,
     bucket: "public" | "private" = "public",
 ) {
+    const isAbsolute = !!filePath && /^https?:\/\//i.test(filePath);
+    
+    // For public files, we can resolve locally if it's a path (not absolute)
+    const locallyResolvedUrl = bucket === "public" && filePath && !isAbsolute
+        ? `${ENV.BASE_MEDIA_URL}/${filePath}`
+        : isAbsolute ? filePath as string : undefined;
+
     return useQuery({
         queryKey: STORAGE_KEYS.resolveUrl(filePath ?? "", bucket),
-        queryFn: () => storageApi.resolveUrl(filePath!, bucket),
+        queryFn: async () => {
+            if (bucket === "public" && locallyResolvedUrl) {
+                return locallyResolvedUrl;
+            }
+            return storageApi.getSignedUrl(filePath!);
+        },
         enabled: !!filePath,
-        staleTime: bucket === "public" ? Infinity : 10 * 60 * 1000, // 10 min for signed URLs
+        initialData: locallyResolvedUrl, // Instant resolution for public assets
+        staleTime: bucket === "public" ? Infinity : 10 * 60 * 1000,
     });
 }

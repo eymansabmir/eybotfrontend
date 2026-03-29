@@ -10,7 +10,7 @@ export const audioNode: NodeDefinition<AudioNodeData> = {
     schema: AudioNodeSchema,
     renderer: AudioNodeRenderer,
     handler: AudioNodeHandler,
-    defaultData: { filePath: '' },
+    defaultData: { url: '' },
     defaultBranches: [{ key: 'default', label: 'Default' }],
 };
 
