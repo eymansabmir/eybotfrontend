@@ -242,15 +242,45 @@ export function BotEditorPage() {
                 branches = []; // End nodes theoretically have no outbound branches
             } else if (n.type === "send_carousel") {
                 const cards = (n.data.cards as any[]) || [];
-                const allQuickReplies = cards.flatMap(card =>
-                    card.buttonType === 'quick_reply' ? (card.quickReplyButtons || []) : []
-                );
+                const firstCard = cards[0];
+                
+                // Sync all cards with the first card's buttons
+                if (firstCard) {
+                    n.data.cards = cards.map(card => ({
+                        ...card,
+                        buttonType: firstCard.buttonType,
+                        ctaUrlButton: firstCard.ctaUrlButton,
+                        quickReplyButtons: firstCard.quickReplyButtons,
+                    }));
+                }
 
-                if (!branches.length || branches.some(b => b.key === 'default')) {
+                const allQuickReplies = (firstCard?.buttonType === 'quick_reply' ? (firstCard.quickReplyButtons || []) : []);
+
+                // Ensure interaction object is correctly populated for the engine
+                if (allQuickReplies.length > 0) {
+                    n.data.interaction = {
+                        mode: 'input',
+                        input: {
+                            type: 'choice',
+                            timeoutSeconds: 3600,
+                            options: allQuickReplies.map((btn: any) => ({
+                                id: btn.id,
+                                label: btn.title,
+                                branchKey: btn.id,
+                            })) as any,
+                        }
+                    };
+                } else {
+                    delete n.data.interaction;
+                }
+
+                if (allQuickReplies.length > 0) {
                     branches = [
-                        ...allQuickReplies.map(btn => ({ key: btn.id, label: btn.title })),
+                        ...allQuickReplies.map((btn: any) => ({ key: btn.id, label: btn.title })),
                         { key: "timeout", label: "Timeout" }
                     ];
+                } else {
+                    branches = [{ key: "default", label: "Default" }];
                 }
             } else if (n.type === "send_cards") {
                 // SEND_CARDS in interactive mode: each card can have buttons with IDs

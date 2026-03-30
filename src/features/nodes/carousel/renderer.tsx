@@ -15,13 +15,33 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
             nds.map((node) => {
                 if (node.id === id) {
                     const mergedData = { ...node.data, ...newData };
-                    
+
                     const updatedNode: typeof node = { ...node, data: mergedData };
-                    
-                    // Sync branches with all quick reply buttons across all cards
-                    const allQuickReplies = (mergedData.cards || []).flatMap(card => 
-                        card.buttonType === 'quick_reply' ? (card.quickReplyButtons || []) : []
-                    );
+
+                    // Sync branches with the first card's quick reply buttons (since they are now global)
+                    const firstCard = (mergedData.cards || [])[0];
+                    if (firstCard) {
+                        mergedData.cards = (mergedData.cards || []).map(card => ({
+                            ...card,
+                            buttonType: firstCard.buttonType,
+                            ctaUrlButton: firstCard.ctaUrlButton,
+                            quickReplyButtons: firstCard.quickReplyButtons,
+                        }));
+                    }
+
+                    const quickReplies = firstCard?.buttonType === 'quick_reply' ? (firstCard.quickReplyButtons || []) : [];
+
+                    // Ensure interaction object exists for choice nodes
+                    if (quickReplies.length > 0 && (!mergedData.interaction || !mergedData.interaction.input)) {
+                        mergedData.interaction = {
+                            mode: 'input',
+                            input: {
+                                type: 'choice',
+                                timeoutSeconds: 3600,
+                                options: []
+                            }
+                        };
+                    }
 
                     // Sync interaction options for the engine
                     if (mergedData.interaction?.input?.type === 'choice') {
@@ -29,7 +49,7 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                             ...mergedData.interaction,
                             input: {
                                 ...mergedData.interaction.input,
-                                options: allQuickReplies.map(btn => ({
+                                options: quickReplies.map(btn => ({
                                     id: btn.id,
                                     label: btn.title,
                                     branchKey: btn.id,
@@ -37,15 +57,15 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                             },
                         };
                     }
-                    
+
                     (updatedNode as any).branches = [
-                        ...allQuickReplies.map(btn => ({
+                        ...quickReplies.map(btn => ({
                             key: btn.id,
                             label: btn.title,
                         })),
                         { key: 'timeout', label: 'Timeout' },
                     ];
-                    
+
                     return updatedNode;
                 }
                 return node;
@@ -79,7 +99,7 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
     };
 
     const updateCard = (index: number, patch: any) => {
-        const newCards = (data.cards || []).map((card, i) => 
+        const newCards = (data.cards || []).map((card, i) =>
             i === index ? { ...card, ...patch } : card
         );
         updateData({ cards: newCards });
@@ -145,14 +165,14 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                 {/* Card Navigation & Management */}
                 <div className="flex items-center justify-between gap-2 bg-muted/20 p-2 rounded-xl border border-border/50">
                     <div className="flex items-center gap-1">
-                        <button 
+                        <button
                             onClick={() => setActiveCardIndex(prev => Math.max(0, prev - 1))}
                             disabled={activeCardIndex === 0}
                             className="p-1 hover:bg-background rounded-md disabled:opacity-30 transition-colors"
                         >
                             <ChevronLeft size={16} />
                         </button>
-                        <button 
+                        <button
                             onClick={() => setActiveCardIndex(prev => Math.min((data.cards?.length || 1) - 1, prev + 1))}
                             disabled={activeCardIndex === (data.cards?.length || 1) - 1}
                             className="p-1 hover:bg-background rounded-md disabled:opacity-30 transition-colors"
@@ -160,7 +180,7 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                             <ChevronRight size={16} />
                         </button>
                     </div>
-                    
+
                     <div className="flex gap-1 overflow-x-auto no-scrollbar py-1">
                         {data.cards?.map((_, i) => (
                             <button
@@ -176,7 +196,7 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
 
                     <div className="flex items-center gap-1">
                         {(data.cards || []).length > 2 && (
-                            <button 
+                            <button
                                 onClick={() => removeCard(activeCardIndex)}
                                 className="p-1 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
                             >
@@ -184,7 +204,7 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                             </button>
                         )}
                         {(data.cards || []).length < 10 && (
-                            <button 
+                            <button
                                 onClick={addCard}
                                 className="p-1 text-primary hover:bg-primary/10 rounded-md transition-colors"
                             >
@@ -250,7 +270,7 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Card Action</label>
-                                <select 
+                                <select
                                     className="bg-muted/50 rounded-lg px-2 py-1 text-[10px] border border-border/50 focus:outline-none"
                                     value={activeCard.buttonType || 'cta_url'}
                                     onChange={(e) => {
@@ -258,9 +278,9 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                                         const newCards = (data.cards || []).map(card => ({
                                             ...card,
                                             buttonType: newType,
-                                            // Initialize buttons if empty when switching to quick_reply
+                                            // Sync quick replies across all cards if switching to quick_reply
                                             quickReplyButtons: newType === 'quick_reply' && (!card.quickReplyButtons || card.quickReplyButtons.length === 0)
-                                                ? [{ id: `qr_${Date.now()}_${Math.random()}`, title: 'Quick Reply' }]
+                                                ? [{ id: `qr_${Date.now()}`, title: 'Quick Reply' }]
                                                 : card.quickReplyButtons
                                         }));
                                         updateData({ cards: newCards });
@@ -278,8 +298,8 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                                         className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-center"
                                         value={activeCard.ctaUrlButton?.displayText || ""}
                                         placeholder="Button Text"
-                                        onChange={(e) => updateCard(activeCardIndex, { 
-                                            ctaUrlButton: { ...activeCard.ctaUrlButton, displayText: e.target.value } 
+                                        onChange={(e) => updateCard(activeCardIndex, {
+                                            ctaUrlButton: { ...activeCard.ctaUrlButton, displayText: e.target.value }
                                         })}
                                     />
                                     <input
@@ -287,9 +307,15 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                                         className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-mono"
                                         value={activeCard.ctaUrlButton?.url || ""}
                                         placeholder="URL"
-                                        onChange={(e) => updateCard(activeCardIndex, { 
-                                            ctaUrlButton: { ...activeCard.ctaUrlButton, url: e.target.value } 
+                                        onChange={(e) => updateCard(activeCardIndex, {
+                                            ctaUrlButton: { ...activeCard.ctaUrlButton, url: e.target.value }
                                         })}
+                                    />
+                                    <Handle
+                                        type="source"
+                                        position={Position.Right}
+                                        id="default"
+                                        className="right-[-28px]! h-4 w-4 border-2 border-background bg-primary shadow-sm hover:scale-125 transition-transform"
                                     />
                                 </div>
                             ) : (
@@ -302,9 +328,13 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                                                     className="flex-1 bg-muted/50 rounded-lg border border-border/50 py-2 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-center"
                                                     value={btn.title}
                                                     onChange={(e) => {
-                                                        const newBtns = [...(activeCard.quickReplyButtons || [])];
-                                                        newBtns[btnIdx] = { ...btn, title: e.target.value };
-                                                        updateCard(activeCardIndex, { quickReplyButtons: newBtns });
+                                                        const newCards = (data.cards || []).map(card => ({
+                                                            ...card,
+                                                            quickReplyButtons: (card.quickReplyButtons || []).map((b: any, i: number) =>
+                                                                i === btnIdx ? { ...b, title: e.target.value } : b
+                                                            )
+                                                        }));
+                                                        updateData({ cards: newCards });
                                                     }}
                                                 />
                                                 <button
@@ -332,11 +362,11 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                                         <button
                                             onClick={() => {
                                                 const timestamp = Date.now();
-                                                const newCards = (data.cards || []).map((card, idx) => ({
+                                                const newCards = (data.cards || []).map((card) => ({
                                                     ...card,
                                                     quickReplyButtons: [
                                                         ...(card.quickReplyButtons || []),
-                                                        { id: `qr_${timestamp}_${idx}`, title: 'Quick Reply' }
+                                                        { id: `qr_${timestamp}`, title: 'Quick Reply' }
                                                     ]
                                                 }));
                                                 updateData({ cards: newCards });
@@ -351,7 +381,7 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                         </div>
                     </div>
                 )}
-                
+
                 {/* Interaction Settings */}
                 <div className="pt-2 border-t border-border/50 space-y-3">
                     <div className="space-y-1.5">
@@ -409,9 +439,9 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
 
             {/* Indicator of cards */}
             <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-1">
-                 {data.cards?.map((_, i) => (
+                {data.cards?.map((_, i) => (
                     <div key={i} className={cn("w-1.5 h-1.5 rounded-full", activeCardIndex === i ? "bg-primary" : "bg-muted-foreground/20")} />
-                 ))}
+                ))}
             </div>
 
             {/* Visual background element */}
