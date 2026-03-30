@@ -184,28 +184,30 @@ export function NocoDBConfigForm({
               </AccordionItem>
             )}
 
-            <AccordionItem value="fields" className="border rounded-lg bg-background px-4">
-              <AccordionTrigger className="py-3 text-sm hover:no-underline font-medium">
-                {draft.action === "update_record" ? "Updates" : "Fields"}
-              </AccordionTrigger>
-              <AccordionContent className="pb-4 space-y-4">
-                <div className="space-y-2">
-                  {draft.fields.map((field, index) => (
-                    <div key={index} className="flex gap-2 items-start group relative">
-                      <Input className="flex-1 overflow-hidden h-9 text-sm" placeholder="Field name" value={field.key} onChange={(e) => { const newFields = [...draft.fields]; newFields[index].key = e.target.value; onDraftChange({ fields: newFields }); }} />
-                      <Input className="flex-1 overflow-hidden h-9 text-sm" placeholder="Value" value={field.value} onChange={(e) => { const newFields = [...draft.fields]; newFields[index].value = e.target.value; onDraftChange({ fields: newFields }); }} />
-                      <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeField(index)}>
-                        <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" size="sm" className="w-full h-8 text-xs gap-1.5 border-dashed" onClick={addField}>
-                  <Plus className="size-3" />
-                  Add {draft.action === "update_record" ? "update" : "field"}
-                </Button>
-              </AccordionContent>
-            </AccordionItem>
+            {draft.action !== "search_records" && (
+              <AccordionItem value="fields" className="border rounded-lg bg-background px-4">
+                <AccordionTrigger className="py-3 text-sm hover:no-underline font-medium">
+                  {draft.action === "update_record" ? "Updates" : "Fields"}
+                </AccordionTrigger>
+                <AccordionContent className="pb-4 space-y-4">
+                  <div className="space-y-2">
+                    {draft.fields.map((field, index) => (
+                      <div key={index} className="flex gap-2 items-start group relative">
+                        <Input className="flex-1 overflow-hidden h-9 text-sm" placeholder="Field name" value={field.key} onChange={(e) => { const newFields = [...draft.fields]; newFields[index].key = e.target.value; onDraftChange({ fields: newFields }); }} />
+                        <Input className="flex-1 overflow-hidden h-9 text-sm" placeholder="Value" value={field.value} onChange={(e) => { const newFields = [...draft.fields]; newFields[index].value = e.target.value; onDraftChange({ fields: newFields }); }} />
+                        <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeField(index)}>
+                          <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full h-8 text-xs gap-1.5 border-dashed" onClick={addField}>
+                    <Plus className="size-3" />
+                    Add {draft.action === "update_record" ? "update" : "field"}
+                  </Button>
+                </AccordionContent>
+              </AccordionItem>
+            )}
 
             {draft.action === "search_records" && (
               <AccordionItem value="mapping" className="border rounded-lg bg-background px-4">
