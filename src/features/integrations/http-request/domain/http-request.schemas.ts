@@ -14,3 +14,8 @@ export const HttpRequestCredentialSchema = z.object({
 });
 
 export const HttpRequestCredentialsListSchema = z.array(HttpRequestCredentialSchema);
+
+export const HttpRequestPreviewSchema = z.object({
+  statusCode: z.number(),
+  data: z.unknown(),
+});
