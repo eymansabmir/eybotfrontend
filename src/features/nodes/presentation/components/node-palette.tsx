@@ -25,16 +25,18 @@ export function NodePalette() {
             NodeType.SEND_AUDIO,
             NodeType.SEND_DOCUMENT,
             NodeType.SEND_LOCATION,
-            NodeType.SEND_BUTTONS,
-            NodeType.SEND_LIST,
             NodeType.SEND_TEMPLATE,
-            NodeType.SEND_CARDS,
-            NodeType.SEND_CAROUSEL,
         ]);
         const inputTypes = new Set<NodeTypeValue>([
             NodeType.ASK_QUESTION,
             NodeType.LOCATION_REQUEST,
             NodeType.NPS,
+            NodeType.ASK_FILE,
+            NodeType.LANGUAGE,
+            NodeType.SEND_BUTTONS,
+            NodeType.SEND_LIST,
+            NodeType.SEND_CARDS,
+            NodeType.SEND_CAROUSEL,
         ]);
         const integrationTypes = new Set<NodeTypeValue>([
             NodeType.HTTP_REQUEST,
