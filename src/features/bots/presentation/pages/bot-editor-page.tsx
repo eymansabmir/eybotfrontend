@@ -9,6 +9,8 @@ import type { Node, Edge } from "@xyflow/react";
 import { NodeType } from "@/features/nodes/node-types.constants";
 import { useState } from "react";
 import { BotSettingsDialog } from "@/features/settings/presentation/components/bot-settings-dialog";
+import { hasValidOpenAIChatCompletionInput } from "@/features/integrations/openai/domain/chat-completion-validation";
+import { isValidAssistantThreadIdInput } from "@/features/integrations/openai/domain/assistant-thread-id-validation";
 
 export function BotEditorPage() {
     const { id } = useParams({ from: "/bot/$id" });
@@ -111,8 +113,10 @@ export function BotEditorPage() {
             }
 
             if (mode === "chat_completion") {
-                if (!nodeData["prompt"]) {
-                    return `${nodeLabel}: message template is required for chat completion.`;
+                if (!hasValidOpenAIChatCompletionInput({
+                    messages: nodeData["messages"],
+                })) {
+                    return `${nodeLabel}: at least one non-empty message is required for chat completion.`;
                 }
                 continue;
             }
@@ -135,6 +139,11 @@ export function BotEditorPage() {
                 if (!nodeData["assistantId"] || !nodeData["prompt"]) {
                     return `${nodeLabel}: assistant ID and message are required for assistant mode.`;
                 }
+
+                if (!isValidAssistantThreadIdInput(nodeData["threadId"])) {
+                    return `${nodeLabel}: thread ID template must be {{session.key}} or {{contact.key}}.`;
+                }
+
                 continue;
             }
 

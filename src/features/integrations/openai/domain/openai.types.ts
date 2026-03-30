@@ -43,8 +43,9 @@ export interface OpenAIPreviewInput {
   orgId: string;
   credentialId: string;
   model: string;
-  prompt: string;
+  prompt?: string;
   systemPrompt?: string;
+  messages?: Array<{ role: string; content: string }>;
   temperature?: number;
   maxTokens?: number;
   topP?: number;
