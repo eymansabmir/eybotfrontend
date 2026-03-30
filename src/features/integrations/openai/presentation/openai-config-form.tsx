@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Plus, MessageSquare, Trash2, Wrench } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { OpenAICredential, OpenAIModel, OpenAIVoiceModel, OpenAIAssistant } from "../domain/openai.types";
 import { isReliableTextModel, usesMaxCompletionTokensParam } from "../domain/openai-model-capabilities";
+import { hasValidOpenAIChatCompletionInput } from "../domain/chat-completion-validation";
 import type { OpenAIConfigDraft } from "../state/openai-config.state";
 import { OpenAIModelSelector } from "./openai-model-selector";
 
@@ -180,6 +181,12 @@ export function OpenAIConfigForm({
   const isTranscription = draft.mode === "voice" && draft.voiceAction === "create_transcription";
   const usesCompletionTokens = usesMaxCompletionTokensParam(draft.model);
 
+  useEffect(() => {
+    if (isTranscription && draft.model !== "whisper-1") {
+      onDraftChange({ model: "whisper-1" });
+    }
+  }, [isTranscription, draft.model, onDraftChange]);
+
   return (
     <div className="flex flex-col gap-5 pt-1">
       {/* Account Selection */}
@@ -241,9 +248,11 @@ export function OpenAIConfigForm({
             </Select>
           </div>
 
-          {draft.mode && !isAssistant && (
+          {draft.mode && !isAssistant && !isTranscription && (
             <div className="space-y-1.5">
-              <Label className={SECTION_LABEL_CLASS}>Model</Label>
+              {!(isChatCompletion || isGenerateVariables || isImage || isSpeech) && (
+                <Label className={SECTION_LABEL_CLASS}>Model</Label>
+              )}
               <OpenAIModelSelector
                 value={draft.model}
                 onValueChange={(value) => {
@@ -500,7 +509,7 @@ export function OpenAIConfigForm({
           {/* Preview Button */}
           {isChatCompletion && (
             <div className="mt-2 flex flex-col gap-3">
-              <Button variant="outline" size="sm" onClick={onTestPrompt} disabled={!draft.credentialId || !draft.model || !draft.prompt || testingPrompt} className="self-start gap-1.5 h-8">
+              <Button variant="outline" size="sm" onClick={onTestPrompt} disabled={!draft.credentialId || !draft.model || !hasValidOpenAIChatCompletionInput(draft) || testingPrompt} className="self-start gap-1.5 h-8">
                 <MessageSquare className="size-3.5" />
                 {testingPrompt ? "Evaluating..." : "Preview Response"}
               </Button>

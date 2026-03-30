@@ -11,6 +11,8 @@ import { DEFAULT_ORG_ID } from "@/features/integrations/openai/domain/openai.con
 import { useOpenAICredentials, useOpenAIModels, useOpenAIAssistants, useOpenAIVoiceModels, useTestOpenAICredential, useTestOpenAIPrompt } from "@/features/integrations/openai/hooks/use-openai-integration";
 import { OpenAIConfigForm } from "@/features/integrations/openai/presentation/openai-config-form";
 import { createOpenAIConfigDraft, openAIConfigReducer } from "@/features/integrations/openai/state/openai-config.state";
+import { hasValidOpenAIChatCompletionInput } from "@/features/integrations/openai/domain/chat-completion-validation";
+import { isValidAssistantThreadIdInput } from "@/features/integrations/openai/domain/assistant-thread-id-validation";
 import { OpenAICredentialsDialog } from "@/features/integrations/openai/presentation/openai-credentials-dialog";
 import { OpenAILogo } from "./logo";
 import type { OpenAINodeData } from "./schema";
@@ -76,9 +78,11 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
       return;
     }
 
-    if (draft.mode === "chat_completion" && !draft.prompt.trim()) {
-      toast.error("Message template is required for chat completion");
-      return;
+    if (draft.mode === "chat_completion") {
+      if (!hasValidOpenAIChatCompletionInput(draft)) {
+        toast.error("At least one non-empty message is required for chat completion");
+        return;
+      }
     }
 
     if (draft.mode === "voice" && draft.voiceAction === "create_speech" && !draft.prompt.trim()) {
@@ -93,6 +97,11 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
 
     if (draft.mode === "assistant" && (!draft.assistantId?.trim() || !draft.prompt.trim())) {
       toast.error("Assistant ID and message are required for assistant mode");
+      return;
+    }
+
+    if (draft.mode === "assistant" && !isValidAssistantThreadIdInput(draft.threadId)) {
+      toast.error("Thread ID must use {{session.key}} or {{contact.key}} when using template syntax");
       return;
     }
 
@@ -144,6 +153,7 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
         model: draft.model,
         prompt: draft.prompt,
         systemPrompt: draft.systemPrompt,
+        messages: draft.messages,
         temperature: draft.temperature,
         maxTokens: draft.maxTokens,
         topP: draft.topP,
