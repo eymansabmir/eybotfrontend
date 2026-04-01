@@ -70,3 +70,14 @@ export function useArchiveBot() {
         },
     });
 }
+
+export function useDeleteBot() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string) => botsApi.deleteBot(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: botKeys.lists() });
+        },
+    });
+}
