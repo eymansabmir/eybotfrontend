@@ -1,5 +1,5 @@
 import { FlowBuilder, type FlowBuilderRef } from "@/features/nodes/presentation/components/flow-builder";
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, useParams, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Save, Play, Settings, Loader2, Rocket, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +12,11 @@ import { useState } from "react";
 import { BotSettingsDialog } from "@/features/settings/presentation/components/bot-settings-dialog";
 import { hasValidOpenAIChatCompletionInput } from "@/features/integrations/openai/domain/chat-completion-validation";
 import { isValidAssistantThreadIdInput } from "@/features/integrations/openai/domain/assistant-thread-id-validation";
+import { formatDistanceToNow } from "date-fns";
 
 export function BotEditorPage() {
     const { id } = useParams({ from: "/bot/$id" });
+    const navigate = useNavigate();
     const isNew = id === "new";
 
     const { data: bot, isLoading } = useBot(id);
@@ -345,8 +347,9 @@ export function BotEditorPage() {
 
         try {
             if (isNew) {
-                await createBotMutation.mutateAsync(payload as any);
+                const newBot = await createBotMutation.mutateAsync(payload as any);
                 toast.success("Bot created successfully!");
+                navigate({ to: "/bot/$id", params: { id: newBot.id } });
             } else {
                 await updateBotMutation.mutateAsync(payload as any);
                 toast.success("Bot saved successfully!");
@@ -470,7 +473,10 @@ export function BotEditorPage() {
                             <span className="text-muted-foreground font-normal text-xs">/ {id}</span>
                         </div>
                         <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                            {bot?.status || "Draft"} • {bot?.updatedAt ? `Saved just now` : "Not saved yet"}
+                            <span className={bot?.status === 'published' ? 'text-emerald-600' : 'text-amber-600'}>
+                                {bot?.status || "Draft"}
+                            </span>
+                            {" "}• {bot?.updatedAt ? `Last saved ${formatDistanceToNow(new Date(bot.updatedAt), { addSuffix: true })}` : "Not saved yet"}
                         </p>
                     </div>
                 </div>
@@ -481,20 +487,27 @@ export function BotEditorPage() {
                             variant="outline"
                             size="sm"
                             className="gap-2 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
-                            onClick={() => {
+                            onClick={async () => {
                                 const integrationValidationError = getIntegrationValidationError();
                                 if (integrationValidationError) {
                                     toast.error(integrationValidationError);
                                     return;
                                 }
-                                publishBotMutation.mutate(id, {
-                                    onSuccess: () => toast.success("Bot published successfully!"),
-                                    onError: () => toast.error("Failed to publish bot"),
-                                });
+                                
+                                // Save changes first before publishing to ensure live version is up to date
+                                try {
+                                    await handleSave();
+                                    publishBotMutation.mutate(id, {
+                                        onSuccess: () => toast.success("Bot published successfully!"),
+                                        onError: () => toast.error("Failed to publish bot"),
+                                    });
+                                } catch (error) {
+                                    // Error toast already shown in handleSave
+                                }
                             }}
-                            disabled={publishBotMutation.isPending}
+                            disabled={publishBotMutation.isPending || updateBotMutation.isPending}
                         >
-                            {publishBotMutation.isPending ? (
+                            {(publishBotMutation.isPending || updateBotMutation.isPending) ? (
                                 <Loader2 className="size-3.5 animate-spin" />
                             ) : (
                                 <Rocket className="size-3.5" />
@@ -543,19 +556,21 @@ export function BotEditorPage() {
                             </Link>
                         )}
                     </Button>
-                    <Button
-                        size="sm"
-                        className="gap-2 px-6"
-                        onClick={handleSave}
-                        disabled={updateBotMutation.isPending || createBotMutation.isPending}
-                    >
-                        {(updateBotMutation.isPending || createBotMutation.isPending) ? (
-                            <Loader2 className="size-3.5 animate-spin" />
-                        ) : (
-                            <Save className="size-3.5" />
-                        )}
-                        {isNew ? "Create" : "Save Changes"}
-                    </Button>
+                    {(isNew || bot?.status !== "published") && (
+                        <Button
+                            size="sm"
+                            className="gap-2 px-6"
+                            onClick={handleSave}
+                            disabled={updateBotMutation.isPending || createBotMutation.isPending}
+                        >
+                            {(updateBotMutation.isPending || createBotMutation.isPending) ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                            ) : (
+                                <Save className="size-3.5" />
+                            )}
+                            {isNew ? "Create" : "Save Changes"}
+                        </Button>
+                    )}
                 </div>
             </header>
 
