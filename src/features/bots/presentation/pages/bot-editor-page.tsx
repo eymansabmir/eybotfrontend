@@ -2,9 +2,10 @@ import { FlowBuilder, type FlowBuilderRef } from "@/features/nodes/presentation/
 import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, Save, Play, Settings, Loader2, Rocket, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useBot, useUpdateBot, useCreateBot, usePublishBot, useArchiveBot } from "../../data/queries/use-bots";
 import { toast } from "sonner";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, type KeyboardEvent, type ChangeEvent } from "react";
 import type { Node, Edge } from "@xyflow/react";
 import { NodeType } from "@/features/nodes/node-types.constants";
 import { useState } from "react";
@@ -356,6 +357,30 @@ export function BotEditorPage() {
         }
     };
 
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [tempName, setTempName] = useState(bot?.name || "");
+
+    useEffect(() => {
+        if (bot?.name) setTempName(bot.name);
+    }, [bot?.name]);
+
+    const handleInlineRename = async () => {
+        if (!tempName.trim() || tempName === bot?.name) {
+            setIsEditingName(false);
+            return;
+        }
+
+        try {
+            await updateBotMutation.mutateAsync({ name: tempName });
+            toast.success("Bot renamed successfully!");
+            setIsEditingName(false);
+        } catch (error) {
+            toast.error("Failed to rename bot.");
+            setTempName(bot?.name || "");
+            setIsEditingName(false);
+        }
+    };
+
     if (isLoading && !isNew) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
@@ -363,6 +388,7 @@ export function BotEditorPage() {
             </div>
         );
     }
+    const isPublished = bot?.status === "published";
 
     // Map backend format back to frontend React Flow format
     const initialNodes = bot?.nodes?.map((n: any) => {
@@ -416,10 +442,33 @@ export function BotEditorPage() {
                         </Link>
                     </Button>
                     <div className="flex flex-col">
-                        <h1 className="text-sm font-semibold tracking-tight">
-                            {bot?.name || (isNew ? "New Bot" : "Loading...")}{" "}
-                            <span className="text-muted-foreground font-normal">/ {id}</span>
-                        </h1>
+                        <div className="flex items-center gap-2 h-6">
+                            {isEditingName && !isPublished ? (
+                                <Input
+                                    value={tempName}
+                                    onChange={(e: ChangeEvent<HTMLInputElement>) => setTempName(e.target.value)}
+                                    onBlur={handleInlineRename}
+                                    onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                                        if (e.key === "Enter") handleInlineRename();
+                                        if (e.key === "Escape") {
+                                            setTempName(bot?.name || "");
+                                            setIsEditingName(false);
+                                        }
+                                    }}
+                                    autoFocus
+                                    className="h-7 w-[240px] text-sm font-semibold px-2 py-0 focus-visible:ring-1"
+                                />
+                            ) : (
+                                <h1
+                                    className={`text-sm font-semibold tracking-tight transition-colors px-1 -ml-1 rounded ${!isPublished ? "cursor-pointer hover:bg-muted" : "cursor-default"}`}
+                                    onClick={() => !isPublished && setIsEditingName(true)}
+                                    title={isPublished ? "Unpublish to rename bot" : "Click to rename"}
+                                >
+                                    {bot?.name || (isNew ? "New Bot" : "Loading...")}
+                                </h1>
+                            )}
+                            <span className="text-muted-foreground font-normal text-xs">/ {id}</span>
+                        </div>
                         <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
                             {bot?.status || "Draft"} • {bot?.updatedAt ? `Saved just now` : "Not saved yet"}
                         </p>
