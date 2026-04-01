@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 
 import { useCreateHttpRequestCredential } from "../hooks/use-http-request-integration";
 import type { HttpRequestCredential } from "../domain/http-request.types";
@@ -29,8 +28,8 @@ export function HttpRequestCredentialsDialog({
   const [name, setName] = useState("HTTP credential");
   const [baseUrl, setBaseUrl] = useState("");
   const [bearerToken, setBearerToken] = useState("");
-  const [headersText, setHeadersText] = useState("{}");
-  const [queryParamsText, setQueryParamsText] = useState("{}");
+  const [headers, setHeaders] = useState<KeyValueRow[]>([]);
+  const [queryParams, setQueryParams] = useState<KeyValueRow[]>([]);
   const [proxyUrl, setProxyUrl] = useState("");
   const [proxyMode, setProxyMode] = useState(false);
 
@@ -45,25 +44,24 @@ export function HttpRequestCredentialsDialog({
       return;
     }
 
-    const headers = parseObjectOrToast(headersText, "Headers");
-    if (headers === null) return;
-
-    const queryParams = parseObjectOrToast(queryParamsText, "Query params");
-    if (queryParams === null) return;
+    const normalizedHeaders = toRecord(headers);
+    const normalizedQueryParams = toRecord(queryParams);
 
     try {
       const created = await createCredential.mutateAsync({
         name: name.trim(),
         baseUrl: proxyMode ? undefined : clean(baseUrl),
         bearerToken: proxyMode ? undefined : clean(bearerToken),
-        headers: proxyMode ? undefined : headers,
-        queryParams: proxyMode ? undefined : queryParams,
+        headers: proxyMode ? undefined : normalizedHeaders,
+        queryParams: proxyMode ? undefined : normalizedQueryParams,
         proxyUrl: proxyMode ? clean(proxyUrl) : undefined,
       });
       toast.success("HTTP credential created");
       onCreated?.(created);
       setBearerToken("");
       setProxyUrl("");
+      setHeaders([]);
+      setQueryParams([]);
       onOpenChange(false);
     } catch {
       toast.error("Failed to create HTTP credential");
@@ -74,22 +72,30 @@ export function HttpRequestCredentialsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-semibold tracking-tight">Add HTTP credential</DialogTitle>
+          <DialogTitle className="text-2xl font-semibold tracking-tight">Connect HTTP account</DialogTitle>
           <DialogDescription>
-            Create either a request credential (auth/default headers) or a proxy credential for HTTP Request nodes.
+            Save reusable API settings (base URL, token, headers) or a proxy connection for HTTP Request nodes.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
+          <div className="rounded-lg border bg-muted/20 p-3 text-sm text-muted-foreground space-y-1">
+            <p>Use this once, then reuse it in any HTTP Request node.</p>
+            <p>Works with Zapier webhooks, Make webhooks, Gemini APIs, and most REST APIs.</p>
+          </div>
+
           <div className="space-y-1.5">
-            <Label>Name</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Primary API credential" />
+            <Label>Connection name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Example: JSONPlaceholder API" />
           </div>
 
           <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
             <Label htmlFor="http-credential-proxy-mode" className="text-sm">Create as proxy credential</Label>
             <Switch id="http-credential-proxy-mode" checked={proxyMode} onCheckedChange={setProxyMode} />
           </div>
+          <p className="text-xs text-muted-foreground">
+            Keep this off for normal API/webhook use. Turn it on only if your network requires routing requests through a proxy server.
+          </p>
 
           {proxyMode ? (
             <div className="space-y-1.5">
@@ -112,34 +118,86 @@ export function HttpRequestCredentialsDialog({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Bearer token (optional)</Label>
+                  <Label>API token (optional)</Label>
                   <Input
                     type="password"
                     value={bearerToken}
                     onChange={(e) => setBearerToken(e.target.value)}
-                    placeholder="token..."
+                    placeholder="Paste token (Bearer prefix not required)"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>Default headers (JSON object)</Label>
-                  <Textarea
-                    rows={5}
-                    value={headersText}
-                    onChange={(e) => setHeadersText(e.target.value)}
-                    placeholder={'{\n  "x-api-version": "2026-03"\n}'}
-                  />
+                  <Label>Default headers (optional)</Label>
+                  <div className="space-y-2">
+                    {headers.map((row) => (
+                      <div key={row.id} className="space-y-2 p-2 border rounded-md relative bg-muted/10">
+                        <button
+                          type="button"
+                          className="absolute top-1 right-1 h-5 w-5 text-muted-foreground hover:text-destructive"
+                          onClick={() => setHeaders((prev) => prev.filter((item) => item.id !== row.id))}
+                          aria-label="Remove header"
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
+                        <div className="pr-6 space-y-2">
+                          <Input
+                            value={row.key}
+                            onChange={(e) => setHeaders((prev) => prev.map((item) => item.id === row.id ? { ...item, key: e.target.value } : item))}
+                            placeholder="Header name (e.g. Content-Type)"
+                            className="h-8 text-xs bg-background"
+                          />
+                          <Input
+                            value={row.value}
+                            onChange={(e) => setHeaders((prev) => prev.map((item) => item.id === row.id ? { ...item, value: e.target.value } : item))}
+                            placeholder="Header value (e.g. application/json)"
+                            className="h-8 text-xs bg-background"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" className="w-full h-8 text-xs gap-1.5 border-dashed" onClick={() => setHeaders((prev) => [...prev, createRow()])}>
+                      <Plus className="size-3" />
+                      Add header
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Default query params (JSON object)</Label>
-                  <Textarea
-                    rows={5}
-                    value={queryParamsText}
-                    onChange={(e) => setQueryParamsText(e.target.value)}
-                    placeholder={'{\n  "workspaceId": "abc"\n}'}
-                  />
+                  <Label>Default query params (optional)</Label>
+                  <div className="space-y-2">
+                    {queryParams.map((row) => (
+                      <div key={row.id} className="space-y-2 p-2 border rounded-md relative bg-muted/10">
+                        <button
+                          type="button"
+                          className="absolute top-1 right-1 h-5 w-5 text-muted-foreground hover:text-destructive"
+                          onClick={() => setQueryParams((prev) => prev.filter((item) => item.id !== row.id))}
+                          aria-label="Remove query param"
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
+                        <div className="pr-6 space-y-2">
+                          <Input
+                            value={row.key}
+                            onChange={(e) => setQueryParams((prev) => prev.map((item) => item.id === row.id ? { ...item, key: e.target.value } : item))}
+                            placeholder="Param name (e.g. api_key)"
+                            className="h-8 text-xs bg-background"
+                          />
+                          <Input
+                            value={row.value}
+                            onChange={(e) => setQueryParams((prev) => prev.map((item) => item.id === row.id ? { ...item, value: e.target.value } : item))}
+                            placeholder="Param value"
+                            className="h-8 text-xs bg-background"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" className="w-full h-8 text-xs gap-1.5 border-dashed" onClick={() => setQueryParams((prev) => [...prev, createRow()])}>
+                      <Plus className="size-3" />
+                      Add query param
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>
@@ -156,34 +214,31 @@ export function HttpRequestCredentialsDialog({
   );
 }
 
-function parseObjectOrToast(input: string, label: string): Record<string, string> | undefined | null {
-  const text = input.trim();
-  if (!text || text === "{}") return undefined;
-
-  try {
-    const parsed = JSON.parse(text) as unknown;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      toast.error(`${label} must be a JSON object`);
-      return null;
-    }
-
-    const output: Record<string, string> = {};
-    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
-      if (typeof value !== "string") {
-        toast.error(`${label} values must be strings`);
-        return null;
-      }
-      output[key] = value;
-    }
-
-    return Object.keys(output).length > 0 ? output : undefined;
-  } catch {
-    toast.error(`${label} must be valid JSON`);
-    return null;
-  }
-}
-
 function clean(value: string): string | undefined {
   const trimmed = value.trim();
   return trimmed ? trimmed : undefined;
+}
+
+interface KeyValueRow {
+  id: string;
+  key: string;
+  value: string;
+}
+
+function createRow(): KeyValueRow {
+  return {
+    id: `row_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    key: "",
+    value: "",
+  };
+}
+
+function toRecord(rows: KeyValueRow[]): Record<string, string> | undefined {
+  const output: Record<string, string> = {};
+  for (const row of rows) {
+    const key = row.key.trim();
+    if (!key) continue;
+    output[key] = row.value;
+  }
+  return Object.keys(output).length > 0 ? output : undefined;
 }

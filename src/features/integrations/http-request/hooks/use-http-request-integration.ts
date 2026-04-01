@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { httpRequestCredentialsApi } from "../api/http-request-credentials.api";
-import type { CreateHttpRequestCredentialInput } from "../domain/http-request.types";
+import { httpRequestPreviewApi } from "../api/http-request-preview.api";
+import type { CreateHttpRequestCredentialInput, HttpRequestPreviewInput } from "../domain/http-request.types";
 
 const httpRequestKeys = {
   all: ["integrations", "http-request"] as const,
@@ -27,5 +28,11 @@ export function useCreateHttpRequestCredential(orgId?: string) {
         void queryClient.invalidateQueries({ queryKey: httpRequestKeys.credentials(orgId) });
       }
     },
+  });
+}
+
+export function useHttpRequestPreview() {
+  return useMutation({
+    mutationFn: (input: HttpRequestPreviewInput) => httpRequestPreviewApi.run(input),
   });
 }

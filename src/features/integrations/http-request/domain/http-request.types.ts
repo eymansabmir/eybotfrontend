@@ -1,4 +1,4 @@
-export type HttpRequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+export type HttpRequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "CONNECT" | "OPTIONS" | "TRACE";
 
 export interface HttpRequestCredential {
   id: string;
@@ -27,4 +27,21 @@ export interface HttpRequestResponseMapping {
   jsonPath: string;
   variableName: string;
   scope: "session" | "contact";
+}
+
+export interface HttpRequestPreviewInput {
+  orgId: string;
+  credentialId?: string;
+  proxyCredentialsId?: string;
+  url: string;
+  method: HttpRequestMethod;
+  headers?: Record<string, string>;
+  queryParams?: Record<string, string>;
+  body?: string;
+  timeoutMs?: number;
+}
+
+export interface HttpRequestPreviewResult {
+  statusCode: number;
+  data: unknown;
 }
