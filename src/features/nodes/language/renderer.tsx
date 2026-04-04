@@ -1,7 +1,7 @@
 import React from "react";
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { Languages, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
+import { Languages, AlertCircle, ExternalLink, RefreshCw, Variable, ShieldCheck, ChevronDown } from "lucide-react";
 import type { LanguageNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
@@ -133,6 +133,47 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                         onChange={(e) => updateData({ message: e.target.value })}
                         disabled={!isEnabled}
                     />
+                </div>
+
+                {/* Variable Mapping */}
+                <div className="space-y-3 pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-1.5">
+                        <Variable size={10} className="text-muted-foreground" />
+                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Save Selection To</label>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-2.5">
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/40">@</span>
+                            <input
+                                type="text"
+                                className="w-full bg-primary/5 rounded-lg border border-primary/20 pl-7 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary"
+                                value={data.variableName || "selected_language"}
+                                placeholder="variable_name"
+                                onChange={(e) => updateData({ variableName: e.target.value })}
+                                disabled={!isEnabled}
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5">
+                                <ShieldCheck size={10} className="text-muted-foreground" />
+                                <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Storage Scope</label>
+                            </div>
+                            <div className="relative">
+                                <select
+                                    className="w-full bg-muted/50 rounded-lg border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer hover:bg-muted"
+                                    value={data.variableScope || "session"}
+                                    onChange={(e) => updateData({ variableScope: e.target.value as "session" | "contact" })}
+                                    disabled={!isEnabled}
+                                >
+                                    <option value="session">Session</option>
+                                    <option value="contact">Contact Custom Field</option>
+                                </select>
+                                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {isEnabled && (

@@ -2,7 +2,8 @@ import { z } from "zod";
 
 export const LanguageNodeSchema = z.object({
     message: z.string().min(1, "Message is required"),
-    variable: z.string().default("selected_language"),
+    variableName: z.string().default("selected_language"),
+    variableScope: z.enum(["session", "contact"]).default("session"),
     timeoutSeconds: z.number().default(3600),
 });
 
