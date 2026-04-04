@@ -165,3 +165,18 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Flow Builder Customizations */
+.react-flow__handle {
+  width: 16px !important;
+  height: 16px !important;
+  border-width: 4px !important;
+}
+
+.react-flow__edge-path {
+  stroke-width: 2 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 3 !important;
+}

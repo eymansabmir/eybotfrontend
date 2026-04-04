@@ -62,6 +62,10 @@ interface FlowBuilderProps {
     onEdgesChangeExternal?: (edges: Edge[]) => void;
 }
 
+const defaultEdgeOptions = {
+    style: { strokeWidth: 2 },
+};
+
 export interface FlowBuilderRef {
     getFlowState: () => { nodes: Node[]; edges: Edge[] };
 }
@@ -175,6 +179,7 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 nodeTypes={nodeTypes as any}
+                defaultEdgeOptions={defaultEdgeOptions}
                 fitView
             >
                 <Background color="#cbd5e1" gap={20} variant={BackgroundVariant.Dots} />
