@@ -56,6 +56,7 @@ export function LocalizationForm({ localization, onChange }: Props) {
 
   const addLanguage = (code: string) => {
     if (enabledLanguages.includes(code)) return;
+    if (enabledLanguages.length >= 10) return;
 
     const newLanguages = [...enabledLanguages, code];
     onChange({
@@ -131,7 +132,11 @@ export function LocalizationForm({ localization, onChange }: Props) {
                 >
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Search size={16} />
-                    <span>Search and add a language...</span>
+                    <span>
+                        {enabledLanguages.length >= 10 
+                            ? "Limit reached (max 10 languages)" 
+                            : "Search and add a language..."}
+                    </span>
                   </div>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -150,16 +155,20 @@ export function LocalizationForm({ localization, onChange }: Props) {
                             key={code}
                             value={lang}
                             onSelect={() => addLanguage(code)}
-                            disabled={isAdded}
+                            disabled={isAdded || enabledLanguages.length >= 10}
                             className="flex items-center justify-between py-2.5"
                           >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 text-sm">
                               <span>{lang}</span>
                               <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded uppercase">
                                 {code}
                               </span>
                             </div>
-                            {isAdded && <Badge variant="secondary" className="text-[10px] h-5">Added</Badge>}
+                            {isAdded ? (
+                                <Badge variant="secondary" className="text-[10px] h-5">Added</Badge>
+                            ) : enabledLanguages.length >= 10 && (
+                                <Badge variant="outline" className="text-[10px] h-5 text-muted-foreground">Limit Reached</Badge>
+                            )}
                           </CommandItem>
                         );
                       })}

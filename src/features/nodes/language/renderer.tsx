@@ -71,6 +71,7 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                 "group relative min-w-[280px] rounded-2xl border bg-card p-0 transition-all hover:shadow-xl",
                 selected ? "border-primary shadow-lg ring-4 ring-primary/10" : "border-border"
             )}
+            style={{ maxWidth: '320px' }}
         >
             <Handle
                 type="target"
@@ -110,9 +111,9 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                                 Edit Settings
                              </span>
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-1.5 max-w-[280px]">
                             {enabledLanguages.map(code => (
-                                <div key={code} className="px-2 py-1 rounded-md bg-primary/5 border border-primary/10 text-[10px] font-medium text-primary">
+                                <div key={code} className="px-2 py-1 rounded-md bg-primary/5 border border-primary/10 text-[9px] font-medium text-primary whitespace-nowrap">
                                     {getLanguageName(code)}
                                 </div>
                             ))}
