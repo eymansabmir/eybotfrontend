@@ -26,6 +26,9 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+
+const MAX_LANGUAGE_SELECTION = 10;
 
 interface LocalizationSettings {
   isEnabled: boolean;
@@ -56,6 +59,10 @@ export function LocalizationForm({ localization, onChange }: Props) {
 
   const addLanguage = (code: string) => {
     if (enabledLanguages.includes(code)) return;
+    if (enabledLanguages.length >= MAX_LANGUAGE_SELECTION) {
+      toast.error(`You can select up to ${MAX_LANGUAGE_SELECTION} languages in the Language node.`);
+      return;
+    }
 
     const newLanguages = [...enabledLanguages, code];
     onChange({
@@ -121,6 +128,9 @@ export function LocalizationForm({ localization, onChange }: Props) {
             <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground px-1">
                 Add New Language
             </Label>
+            <p className="text-[11px] text-muted-foreground px-1">
+              Up to {MAX_LANGUAGE_SELECTION} languages are allowed for WhatsApp list compatibility.
+            </p>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -150,7 +160,7 @@ export function LocalizationForm({ localization, onChange }: Props) {
                             key={code}
                             value={lang}
                             onSelect={() => addLanguage(code)}
-                            disabled={isAdded}
+                            disabled={isAdded || enabledLanguages.length >= MAX_LANGUAGE_SELECTION}
                             className="flex items-center justify-between py-2.5"
                           >
                             <div className="flex items-center gap-2">
