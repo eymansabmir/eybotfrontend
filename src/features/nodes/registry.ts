@@ -27,6 +27,7 @@ import { googleSheetsNode } from "./google-sheets";
 import { nocodbNode } from "./nocodb";
 import { anthropicNode } from "./anthropic";
 import { deepseekNode } from "./deepseek";
+import { variableManagerNode } from "./variable-manager";
 import type { NodeDefinition } from "./types";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
@@ -59,6 +60,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [nocodbNode.config.type]: nocodbNode,
     [anthropicNode.config.type]: anthropicNode,
     [deepseekNode.config.type]: deepseekNode,
+    [variableManagerNode.config.type]: variableManagerNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(

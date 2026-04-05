@@ -4,6 +4,7 @@ import { MapPin as MapPinIcon, MessageSquare, Database } from "lucide-react";
 import type { LocationRequestNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
 export function LocationRequestNodeRenderer({ id, data, selected }: NodeProps & { data: LocationRequestNodeData }) {
     const { setNodes } = useReactFlow();
@@ -59,12 +60,10 @@ export function LocationRequestNodeRenderer({ id, data, selected }: NodeProps & 
                         <Database size={12} className="text-muted-foreground" />
                         <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Variable Prefix</label>
                     </div>
-                    <input
-                        type="text"
-                        className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                    <VariablesCombobox 
                         value={data.variablePrefix || ""}
-                        placeholder="e.g. pickup"
-                        onChange={(e) => updateData({ variablePrefix: e.target.value })}
+                        onChange={(val) => updateData({ variablePrefix: val })}
+                        placeholder="Prefix. e.g. pickup"
                     />
                     <p className="text-[8px] text-muted-foreground italic px-1">
                         Will store: {data.variablePrefix || '...'}_lat, {data.variablePrefix || '...'}_lng, etc.

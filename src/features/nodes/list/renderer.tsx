@@ -1,9 +1,10 @@
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { List as ListIcon, Plus, Trash2 } from "lucide-react";
+import { List as ListIcon, Plus, Trash2, MessageSquare } from "lucide-react";
 import type { ListNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
 export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: ListNodeData }) {
     const { setNodes } = useReactFlow();
@@ -39,12 +40,32 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
         );
     };
 
-    const updateBodyOrButton = (newData: Partial<Pick<ListNodeData, "body" | "buttonTitle" | "footer">>) => {
+    const updateData = (newData: Partial<ListNodeData>) => {
         setNodes((nds) =>
             nds.map((node) =>
                 node.id === id ? { ...node, data: { ...node.data, ...newData } } : node
             )
         );
+    };
+
+    const updateVariableSettings = (patch: Partial<{ variableName: string; variableScope: 'session' | 'contact' }>) => {
+        const interaction = data.interaction || {
+            mode: "input",
+            input: {
+                type: "choice",
+                timeoutSeconds: 3600,
+                options: allRows.map((r) => ({ id: r.id, label: r.title, branchKey: r.id })),
+            },
+        };
+        updateData({
+            interaction: {
+                ...interaction,
+                input: {
+                    ...(interaction.input || { type: 'choice', timeoutSeconds: 3600, options: [] }),
+                    ...patch
+                }
+            }
+        });
     };
 
     const addSection = () => {
@@ -124,7 +145,7 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                         rows={2}
                         value={data.body || ""}
                         placeholder="Choose an option below..."
-                        onChange={(e) => updateBodyOrButton({ body: e.target.value })}
+                        onChange={(e) => updateData({ body: e.target.value })}
                     />
                 </div>
 
@@ -136,7 +157,7 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                         className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                         value={data.buttonTitle || ""}
                         placeholder="View options"
-                        onChange={(e) => updateBodyOrButton({ buttonTitle: e.target.value })}
+                        onChange={(e) => updateData({ buttonTitle: e.target.value })}
                     />
                 </div>
 
@@ -214,8 +235,33 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                         className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                         value={data.footer || ""}
                         placeholder="Powered by our bot"
-                        onChange={(e) => updateBodyOrButton({ footer: e.target.value })}
+                        onChange={(e) => updateData({ footer: e.target.value })}
                     />
+                </div>
+
+                {/* Variable capture */}
+                <div className="space-y-3 pt-2 border-t border-border/50">
+                    <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                            <MessageSquare size={10} className="text-muted-foreground" />
+                            <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Capture selection in</label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <VariablesCombobox 
+                                value={data.interaction?.input?.variableName || ""} 
+                                onChange={(val) => updateVariableSettings({ variableName: val })} 
+                                placeholder="variable_name" 
+                            />
+                            <select
+                                className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                                value={data.interaction?.input?.variableScope || "session"}
+                                onChange={(e) => updateVariableSettings({ variableScope: e.target.value as any })}
+                            >
+                                <option value="session">Session</option>
+                                <option value="contact">Contact</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Timeout branch row */}

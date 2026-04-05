@@ -2,7 +2,6 @@ import React, { useCallback, useRef, forwardRef, useImperativeHandle } from "rea
 import {
     ReactFlow,
     Background,
-    Controls,
     applyEdgeChanges,
     applyNodeChanges,
     addEdge,
@@ -23,6 +22,7 @@ import "@xyflow/react/dist/style.css";
 
 import { nodeTypes, getNodeDefinition } from "../../registry";
 import { NodePalette } from "./node-palette";
+import { useVariablesStore } from "@/features/variables/store";
 
 const defaultNodes: Node[] = [
     {
@@ -81,6 +81,52 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
             edges: getEdges()
         })
     }));
+
+    React.useEffect(() => {
+        const foundVars = new Set<string>();
+        nodes.forEach(node => {
+            const data = node.data as any;
+            if (!data) return;
+
+            // Direct variable fields (Input, NPS, Language, File)
+            if (typeof data.variable === 'string' && data.variable.trim()) foundVars.add(data.variable.trim());
+            if (typeof data.variableName === 'string' && data.variableName.trim()) foundVars.add(data.variableName.trim());
+            
+            // AI Nodes & HTTP Request
+            if (typeof data.resultVariable === 'string' && data.resultVariable.trim()) foundVars.add(data.resultVariable.trim());
+            
+            // Location Request
+            if (typeof data.variablePrefix === 'string' && data.variablePrefix.trim()) foundVars.add(data.variablePrefix.trim());
+
+            // Nested Interaction variables (Buttons, Cards, Carousel, List)
+            const interactionVar = data.interaction?.input?.variableName;
+            if (typeof interactionVar === 'string' && interactionVar.trim()) {
+                foundVars.add(interactionVar.trim());
+            }
+
+            // Array fields (Variable collections & Set Variable assignments)
+            if (Array.isArray(data.variables)) {
+                data.variables.forEach((v: any) => {
+                    if (typeof v === 'string' && v.trim()) foundVars.add(v.trim());
+                });
+            }
+            if (Array.isArray(data.assignments)) {
+                data.assignments.forEach((as: any) => {
+                    if (typeof as?.variable === 'string' && as.variable.trim()) foundVars.add(as.variable.trim());
+                });
+            }
+        });
+
+        const store = useVariablesStore.getState();
+        const existingNames = new Set(store.variables.map(v => v.name));
+        
+        foundVars.forEach(vName => {
+            if (!existingNames.has(vName)) {
+                store.addVariable(vName);
+                existingNames.add(vName);
+            }
+        });
+    }, [nodes]);
 
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => {
@@ -178,7 +224,6 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
                 fitView
             >
                 <Background color="#cbd5e1" gap={20} variant={BackgroundVariant.Dots} />
-                <Controls />
                 <Panel position="top-left" className="ml-4 mt-4">
                     <NodePalette />
                 </Panel>

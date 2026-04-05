@@ -4,6 +4,7 @@ import { FileUp, Variable } from "lucide-react";
 import type { FileNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
 export function FileNodeRenderer({ id, data, selected }: NodeProps & { data: FileNodeData }) {
     const { setNodes } = useReactFlow();
@@ -62,15 +63,20 @@ export function FileNodeRenderer({ id, data, selected }: NodeProps & { data: Fil
                         <Variable size={10} className="text-muted-foreground" />
                         <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Save File URL To</label>
                     </div>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/40">@</span>
-                        <input
-                            type="text"
-                            className="w-full bg-primary/5 rounded-lg border border-primary/20 pl-7 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary"
-                            value={data.variableName}
-                            placeholder="e.g. user_document"
-                            onChange={(e) => updateData({ variableName: e.target.value })}
+                    <div className="grid grid-cols-2 gap-2">
+                        <VariablesCombobox 
+                            value={data.variableName || ""} 
+                            onChange={(val) => updateData({ variableName: val })} 
+                            placeholder="e.g. user_document" 
                         />
+                        <select
+                            className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            value={data.variableScope || "session"}
+                            onChange={(e) => updateData({ variableScope: e.target.value as any })}
+                        >
+                            <option value="session">Session</option>
+                            <option value="contact">Contact</option>
+                        </select>
                     </div>
                 </div>
 
