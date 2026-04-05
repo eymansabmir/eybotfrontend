@@ -147,20 +147,20 @@ export function BotEditorNavbar({
                 )}
                 
                 <Button 
-                    variant="outline" 
+                    variant="default" 
                     size="sm" 
-                    className="gap-2 text-primary border-primary/20 bg-primary/5 hover:bg-primary/10 h-8 rounded-full font-bold text-xs px-4" 
+                    className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 h-8 rounded-full font-bold text-xs px-4 shadow-sm border border-black/5" 
                     disabled={isNew} 
                     asChild={!isNew}
                 >
                     {isNew ? (
                         <>
-                            <Play className="size-3 fill-primary" />
+                            <Play className="size-3 fill-current" />
                             Test Flow
                         </>
                     ) : (
                         <Link to="/bot/$id/test" params={{ id }}>
-                            <Play className="size-3 fill-primary" />
+                            <Play className="size-3 fill-current" />
                             Test Flow
                         </Link>
                     )}
