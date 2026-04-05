@@ -1,7 +1,7 @@
 import React from "react";
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { Languages, RefreshCw } from "lucide-react";
+import { Languages, RefreshCw, Variable } from "lucide-react";
 import type { LanguageNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
@@ -116,6 +116,24 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                         placeholder="Select your preferred language..."
                         onChange={(e) => updateData({ message: e.target.value })}
                     />
+                </div>
+
+                {/* Variable Mapping */}
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5 border-t border-border/50 pt-3">
+                        <Variable size={10} className="text-muted-foreground" />
+                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Save Selection To</label>
+                    </div>
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/40">@</span>
+                        <input
+                            type="text"
+                            className="w-full bg-primary/5 rounded-lg border border-primary/20 pl-7 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary"
+                            value={data.variable || "selected_language"}
+                            placeholder="e.g. preferred_language"
+                            onChange={(e) => updateData({ variable: e.target.value })}
+                        />
+                    </div>
                 </div>
 
                 {isEnabled && (
