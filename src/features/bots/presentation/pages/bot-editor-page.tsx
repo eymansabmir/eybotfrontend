@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useBot, useUpdateBot, useCreateBot, usePublishBot, useArchiveBot } from "../../data/queries/use-bots";
 import { toast } from "sonner";
-import { useRef, useEffect, type KeyboardEvent, type ChangeEvent } from "react";
+import { useRef, useEffect, useState } from "react";
 import type { Node, Edge } from "@xyflow/react";
 import { NodeType } from "@/features/nodes/node-types.constants";
 import { useState } from "react";
@@ -13,7 +13,9 @@ import { BotSettingsDialog } from "@/features/settings/presentation/components/b
 import { useVariablesStore } from "@/features/variables/store";
 import { hasValidOpenAIChatCompletionInput } from "@/features/integrations/openai/domain/chat-completion-validation";
 import { isValidAssistantThreadIdInput } from "@/features/integrations/openai/domain/assistant-thread-id-validation";
-import { formatDistanceToNow } from "date-fns";
+import { BotEditorNavbar } from "../components/bot-editor-navbar";
+
+const MAX_LANGUAGE_NODE_LANGUAGES = 10;
 
 export function BotEditorPage() {
     const { id } = useParams({ from: "/bot/$id" });
@@ -25,7 +27,6 @@ export function BotEditorPage() {
     const createBotMutation = useCreateBot();
     const publishBotMutation = usePublishBot();
     const archiveBotMutation = useArchiveBot();
-    const [settingsOpen, setSettingsOpen] = useState(false);
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
 
     const { variables, setVariables } = useVariablesStore();
@@ -195,6 +196,34 @@ export function BotEditorPage() {
 
         const { nodes: localNodes, edges: localEdges } = flowBuilderRef.current.getFlowState();
 
+        const languageNodes = localNodes.filter((n) => n.type === NodeType.LANGUAGE);
+        const primaryLanguageNode = languageNodes[0];
+
+        const derivedLocalization = (() => {
+            if (!primaryLanguageNode) {
+                return bot?.settings?.localization;
+            }
+
+            const nodeData = primaryLanguageNode.data as Record<string, unknown>;
+            const nodeLanguages = Array.isArray(nodeData.languages)
+                ? (nodeData.languages as string[]).map((lang) => lang.trim()).filter(Boolean)
+                : [];
+            const uniqueLanguages = Array.from(new Set(nodeLanguages)).slice(0, MAX_LANGUAGE_NODE_LANGUAGES);
+            const defaultLanguage = typeof nodeData.defaultLanguage === "string" && nodeData.defaultLanguage.trim().length > 0
+                ? nodeData.defaultLanguage.trim()
+                : uniqueLanguages[0];
+
+            return {
+                isEnabled: uniqueLanguages.length > 0,
+                languages: uniqueLanguages,
+                defaultLanguage,
+            };
+        })();
+
+        if (languageNodes.length > 1) {
+            toast.warning("Multiple language nodes detected. Localization settings will follow the first language node in the flow.");
+        }
+
         const mapNodeToBackend = (n: Node & { branches?: { key: string; label: string }[] }) => {
             let backendData = { ...n.data };
             const resolvedBranches = (n.branches ?? backendData.branches ?? []) as { key: string; label: string }[];
@@ -252,6 +281,33 @@ export function BotEditorPage() {
                 if (!branches.some(b => b.key === "default")) {
                     branches.push({ key: "default", label: "Default" });
                 }
+            } else if (n.type === "language") {
+                const currentData = n.data as Record<string, unknown>;
+                const languages = Array.isArray(currentData.languages)
+                    ? (currentData.languages as string[]).map((lang) => lang.trim()).filter(Boolean)
+                    : [];
+                const limitedLanguages = Array.from(new Set(languages)).slice(0, MAX_LANGUAGE_NODE_LANGUAGES);
+                const localizationEnabled = typeof currentData.localizationEnabled === "boolean"
+                    ? currentData.localizationEnabled
+                    : limitedLanguages.length > 0;
+                const defaultLanguage = typeof currentData.defaultLanguage === "string" && currentData.defaultLanguage.trim().length > 0
+                    ? currentData.defaultLanguage.trim()
+                    : limitedLanguages[0];
+
+                if (languages.length > MAX_LANGUAGE_NODE_LANGUAGES) {
+                    toast.error(`Language node supports up to ${MAX_LANGUAGE_NODE_LANGUAGES} languages. Extra languages were removed.`);
+                }
+
+                backendData = {
+                    message: (currentData.message as string) || "Please select your language",
+                    variable: (currentData.variable as string) || "selected_language",
+                    timeoutSeconds: (currentData.timeoutSeconds as number) || 3600,
+                    localizationEnabled,
+                    languages: limitedLanguages,
+                    defaultLanguage,
+                };
+
+                branches = [{ key: "default", label: "Default" }];
             } else if (n.type === "start") {
                 branches = [{ key: "default", label: "Default" }];
             } else if (n.type === "end") {
@@ -361,8 +417,8 @@ export function BotEditorPage() {
         try {
             if (isNew) {
                 const newBot = await createBotMutation.mutateAsync(payload as any);
-                toast.success("Bot created successfully!");
-                navigate({ to: "/bot/$id", params: { id: newBot.id } });
+                toast.success("Bot created! Let's configure your WhatsApp settings.");
+                navigate({ to: "/bot/$id/settings", params: { id: newBot.id } });
             } else {
                 await updateBotMutation.mutateAsync(payload as any);
                 toast.success("Bot saved successfully!");
@@ -428,6 +484,23 @@ export function BotEditorPage() {
                 buttonLabel: n.data.buttonLabel || "Rate",
                 timeoutSeconds: n.data.timeoutSeconds || 3600
             };
+        } else if (n.type === "language") {
+            const settingsLocalization = bot?.settings?.localization;
+            const languageList = Array.isArray(n.data.languages) && n.data.languages.length > 0
+                ? (n.data.languages as string[]).slice(0, MAX_LANGUAGE_NODE_LANGUAGES)
+                : (settingsLocalization?.languages || []);
+            const localizationEnabled = typeof n.data.localizationEnabled === "boolean"
+                ? n.data.localizationEnabled
+                : (settingsLocalization?.isEnabled ?? languageList.length > 0);
+
+            frontendData = {
+                message: n.data.message || "Please select your language",
+                variable: n.data.variable || "selected_language",
+                timeoutSeconds: n.data.timeoutSeconds || 3600,
+                localizationEnabled,
+                languages: languageList,
+                defaultLanguage: n.data.defaultLanguage || settingsLocalization?.defaultLanguage || languageList[0],
+            };
         }
         return {
             id: n.id,
@@ -449,143 +522,48 @@ export function BotEditorPage() {
 
     return (
         <div className="flex h-screen w-full flex-col bg-background">
-            {/* Editor Header */}
-            <header className="flex items-center justify-between border-b px-6 py-3 bg-card/50 backdrop-blur-md">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" asChild className="rounded-full">
-                        <Link to="/bots">
-                            <ArrowLeft className="size-4" />
-                        </Link>
-                    </Button>
-                    <div className="flex flex-col">
-                        <div className="flex items-center gap-2 h-6">
-                            {isEditingName && !isPublished ? (
-                                <Input
-                                    value={tempName}
-                                    onChange={(e: ChangeEvent<HTMLInputElement>) => setTempName(e.target.value)}
-                                    onBlur={handleInlineRename}
-                                    onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                                        if (e.key === "Enter") handleInlineRename();
-                                        if (e.key === "Escape") {
-                                            setTempName(bot?.name || "");
-                                            setIsEditingName(false);
-                                        }
-                                    }}
-                                    autoFocus
-                                    className="h-7 w-[240px] text-sm font-semibold px-2 py-0 focus-visible:ring-1"
-                                />
-                            ) : (
-                                <h1
-                                    className={`text-sm font-semibold tracking-tight transition-colors px-1 -ml-1 rounded ${!isPublished ? "cursor-pointer hover:bg-muted" : "cursor-default"}`}
-                                    onClick={() => !isPublished && setIsEditingName(true)}
-                                    title={isPublished ? "Unpublish to rename bot" : "Click to rename"}
-                                >
-                                    {bot?.name || (isNew ? "New Bot" : "Loading...")}
-                                </h1>
-                            )}
-                            <span className="text-muted-foreground font-normal text-xs">/ {id}</span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                            <span className={bot?.status === 'published' ? 'text-emerald-600' : 'text-amber-600'}>
-                                {bot?.status || "Draft"}
-                            </span>
-                            {" "}• {bot?.updatedAt ? `Last saved ${formatDistanceToNow(new Date(bot.updatedAt), { addSuffix: true })}` : "Not saved yet"}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {!isNew && bot?.status !== "published" && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-2 text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
-                            onClick={async () => {
-                                const integrationValidationError = getIntegrationValidationError();
-                                if (integrationValidationError) {
-                                    toast.error(integrationValidationError);
-                                    return;
-                                }
-                                
-                                // Save changes first before publishing to ensure live version is up to date
-                                try {
-                                    await handleSave();
-                                    publishBotMutation.mutate(id, {
-                                        onSuccess: () => toast.success("Bot published successfully!"),
-                                        onError: () => toast.error("Failed to publish bot"),
-                                    });
-                                } catch (error) {
-                                    // Error toast already shown in handleSave
-                                }
-                            }}
-                            disabled={publishBotMutation.isPending || updateBotMutation.isPending}
-                        >
-                            {(publishBotMutation.isPending || updateBotMutation.isPending) ? (
-                                <Loader2 className="size-3.5 animate-spin" />
-                            ) : (
-                                <Rocket className="size-3.5" />
-                            )}
-                            Publish
-                        </Button>
-                    )}
-                    {!isNew && bot?.status === "published" && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-2 text-amber-600 border-amber-200 bg-amber-50 hover:bg-amber-100"
-                            onClick={() => archiveBotMutation.mutate(id, {
-                                onSuccess: () => toast.success("Bot archived. You can now edit it."),
-                                onError: () => toast.error("Failed to archive bot"),
-                            })}
-                            disabled={archiveBotMutation.isPending}
-                        >
-                            {archiveBotMutation.isPending ? (
-                                <Loader2 className="size-3.5 animate-spin" />
-                            ) : (
-                                <Archive className="size-3.5" />
-                            )}
-                            Unpublish
-                        </Button>
-                    )}
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="gap-2"
-                        onClick={() => setSettingsOpen(true)}
-                    >
-                        <Settings className="size-3.5" />
-                        Settings
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-2 text-primary border-primary/20 bg-primary/5 hover:bg-primary/10" disabled={isNew} asChild={!isNew}>
-                        {isNew ? (
-                            <>
-                                <Play className="size-3.5 fill-primary" />
-                                Test Flow
-                            </>
-                        ) : (
-                            <Link to="/bot/$id/test" params={{ id }}>
-                                <Play className="size-3.5 fill-primary" />
-                                Test Flow
-                            </Link>
-                        )}
-                    </Button>
-                    {(isNew || bot?.status !== "published") && (
-                        <Button
-                            size="sm"
-                            className="gap-2 px-6"
-                            onClick={handleSave}
-                            disabled={updateBotMutation.isPending || createBotMutation.isPending}
-                        >
-                            {(updateBotMutation.isPending || createBotMutation.isPending) ? (
-                                <Loader2 className="size-3.5 animate-spin" />
-                            ) : (
-                                <Save className="size-3.5" />
-                            )}
-                            {isNew ? "Create" : "Save Changes"}
-                        </Button>
-                    )}
-                </div>
-            </header>
+            <BotEditorNavbar 
+                id={id}
+                bot={bot}
+                isNew={isNew}
+                isPublished={isPublished}
+                activeTab="flow"
+                isEditingName={isEditingName}
+                tempName={tempName}
+                onUpdateTempName={setTempName}
+                onStartRename={() => setIsEditingName(true)}
+                onCancelRename={() => {
+                    setTempName(bot?.name || "");
+                    setIsEditingName(false);
+                }}
+                onRename={handleInlineRename}
+                onSave={handleSave}
+                onPublish={async () => {
+                    const integrationValidationError = getIntegrationValidationError();
+                    if (integrationValidationError) {
+                        toast.error(integrationValidationError);
+                        return;
+                    }
+                    
+                    try {
+                        await handleSave();
+                        publishBotMutation.mutate(id, {
+                            onSuccess: () => toast.success("Bot published successfully!"),
+                            onError: (err: any) => {
+                                const message = err?.response?.data?.message || err?.message || "Failed to publish bot";
+                                toast.error(message);
+                            },
+                        });
+                    } catch (error) {}
+                }}
+                onUnpublish={() => archiveBotMutation.mutate(id, {
+                    onSuccess: () => toast.success("Bot archived. You can now edit it."),
+                    onError: () => toast.error("Failed to archive bot"),
+                })}
+                isSaving={updateBotMutation.isPending || createBotMutation.isPending}
+                isPublishing={publishBotMutation.isPending}
+                isUnpublishing={archiveBotMutation.isPending}
+            />
 
             {/* Editor Content */}
             <main className="relative flex-1 overflow-hidden">
@@ -597,21 +575,7 @@ export function BotEditorPage() {
                 />
             </main>
 
-            {bot && (
-                <BotSettingsDialog
-                    open={settingsOpen}
-                    onOpenChange={setSettingsOpen}
-                    bot={bot}
-                    onSave={async (updates) => {
-                        try {
-                            await updateBotMutation.mutateAsync(updates);
-                            toast.success("Settings updated successfully!");
-                        } catch (error) {
-                            toast.error("Failed to update settings.");
-                        }
-                    }}
-                />
-            )}
+
         </div>
     );
 }

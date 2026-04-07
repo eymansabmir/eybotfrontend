@@ -12,6 +12,7 @@
 
 :root {
   --radius: 0.65rem;
+  --flow-node-width: 260px;
 
   --background: oklch(1 0 0);
   --foreground: oklch(0.23 0.02 250); /* EY black */
@@ -163,5 +164,13 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .flow-node-standard {
+    width: var(--flow-node-width);
+    min-width: var(--flow-node-width);
+    max-width: var(--flow-node-width);
   }
 }
