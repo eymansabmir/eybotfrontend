@@ -13,6 +13,8 @@ import { BotEditorPage } from "@/features/bots/presentation/pages/bot-editor-pag
 import { BotTestPage } from "@/features/bots/presentation/pages/bot-test-page"
 import { EmailOtpLoginPage } from "@/features/auth/presentation/pages/email-otp-login-page"
 
+import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
+
 const rootRoute = createRootRoute({
   component: RootLayout,
 })
@@ -59,6 +61,12 @@ const botEditorRoute = createRoute({
   component: BotEditorPage,
 })
 
+const botSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "bot/$id/settings",
+  component: BotSettingsPage,
+})
+
 const botTestRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "bot/$id/test",
@@ -79,6 +87,7 @@ const routeTree = rootRoute.addChildren([
   usersRoute,
   settingsRoute,
   botEditorRoute,
+  botSettingsRoute,
   botTestRoute,
   loginRoute,
 ])

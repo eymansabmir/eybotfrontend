@@ -10,7 +10,14 @@ export const languageNode: NodeDefinition<LanguageNodeData> = {
     schema: LanguageNodeSchema,
     renderer: LanguageNodeRenderer,
     handler: LanguageNodeHandler,
-    defaultData: { message: 'Please select your language', variable: 'selected_language', timeoutSeconds: 3600 },
+    defaultData: {
+        message: 'Please select your language',
+        variable: 'selected_language',
+        timeoutSeconds: 3600,
+        localizationEnabled: false,
+        languages: [],
+        defaultLanguage: undefined,
+    },
     defaultBranches: [{ key: 'default', label: 'Default' }],
 };
 

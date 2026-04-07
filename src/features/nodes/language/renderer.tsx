@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
 import { useMatch } from "@tanstack/react-router";
 import { useBot } from "@/features/bots/data/queries/use-bots";
-import { NATIVE_LANGUAGE_NAMES, SUPPORTED_LANGUAGES } from "@/features/i18n/languages";
+import { LocalizationForm } from "@/features/settings/presentation/components/localization-form";
+import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client";
 
 export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data: LanguageNodeData }) {
     const { setNodes } = useReactFlow();
@@ -20,10 +22,23 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
 
     const { data: bot } = useBot(botId ?? "");
 
-
     const localization = bot?.settings?.localization;
-    const isEnabled = localization?.isEnabled ?? false;
-    const enabledLanguages = localization?.languages ?? [];
+    const nodeLanguages = Array.isArray(data.languages) ? data.languages : [];
+        const nodeLocalizationEnabled = typeof data.localizationEnabled === "boolean" ? data.localizationEnabled : undefined;
+        const hasNodeLocalization = nodeLocalizationEnabled !== undefined || nodeLanguages.length > 0 || Boolean(data.defaultLanguage);
+
+    const effectiveLocalization = hasNodeLocalization
+        ? {
+                        isEnabled: nodeLocalizationEnabled ?? nodeLanguages.length > 0,
+            languages: nodeLanguages,
+            defaultLanguage: data.defaultLanguage || nodeLanguages[0],
+          }
+        : {
+            isEnabled: localization?.isEnabled ?? false,
+            languages: localization?.languages ?? [],
+            defaultLanguage: localization?.defaultLanguage,
+          };
+        const isEnabled = effectiveLocalization.isEnabled;
 
     const updateData = (newData: Partial<LanguageNodeData>) => {
         setNodes((nds) =>
@@ -36,39 +51,36 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
         );
     };
 
-    const getLanguageName = (code: string) => {
-        const name = Object.entries(SUPPORTED_LANGUAGES).find(([_, c]) => c === code)?.[0] || code;
-        return `${name} (${NATIVE_LANGUAGE_NAMES[name] || code})`;
+    const onLocalizationChange = (next: { isEnabled: boolean; languages: string[]; defaultLanguage?: string }) => {
+        updateData({
+            localizationEnabled: next.isEnabled,
+            languages: next.languages,
+            defaultLanguage: next.defaultLanguage || next.languages[0] || undefined,
+        });
     };
     
     const [isSyncing, setIsSyncing] = React.useState(false);
     
     const handleSync = async () => {
-        if (!botId) return;
+        if (!botId) {
+            toast.error("Flow not found. Please save the bot first.");
+            return;
+        }
         setIsSyncing(true);
         try {
-            const response = await fetch(`http://localhost:3000/api/flows/${botId}/sync-translations`, {
-                method: 'POST',
-            });
-            if (response.ok) {
-                // You might want to show a success toast here if you had a toast system
-                console.log('Translations synced');
-            }
+            await apiClient.post(`/flows/${botId}/sync-translations`);
+            toast.success('Translations synced successfully.');
         } catch (error) {
-            console.error('Failed to sync translations:', error);
+            toast.error((error as Error)?.message || 'Failed to sync translations');
         } finally {
             setIsSyncing(false);
         }
     };
 
-    const openSettings = () => {
-        window.dispatchEvent(new CustomEvent('open-bot-settings'));
-    };
-
     return (
         <div
             className={cn(
-                "group relative min-w-[280px] rounded-2xl border bg-card p-0 transition-all hover:shadow-xl",
+                "flow-node-standard group relative rounded-2xl border bg-card p-0 transition-all hover:shadow-xl",
                 selected ? "border-primary shadow-lg ring-4 ring-primary/10" : "border-border"
             )}
             style={{ maxWidth: '320px' }}
@@ -128,11 +140,10 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                 <div className="space-y-1.5 opacity-100 group-hover:opacity-100 transition-opacity">
                     <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Question Prompt</label>
                     <textarea
-                        className="w-full min-h-[60px] bg-muted/50 rounded-xl border border-border/50 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all placeholder:italic"
+                        className="w-full min-h-15 bg-muted/50 rounded-xl border border-border/50 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all placeholder:italic"
                         value={data.message || ""}
                         placeholder="Select your preferred language..."
                         onChange={(e) => updateData({ message: e.target.value })}
-                        disabled={!isEnabled}
                     />
                 </div>
 
@@ -199,7 +210,7 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
             />
 
             {/* Visual background element */}
-            <div className="absolute inset-x-0 -bottom-px h-[2px] scale-x-0 bg-primary transition-transform group-hover:scale-x-100 rounded-b-2xl" />
+            <div className="absolute inset-x-0 -bottom-px h-0.5 scale-x-0 bg-primary transition-transform group-hover:scale-x-100 rounded-b-2xl" />
         </div>
     );
 }
