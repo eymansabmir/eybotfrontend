@@ -4,6 +4,7 @@ import { Keyboard, Variable, ShieldCheck } from "lucide-react";
 import type { InputNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
 export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: InputNodeData }) {
     const { setNodes } = useReactFlow();
@@ -63,13 +64,10 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                         <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Save Answer To</label>
                     </div>
                     <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/40">@</span>
-                        <input
-                            type="text"
-                            className="w-full bg-primary/5 rounded-lg border border-primary/20 pl-7 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary"
-                            value={data.variable}
-                            placeholder="e.g. user_age"
-                            onChange={(e) => updateData({ variable: e.target.value })}
+                        <VariablesCombobox 
+                            value={data.variable || ""} 
+                            onChange={(val) => updateData({ variable: val })} 
+                            placeholder="Select or create variable..." 
                         />
                     </div>
                 </div>

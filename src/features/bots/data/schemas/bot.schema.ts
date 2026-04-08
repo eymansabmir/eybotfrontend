@@ -38,6 +38,11 @@ export const BotSchema = z.object({
             languages: z.array(z.string()).max(10, "Maximum 10 languages are allowed").default([]),
             defaultLanguage: z.string().optional(),
         }).optional(),
+        variables: z.array(z.object({
+            id: z.string(),
+            name: z.string(),
+            isSessionVariable: z.boolean().default(true),
+        })).optional(),
     }),
     createdAt: z.string(),
     updatedAt: z.string(),

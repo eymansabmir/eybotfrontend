@@ -5,6 +5,7 @@ import type { CarouselNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
 import { useState } from "react";
+import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
 export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data: CarouselNodeData }) {
     const { setNodes } = useReactFlow();
@@ -390,20 +391,18 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                             <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Capture selection in</label>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
-                            <input
-                                type="text"
-                                className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                                placeholder="variable_name"
-                                value={data.interaction?.input?.variableName || ""}
-                                onChange={(e) => {
+                            <VariablesCombobox 
+                                value={data.interaction?.input?.variableName || ""} 
+                                onChange={(val) => {
                                     const interaction = data.interaction || { mode: 'input', input: { type: 'choice' as const, timeoutSeconds: 3600 } };
                                     updateData({
                                         interaction: {
                                             ...interaction,
-                                            input: { ...interaction.input, type: 'choice' as const, variableName: e.target.value }
+                                            input: { ...interaction.input, type: 'choice' as const, variableName: val }
                                         }
                                     });
-                                }}
+                                }} 
+                                placeholder="variable_name" 
                             />
                             <select
                                 className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"

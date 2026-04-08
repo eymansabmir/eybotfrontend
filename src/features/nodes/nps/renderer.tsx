@@ -3,6 +3,7 @@ import type { NodeProps } from "@xyflow/react";
 import { BarChart3, Variable, Settings2, Globe } from "lucide-react";
 import type { NpsNodeData } from "./schema";
 import { cn } from "@/lib/utils";
+import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
 export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsNodeData }) {
     const { setNodes } = useReactFlow();
@@ -99,13 +100,10 @@ export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsN
                         </div>
                     </div>
                     <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/40">@</span>
-                        <input
-                            type="text"
-                            className="w-full bg-primary/5 rounded-lg border border-primary/20 pl-7 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary"
-                            value={data.variable || ""}
-                            placeholder="e.g. nps_score"
-                            onChange={(e) => updateData({ variable: e.target.value })}
+                        <VariablesCombobox 
+                            value={data.variable || ""} 
+                            onChange={(val) => updateData({ variable: val })} 
+                            placeholder="Select or create variable..." 
                         />
                     </div>
                 </div>

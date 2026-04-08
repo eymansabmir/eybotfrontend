@@ -5,6 +5,7 @@ import type { TextNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useReactFlow } from "@xyflow/react";
+import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
 export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: TextNodeData }) {
     const { setNodes } = useReactFlow();
@@ -21,13 +22,12 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
         );
     };
 
-    const addVariable = () => {
-        if (newVar.trim()) {
+    const addVariable = (newVarName: string) => {
+        if (newVarName.trim()) {
             const currentVars = data.variables || [];
-            if (!currentVars.includes(newVar.trim())) {
-                updateData({ variables: [...currentVars, newVar.trim()] });
+            if (!currentVars.includes(newVarName.trim())) {
+                updateData({ variables: [...currentVars, newVarName.trim()] });
             }
-            setNewVar("");
         }
     };
 
@@ -90,21 +90,12 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
                             </span>
                         ))}
 
-                        <div className="flex items-center gap-1 bg-muted/50 rounded-md px-2 py-1 border border-dashed border-border group/add">
-                            <input
-                                type="text"
-                                placeholder="new_var"
-                                className="bg-transparent text-[10px] outline-none w-14 placeholder:text-muted-foreground/50"
-                                value={newVar}
-                                onChange={(e) => setNewVar(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && addVariable()}
+                        <div className="w-[140px]">
+                            <VariablesCombobox 
+                                value=""
+                                onChange={(val) => addVariable(val)}
+                                placeholder="Add variable..."
                             />
-                            <button
-                                onClick={addVariable}
-                                className="text-muted-foreground hover:text-primary transition-colors"
-                            >
-                                <Plus size={10} />
-                            </button>
                         </div>
                     </div>
                 </div>

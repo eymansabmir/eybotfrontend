@@ -12,6 +12,7 @@ import { isReliableTextModel, usesMaxCompletionTokensParam } from "../domain/ope
 import { hasValidOpenAIChatCompletionInput } from "../domain/chat-completion-validation";
 import type { OpenAIConfigDraft } from "../state/openai-config.state";
 import { OpenAIModelSelector } from "./openai-model-selector";
+import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
 interface OpenAIConfigFormProps {
   draft: OpenAIConfigDraft;
@@ -477,7 +478,11 @@ export function OpenAIConfigForm({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Result Variable</Label>
-                    <Input value={draft.resultVariable} onChange={(e) => onDraftChange({ resultVariable: e.target.value })} placeholder="openai_response" />
+                    <VariablesCombobox 
+                        value={draft.resultVariable} 
+                        onChange={(val) => onDraftChange({ resultVariable: val })} 
+                        placeholder="openai_response" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Scope</Label>

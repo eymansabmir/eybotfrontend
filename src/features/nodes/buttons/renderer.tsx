@@ -4,6 +4,7 @@ import { ListChecks, X, Type, Footprints } from "lucide-react";
 import type { ButtonsNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
 type Interaction = NonNullable<ButtonsNodeData["interaction"]>;
 
@@ -235,12 +236,10 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                         <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Capture selection in variable</label>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                        <input
-                            type="text"
-                            className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                            value={data.interaction?.input?.variableName || ""}
-                            placeholder="e.g. choice_key"
-                            onChange={(e) => updateVariableSettings({ variableName: e.target.value })}
+                        <VariablesCombobox 
+                            value={data.interaction?.input?.variableName || ""} 
+                            onChange={(val) => updateVariableSettings({ variableName: val })} 
+                            placeholder="e.g. choice_key" 
                         />
                         <select
                             className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"

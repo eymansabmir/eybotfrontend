@@ -1,11 +1,16 @@
 import { FlowBuilder, type FlowBuilderRef } from "@/features/nodes/presentation/components/flow-builder";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
+import { Link, useParams, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, Save, Play, Settings, Loader2, Rocket, Archive, Variable } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useBot, useUpdateBot, useCreateBot, usePublishBot, useArchiveBot } from "../../data/queries/use-bots";
 import { toast } from "sonner";
 import { useRef, useEffect, useState } from "react";
 import type { Node, Edge } from "@xyflow/react";
 import { NodeType } from "@/features/nodes/node-types.constants";
+import { useState } from "react";
+import { BotSettingsDialog } from "@/features/settings/presentation/components/bot-settings-dialog";
+import { useVariablesStore } from "@/features/variables/store";
 import { hasValidOpenAIChatCompletionInput } from "@/features/integrations/openai/domain/chat-completion-validation";
 import { isValidAssistantThreadIdInput } from "@/features/integrations/openai/domain/assistant-thread-id-validation";
 import { BotEditorNavbar } from "../components/bot-editor-navbar";
@@ -23,6 +28,24 @@ export function BotEditorPage() {
     const publishBotMutation = usePublishBot();
     const archiveBotMutation = useArchiveBot();
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
+
+    const { variables, setVariables } = useVariablesStore();
+    
+    useEffect(() => {
+        if (bot?.settings?.variables) {
+            setVariables(bot.settings.variables as any);
+        } else if (isNew) {
+            setVariables([]);
+        }
+    }, [bot, isNew, setVariables]);
+
+    useEffect(() => {
+        const handleOpenSettings = () => setSettingsOpen(true);
+        window.addEventListener('open-bot-settings', handleOpenSettings);
+        return () => {
+            window.removeEventListener('open-bot-settings', handleOpenSettings);
+        };
+    }, []);
 
     const getIntegrationValidationError = () => {
         const flowState = flowBuilderRef.current?.getFlowState();
@@ -388,10 +411,7 @@ export function BotEditorPage() {
             triggerType: bot?.triggerType || "inbound",
             triggerConfig: bot?.triggerConfig || { keywords: [] },
             status: bot?.status || "draft",
-            settings: {
-                ...(bot?.settings || { timeoutSeconds: 300, maxSteps: 100 }),
-                localization: derivedLocalization,
-            },
+            settings: { ...(bot?.settings || { timeoutSeconds: 300, maxSteps: 100 }), variables },
         };
 
         try {
