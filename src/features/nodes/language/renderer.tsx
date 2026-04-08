@@ -1,7 +1,7 @@
 import React from "react";
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { Languages, RefreshCw, Variable } from "lucide-react";
+import { Languages, AlertCircle, ExternalLink, RefreshCw, Variable, ShieldCheck, ChevronDown } from "lucide-react";
 import type { LanguageNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
@@ -83,6 +83,7 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                 "flow-node-standard group relative rounded-2xl border bg-card p-0 transition-all hover:shadow-xl",
                 selected ? "border-primary shadow-lg ring-4 ring-primary/10" : "border-border"
             )}
+            style={{ maxWidth: '320px' }}
         >
             <Handle
                 type="target"
@@ -103,9 +104,37 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
             </div>
 
             <div className="p-4 space-y-4">
-                <div className="max-h-64 overflow-y-auto pr-1">
-                    <LocalizationForm localization={effectiveLocalization} onChange={onLocalizationChange} />
-                </div>
+                {!isEnabled ? (
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex flex-col gap-2">
+                        <div className="flex items-center gap-2 text-amber-700">
+                             <AlertCircle size={14} />
+                             <span className="text-[10px] font-bold uppercase">Localization Disabled</span>
+                        </div>
+                        <p className="text-[11px] text-amber-600">
+                            Enable localization in <span onClick={openSettings} className="font-bold underline cursor-pointer">Bot Settings</span> to use this node.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                             <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Enabled Languages</label>
+                             <span onClick={openSettings} className="text-[9px] font-medium text-primary flex items-center gap-1 cursor-pointer hover:underline">
+                                <ExternalLink size={10} />
+                                Edit Settings
+                             </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 max-w-[280px]">
+                            {enabledLanguages.map(code => (
+                                <div key={code} className="px-2 py-1 rounded-md bg-primary/5 border border-primary/10 text-[9px] font-medium text-primary whitespace-nowrap">
+                                    {getLanguageName(code)}
+                                </div>
+                            ))}
+                            {enabledLanguages.length === 0 && (
+                                <span className="text-[11px] text-muted-foreground italic">No languages selected yet.</span>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Message Input */}
                 <div className="space-y-1.5 opacity-100 group-hover:opacity-100 transition-opacity">
@@ -119,20 +148,43 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                 </div>
 
                 {/* Variable Mapping */}
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5 border-t border-border/50 pt-3">
+                <div className="space-y-3 pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-1.5">
                         <Variable size={10} className="text-muted-foreground" />
                         <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Save Selection To</label>
                     </div>
-                    <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/40">@</span>
-                        <input
-                            type="text"
-                            className="w-full bg-primary/5 rounded-lg border border-primary/20 pl-7 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary"
-                            value={data.variable || "selected_language"}
-                            placeholder="e.g. preferred_language"
-                            onChange={(e) => updateData({ variable: e.target.value })}
-                        />
+                    
+                    <div className="grid grid-cols-1 gap-2.5">
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/40">@</span>
+                            <input
+                                type="text"
+                                className="w-full bg-primary/5 rounded-lg border border-primary/20 pl-7 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary"
+                                value={data.variableName || "selected_language"}
+                                placeholder="variable_name"
+                                onChange={(e) => updateData({ variableName: e.target.value })}
+                                disabled={!isEnabled}
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5">
+                                <ShieldCheck size={10} className="text-muted-foreground" />
+                                <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Storage Scope</label>
+                            </div>
+                            <div className="relative">
+                                <select
+                                    className="w-full bg-muted/50 rounded-lg border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer hover:bg-muted"
+                                    value={data.variableScope || "session"}
+                                    onChange={(e) => updateData({ variableScope: e.target.value as "session" | "contact" })}
+                                    disabled={!isEnabled}
+                                >
+                                    <option value="session">Session</option>
+                                    <option value="contact">Contact Custom Field</option>
+                                </select>
+                                <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground" />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
