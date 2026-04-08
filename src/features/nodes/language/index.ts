@@ -12,7 +12,8 @@ export const languageNode: NodeDefinition<LanguageNodeData> = {
     handler: LanguageNodeHandler,
     defaultData: {
         message: 'Please select your language',
-        variable: 'selected_language',
+        variableName: 'selected_language',
+        variableScope: 'session',
         timeoutSeconds: 3600,
         localizationEnabled: false,
         languages: [],

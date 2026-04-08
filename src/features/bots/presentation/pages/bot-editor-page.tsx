@@ -14,9 +14,8 @@ import { toast } from "sonner";
 import { useRef, useEffect, useState, useMemo } from "react";
 import type { Node, Edge } from "@xyflow/react";
 import { NodeType } from "@/features/nodes/node-types.constants";
-import { useState } from "react";
-import { BotSettingsDialog } from "@/features/settings/presentation/components/bot-settings-dialog";
 import { useVariablesStore } from "@/features/variables/store";
+
 import { hasValidOpenAIChatCompletionInput } from "@/features/integrations/openai/domain/chat-completion-validation";
 import { isValidAssistantThreadIdInput } from "@/features/integrations/openai/domain/assistant-thread-id-validation";
 import { BotEditorNavbar } from "../components/bot-editor-navbar";
@@ -41,6 +40,10 @@ export function BotEditorPage() {
     const updateTranslationMutation = useUpdateFlowTranslation(id, selectedLang);
     
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
+
+    const [, setSettingsOpen] = useState(false);
+
+
 
     const { variables, setVariables } = useVariablesStore();
     
@@ -252,30 +255,10 @@ export function BotEditorPage() {
         const { nodes: localNodes, edges: localEdges } = flowBuilderRef.current.getFlowState();
 
         const languageNodes = localNodes.filter((n) => n.type === NodeType.LANGUAGE);
-        const primaryLanguageNode = languageNodes[0];
-
-        const derivedLocalization = (() => {
-            if (!primaryLanguageNode) {
-                return bot?.settings?.localization;
-            }
-
-            const nodeData = primaryLanguageNode.data as Record<string, unknown>;
-            const nodeLanguages = Array.isArray(nodeData.languages)
-                ? (nodeData.languages as string[]).map((lang) => lang.trim()).filter(Boolean)
-                : [];
-            const uniqueLanguages = Array.from(new Set(nodeLanguages)).slice(0, MAX_LANGUAGE_NODE_LANGUAGES);
-            const defaultLanguage = typeof nodeData.defaultLanguage === "string" && nodeData.defaultLanguage.trim().length > 0
-                ? nodeData.defaultLanguage.trim()
-                : uniqueLanguages[0];
-
-            return {
-                isEnabled: uniqueLanguages.length > 0,
-                languages: uniqueLanguages,
-                defaultLanguage,
-            };
-        })();
 
         if (languageNodes.length > 1) {
+
+
             toast.warning("Multiple language nodes detected. Localization settings will follow the first language node in the flow.");
         }
 

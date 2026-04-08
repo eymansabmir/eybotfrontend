@@ -63,10 +63,6 @@ interface FlowBuilderProps {
     onEdgesChangeExternal?: (edges: Edge[]) => void;
 }
 
-const defaultEdgeOptions = {
-    style: { strokeWidth: 2 },
-};
-
 export interface FlowBuilderRef {
     getFlowState: () => { nodes: Node[]; edges: Edge[] };
 }

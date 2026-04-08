@@ -7,6 +7,8 @@ import { useReactFlow } from "@xyflow/react";
 import { LockedBadge } from "@/components/ui/locked-badge";
 import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
+
+
 type Interaction = NonNullable<ButtonsNodeData["interaction"]>;
 
 export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: ButtonsNodeData & { isTranslationMode?: boolean } }) {
@@ -244,15 +246,14 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                         {isTranslationMode && <LockedBadge />}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                        <input
-                            type="text"
-                            className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50"
-                            value={data.interaction?.input?.variableName || ""}
-                            placeholder="e.g. choice_key"
-                            onChange={(e) => updateVariableSettings({ variableName: e.target.value })}
-                            readOnly={isTranslationMode}
+                        <VariablesCombobox 
+                            value={data.interaction?.input?.variableName || ""} 
+                            onChange={(val) => updateVariableSettings({ variableName: val })} 
+                            placeholder="e.g. choice_key" 
+                            className={isTranslationMode ? "opacity-50 pointer-events-none" : ""}
                         />
                         <select
+
                             className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50"
                             value={data.interaction?.input?.variableScope || 'session'}
                             onChange={(e) => updateVariableSettings({ variableScope: e.target.value as 'session' | 'contact' })}
