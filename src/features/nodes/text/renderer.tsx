@@ -5,10 +5,12 @@ import type { TextNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useReactFlow } from "@xyflow/react";
+import { LockedBadge } from "@/components/ui/locked-badge";
 
-export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: TextNodeData }) {
+export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: TextNodeData & { isTranslationMode?: boolean } }) {
     const { setNodes } = useReactFlow();
     const [newVar, setNewVar] = useState("");
+    const isTranslationMode = !!data.isTranslationMode;
 
     const updateData = (newData: Partial<TextNodeData>) => {
         setNodes((nds) =>
@@ -57,7 +59,7 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
                         <MessageSquare size={14} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">
-                        Text Message
+                        Text Message {isTranslationMode && <span className="ml-2 text-primary">(Translation)</span>}
                     </span>
                 </div>
             </div>
@@ -76,36 +78,43 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
 
                 {/* Variables Section */}
                 <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Variables</label>
+                    <div className="flex items-center gap-2">
+                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Variables</label>
+                        {isTranslationMode && <LockedBadge />}
+                    </div>
                     <div className="flex flex-wrap gap-1.5">
                         {(data.variables || []).map((v) => (
                             <span key={v} className="flex items-center gap-1 px-2 py-1 rounded-md bg-primary/5 border border-primary/20 text-[10px] font-medium text-primary group/var">
                                 {v}
-                                <button
-                                    onClick={() => removeVariable(v)}
-                                    className="hover:text-destructive transition-colors"
-                                >
-                                    <X size={10} />
-                                </button>
+                                {!isTranslationMode && (
+                                    <button
+                                        onClick={() => removeVariable(v)}
+                                        className="hover:text-destructive transition-colors"
+                                    >
+                                        <X size={10} />
+                                    </button>
+                                )}
                             </span>
                         ))}
 
-                        <div className="flex items-center gap-1 bg-muted/50 rounded-md px-2 py-1 border border-dashed border-border group/add">
-                            <input
-                                type="text"
-                                placeholder="new_var"
-                                className="bg-transparent text-[10px] outline-none w-14 placeholder:text-muted-foreground/50"
-                                value={newVar}
-                                onChange={(e) => setNewVar(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && addVariable()}
-                            />
-                            <button
-                                onClick={addVariable}
-                                className="text-muted-foreground hover:text-primary transition-colors"
-                            >
-                                <Plus size={10} />
-                            </button>
-                        </div>
+                        {!isTranslationMode && (
+                            <div className="flex items-center gap-1 bg-muted/50 rounded-md px-2 py-1 border border-dashed border-border group/add">
+                                <input
+                                    type="text"
+                                    placeholder="new_var"
+                                    className="bg-transparent text-[10px] outline-none w-14 placeholder:text-muted-foreground/50"
+                                    value={newVar}
+                                    onChange={(e) => setNewVar(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && addVariable()}
+                                />
+                                <button
+                                    onClick={addVariable}
+                                    className="text-muted-foreground hover:text-primary transition-colors"
+                                >
+                                    <Plus size={10} />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

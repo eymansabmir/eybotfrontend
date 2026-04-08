@@ -1,10 +1,17 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Save, Play, Loader2, Rocket, Archive } from "lucide-react";
+import { ArrowLeft, Save, Play, Loader2, Rocket, Archive, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
 import { type ChangeEvent, type KeyboardEvent } from "react";
 import type { Bot } from "@/features/bots/data/schemas/bot.schema";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface BotEditorNavbarProps {
     id: string;
@@ -14,6 +21,8 @@ interface BotEditorNavbarProps {
     activeTab: "flow" | "settings";
     isEditingName: boolean;
     tempName: string;
+    selectedLang: string;
+    onLangChange: (lang: string) => void;
     onRename: (newName: string) => void;
     onStartRename: () => void;
     onCancelRename: () => void;
@@ -24,6 +33,7 @@ interface BotEditorNavbarProps {
     isSaving?: boolean;
     isPublishing?: boolean;
     isUnpublishing?: boolean;
+    isTranslationMode?: boolean;
 }
 
 export function BotEditorNavbar({
@@ -34,6 +44,8 @@ export function BotEditorNavbar({
     activeTab,
     isEditingName,
     tempName,
+    selectedLang,
+    onLangChange,
     onRename,
     onStartRename,
     onCancelRename,
@@ -43,8 +55,12 @@ export function BotEditorNavbar({
     onUnpublish,
     isSaving,
     isPublishing,
-    isUnpublishing
+    isUnpublishing,
+    isTranslationMode
 }: BotEditorNavbarProps) {
+    const localization = bot?.settings?.localization;
+    const languages = localization?.languages || [];
+
     return (
         <header className="flex items-center justify-between border-b px-6 py-3 bg-background/80 backdrop-blur-xl sticky top-0 z-40 shadow-sm border-border">
             <div className="flex items-center gap-4">
@@ -89,28 +105,49 @@ export function BotEditorNavbar({
                 </div>
             </div>
 
-            {!isNew && (
-                <div className="absolute left-1/2 -translate-x-1/2 flex items-center bg-muted/40 p-1 rounded-full border border-white/50 shadow-inner">
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        asChild={activeTab !== "flow"} 
-                        className={`h-8 px-5 rounded-full font-bold text-xs transition-all ${activeTab === "flow" ? "bg-white shadow-sm border border-black/5 text-black cursor-default hover:bg-white" : "text-muted-foreground hover:text-foreground hover:bg-transparent"}`}
-                        onClick={activeTab === "flow" ? (e) => e.preventDefault() : undefined}
-                    >
-                        {activeTab === "flow" ? "Flow" : <Link to="/bot/$id" params={{ id }}>Flow</Link>}
-                    </Button>
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        asChild={activeTab !== "settings"} 
-                        className={`h-8 px-5 rounded-full font-bold text-xs transition-all ${activeTab === "settings" ? "bg-white shadow-sm border border-black/5 text-black cursor-default hover:bg-white" : "text-muted-foreground hover:text-foreground hover:bg-transparent"}`}
-                        onClick={activeTab === "settings" ? (e) => e.preventDefault() : undefined}
-                    >
-                         {activeTab === "settings" ? "Settings" : <Link to="/bot/$id/settings" params={{ id }}>Settings</Link>}
-                    </Button>
-                </div>
-            )}
+            <div className="flex items-center gap-3">
+                {activeTab === "flow" && !isNew && (
+                    <div className="flex items-center gap-2 bg-muted/30 px-3 py-1 rounded-full border border-border/50 transition-all hover:bg-muted/50">
+                        <Globe className="size-3 text-muted-foreground" />
+                        <Select value={selectedLang} onValueChange={onLangChange}>
+                            <SelectTrigger className="h-7 border-none bg-transparent focus:ring-0 text-[11px] font-bold py-0 px-2 min-w-[100px] shadow-none">
+                                <SelectValue placeholder="Language" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="default" className="text-[11px] font-medium">Default (English)</SelectItem>
+                                {languages.map((lang: string) => (
+                                    <SelectItem key={lang} value={lang} className="text-[11px] font-medium">
+                                        {lang.toUpperCase()}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+
+                {!isNew && (
+                    <div className="flex items-center bg-muted/40 p-1 rounded-full border border-white/50 shadow-inner">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            asChild={activeTab !== "flow"} 
+                            className={`h-8 px-5 rounded-full font-bold text-xs transition-all ${activeTab === "flow" ? "bg-white shadow-sm border border-black/5 text-black cursor-default hover:bg-white" : "text-muted-foreground hover:text-foreground hover:bg-transparent"}`}
+                            onClick={activeTab === "flow" ? (e) => e.preventDefault() : undefined}
+                        >
+                            {activeTab === "flow" ? "Flow" : <Link to="/bot/$id" params={{ id }}>Flow</Link>}
+                        </Button>
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            asChild={activeTab !== "settings"} 
+                            className={`h-8 px-5 rounded-full font-bold text-xs transition-all ${activeTab === "settings" ? "bg-white shadow-sm border border-black/5 text-black cursor-default hover:bg-white" : "text-muted-foreground hover:text-foreground hover:bg-transparent"}`}
+                            onClick={activeTab === "settings" ? (e) => e.preventDefault() : undefined}
+                        >
+                             {activeTab === "settings" ? "Settings" : <Link to="/bot/$id/settings" params={{ id }}>Settings</Link>}
+                        </Button>
+                    </div>
+                )}
+            </div>
 
             <div className="flex items-center gap-2">
                 {!isNew && bot?.status !== "published" && (
@@ -178,7 +215,7 @@ export function BotEditorNavbar({
                         ) : (
                             <Save className="size-3" />
                         )}
-                        {isNew ? "Create" : "Save Changes"}
+                        {isNew ? "Create" : (isTranslationMode ? "Update Translation" : "Save Changes")}
                     </Button>
                 )}
             </div>

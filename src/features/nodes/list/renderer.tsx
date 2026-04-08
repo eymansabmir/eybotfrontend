@@ -4,9 +4,11 @@ import { List as ListIcon, Plus, Trash2 } from "lucide-react";
 import type { ListNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { LockedBadge } from "@/components/ui/locked-badge";
 
-export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: ListNodeData }) {
+export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: ListNodeData & { isTranslationMode?: boolean } }) {
     const { setNodes } = useReactFlow();
+    const isTranslationMode = !!data.isTranslationMode;
 
     const allRows = (data.sections ?? []).flatMap((s) => s.rows);
 
@@ -48,12 +50,14 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
     };
 
     const addSection = () => {
+        if (isTranslationMode) return;
         const newId = `row_${Date.now()}`;
         const sections = [...(data.sections ?? []), { title: "Section", rows: [{ id: newId, title: "Option" }] }];
         syncBranchesAndInteraction(sections);
     };
 
     const removeSection = (si: number) => {
+        if (isTranslationMode) return;
         const sections = (data.sections ?? []).filter((_, i) => i !== si);
         syncBranchesAndInteraction(sections);
     };
@@ -64,6 +68,7 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
     };
 
     const addRow = (si: number) => {
+        if (isTranslationMode) return;
         const newId = `row_${Date.now()}`;
         const sections = (data.sections ?? []).map((s, i) =>
             i === si ? { ...s, rows: [...s.rows, { id: newId, title: "Option" }] } : s
@@ -72,6 +77,7 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
     };
 
     const removeRow = (si: number, ri: number) => {
+        if (isTranslationMode) return;
         const sections = (data.sections ?? []).map((s, i) =>
             i === si ? { ...s, rows: s.rows.filter((_, j) => j !== ri) } : s
         );
@@ -104,15 +110,18 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                         <ListIcon size={14} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">
-                        List Message
+                        List Message {isTranslationMode && <span className="ml-2 text-primary">(Translation)</span>}
                     </span>
                 </div>
-                <button
-                    onClick={addSection}
-                    className="flex items-center gap-1 rounded-lg bg-teal-500/10 px-2 py-1 text-[9px] font-bold text-teal-600 hover:bg-teal-500/20 transition-colors"
-                >
-                    <Plus size={9} /> Section
-                </button>
+                {!isTranslationMode && (
+                    <button
+                        onClick={addSection}
+                        className="flex items-center gap-1 rounded-lg bg-teal-500/10 px-2 py-1 text-[9px] font-bold text-teal-600 hover:bg-teal-500/20 transition-colors"
+                    >
+                        <Plus size={9} /> Section
+                    </button>
+                )}
+                {isTranslationMode && <LockedBadge />}
             </div>
 
             <div className="p-4 space-y-3">
@@ -156,12 +165,14 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                                     placeholder="Section title"
                                     onChange={(e) => updateSectionTitle(si, e.target.value)}
                                 />
-                                <button
-                                    onClick={() => removeSection(si)}
-                                    className="text-muted-foreground hover:text-destructive transition-colors"
-                                >
-                                    <Trash2 size={12} />
-                                </button>
+                                {!isTranslationMode && (
+                                    <button
+                                        onClick={() => removeSection(si)}
+                                        className="text-muted-foreground hover:text-destructive transition-colors"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                )}
                             </div>
 
                             {section.rows.map((row, ri) => (
@@ -174,12 +185,14 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                                         placeholder="Option label"
                                         onChange={(e) => updateRowTitle(si, ri, e.target.value)}
                                     />
-                                    <button
-                                        onClick={() => removeRow(si, ri)}
-                                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
-                                    >
-                                        <Trash2 size={10} />
-                                    </button>
+                                    {!isTranslationMode && (
+                                        <button
+                                            onClick={() => removeRow(si, ri)}
+                                            className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                                        >
+                                            <Trash2 size={10} />
+                                        </button>
+                                    )}
                                     {/* Per-row branch handle */}
                                     <Handle
                                         type="source"
@@ -190,16 +203,18 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                                 </div>
                             ))}
 
-                            <button
-                                onClick={() => addRow(si)}
-                                className="flex items-center gap-1 pl-2 text-[9px] text-teal-600 hover:text-teal-700 font-medium transition-colors"
-                            >
-                                <Plus size={9} /> Add row
-                            </button>
+                            {!isTranslationMode && (
+                                <button
+                                    onClick={() => addRow(si)}
+                                    className="flex items-center gap-1 pl-2 text-[9px] text-teal-600 hover:text-teal-700 font-medium transition-colors"
+                                >
+                                    <Plus size={9} /> Add row
+                                </button>
+                            )}
                         </div>
                     ))}
 
-                    {(data.sections ?? []).length === 0 && (
+                    {!isTranslationMode && (data.sections ?? []).length === 0 && (
                         <div className="flex items-center justify-center rounded-xl border border-dashed border-border/50 py-4 text-[10px] text-muted-foreground italic">
                             Click "+ Section" to add options
                         </div>

@@ -3,9 +3,11 @@ import type { NodeProps } from "@xyflow/react";
 import { BarChart3, Variable, Settings2, Globe } from "lucide-react";
 import type { NpsNodeData } from "./schema";
 import { cn } from "@/lib/utils";
+import { LockedBadge } from "@/components/ui/locked-badge";
 
-export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsNodeData }) {
+export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsNodeData & { isTranslationMode?: boolean } }) {
     const { setNodes } = useReactFlow();
+    const isTranslationMode = !!data.isTranslationMode;
 
     const updateData = (newData: Partial<NpsNodeData>) => {
         setNodes((nds) =>
@@ -38,7 +40,7 @@ export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsN
                         <BarChart3 size={14} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">
-                        NPS Survey
+                        NPS Survey {isTranslationMode && <span className="ml-2 text-primary">(Translation)</span>}
                     </span>
                 </div>
             </div>
@@ -85,13 +87,15 @@ export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsN
                         <div className="flex items-center gap-1.5">
                             <Variable size={10} className="text-muted-foreground" />
                             <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Save Score To</label>
+                            {isTranslationMode && <LockedBadge />}
                         </div>
                         <div className="flex items-center gap-2">
-                             <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Scope</label>
-                             <select
-                                className="bg-transparent text-[10px] font-bold text-primary focus:outline-none cursor-pointer"
+                            <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Scope</label>
+                            <select
+                                className="bg-transparent text-[10px] font-bold text-primary focus:outline-none disabled:opacity-50"
                                 value={data.variableScope}
                                 onChange={(e) => updateData({ variableScope: e.target.value as any })}
+                                disabled={isTranslationMode}
                             >
                                 <option value="session">Session</option>
                                 <option value="contact">Contact</option>
@@ -102,10 +106,11 @@ export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsN
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/40">@</span>
                         <input
                             type="text"
-                            className="w-full bg-primary/5 rounded-lg border border-primary/20 pl-7 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary"
+                            className="w-full bg-primary/5 rounded-lg border border-primary/20 pl-7 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-primary disabled:opacity-50"
                             value={data.variable || ""}
                             placeholder="e.g. nps_score"
                             onChange={(e) => updateData({ variable: e.target.value })}
+                            readOnly={isTranslationMode}
                         />
                     </div>
                 </div>
@@ -128,14 +133,16 @@ export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsN
                         <div className="flex items-center gap-1.5">
                             <Globe size={10} className="text-muted-foreground" />
                             <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Max Score</label>
+                            {isTranslationMode && <LockedBadge />}
                         </div>
                         <input
                             type="number"
                             min="1"
                             max="11"
-                            className="w-full bg-muted/50 rounded-lg border border-border/50 px-2.5 py-1.5 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            className="w-full bg-muted/50 rounded-lg border border-border/50 px-2.5 py-1.5 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
                             value={data.length || 11}
                             onChange={(e) => updateData({ length: parseInt(e.target.value) || 11 })}
+                            readOnly={isTranslationMode}
                         />
                     </div>
                 </div>

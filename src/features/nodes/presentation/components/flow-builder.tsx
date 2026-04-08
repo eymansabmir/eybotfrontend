@@ -2,7 +2,6 @@ import React, { useCallback, useRef, forwardRef, useImperativeHandle } from "rea
 import {
     ReactFlow,
     Background,
-    Controls,
     applyEdgeChanges,
     applyNodeChanges,
     addEdge,
@@ -58,6 +57,7 @@ const getId = () => `node_${Date.now()}_${idIncrement++}`;
 interface FlowBuilderProps {
     initialNodes?: Node[];
     initialEdges?: Edge[];
+    isTranslationMode?: boolean;
     onNodesChangeExternal?: (nodes: Node[]) => void;
     onEdgesChangeExternal?: (edges: Edge[]) => void;
 }
@@ -68,7 +68,8 @@ export interface FlowBuilderRef {
 
 const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
     initialNodes,
-    initialEdges
+    initialEdges,
+    isTranslationMode = false
 }, ref) => {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const [nodes, setNodes] = React.useState<Node[]>(initialNodes || defaultNodes);
@@ -104,12 +105,14 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
     );
 
     const onDragOver = useCallback((event: React.DragEvent) => {
+        if (isTranslationMode) return;
         event.preventDefault();
         event.dataTransfer.dropEffect = "move";
-    }, []);
+    }, [isTranslationMode]);
 
     const onDrop = useCallback(
         (event: React.DragEvent) => {
+            if (isTranslationMode) return;
             event.preventDefault();
 
             const type = event.dataTransfer.getData("application/reactflow");
@@ -161,7 +164,7 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
 
             setNodes((nds) => nds.concat(newNode));
         },
-        [screenToFlowPosition]
+        [screenToFlowPosition, isTranslationMode]
     );
 
     return (
@@ -175,13 +178,17 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 nodeTypes={nodeTypes as any}
+                nodesDraggable={!isTranslationMode}
+                nodesConnectable={!isTranslationMode}
+                elementsSelectable={true}
                 fitView
             >
                 <Background color="#cbd5e1" gap={20} variant={BackgroundVariant.Dots} />
-                <Controls />
-                <Panel position="top-left" className="ml-4 mt-4">
-                    <NodePalette />
-                </Panel>
+                {!isTranslationMode && (
+                    <Panel position="top-left" className="ml-4 mt-4">
+                        <NodePalette />
+                    </Panel>
+                )}
             </ReactFlow>
         </div>
     );

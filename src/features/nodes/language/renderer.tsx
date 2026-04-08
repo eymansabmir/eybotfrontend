@@ -24,21 +24,21 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
 
     const localization = bot?.settings?.localization;
     const nodeLanguages = Array.isArray(data.languages) ? data.languages : [];
-        const nodeLocalizationEnabled = typeof data.localizationEnabled === "boolean" ? data.localizationEnabled : undefined;
-        const hasNodeLocalization = nodeLocalizationEnabled !== undefined || nodeLanguages.length > 0 || Boolean(data.defaultLanguage);
+    const nodeLocalizationEnabled = typeof data.localizationEnabled === "boolean" ? data.localizationEnabled : undefined;
+    const hasNodeLocalization = nodeLocalizationEnabled !== undefined || nodeLanguages.length > 0 || Boolean(data.defaultLanguage);
 
     const effectiveLocalization = hasNodeLocalization
         ? {
-                        isEnabled: nodeLocalizationEnabled ?? nodeLanguages.length > 0,
+            isEnabled: nodeLocalizationEnabled ?? nodeLanguages.length > 0,
             languages: nodeLanguages,
             defaultLanguage: data.defaultLanguage || nodeLanguages[0],
-          }
+        }
         : {
             isEnabled: localization?.isEnabled ?? false,
             languages: localization?.languages ?? [],
             defaultLanguage: localization?.defaultLanguage,
-          };
-        const isEnabled = effectiveLocalization.isEnabled;
+        };
+    const isEnabled = effectiveLocalization.isEnabled;
 
     const updateData = (newData: Partial<LanguageNodeData>) => {
         setNodes((nds) =>
@@ -58,9 +58,9 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
             defaultLanguage: next.defaultLanguage || next.languages[0] || undefined,
         });
     };
-    
+
     const [isSyncing, setIsSyncing] = React.useState(false);
-    
+
     const handleSync = async () => {
         if (!botId) {
             toast.error("Flow not found. Please save the bot first.");
