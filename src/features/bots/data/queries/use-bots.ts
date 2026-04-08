@@ -81,3 +81,22 @@ export function useDeleteBot() {
         },
     });
 }
+
+export function useFlowTranslation(id: string, language: string) {
+    return useQuery({
+        queryKey: [...botKeys.detail(id), "translation", language],
+        queryFn: () => botsApi.getFlowTranslation(id, language),
+        enabled: !!id && !!language && language !== "default",
+    });
+}
+
+export function useUpdateFlowTranslation(id: string, language: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (translatedData: any) => botsApi.updateFlowTranslation(id, language, translatedData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [...botKeys.detail(id), "translation", language] });
+        },
+    });
+}

@@ -33,7 +33,7 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
 
     const fetchMediaId = async (url: string) => {
         if (!url || data.mediaId) return;
-        
+
         try {
             setIsUploadingToMeta(true);
             const response = await fetch(`${ENV.API_URL}/whatsapp/upload-media`, {
@@ -41,7 +41,7 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url, type: 'sticker' }),
             });
-            
+
             const result = await response.json();
             if (result.success && result.mediaId) {
                 updateData({ mediaId: result.mediaId });
