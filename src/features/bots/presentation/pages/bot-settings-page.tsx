@@ -294,6 +294,8 @@ export function BotSettingsPage() {
                 bot={bot}
                 isPublished={bot?.status === "published"}
                 activeTab="settings"
+                selectedLang="default"
+                onLangChange={() => {}}
                 isEditingName={isEditingName}
                 tempName={tempName}
                 onUpdateTempName={setTempName}

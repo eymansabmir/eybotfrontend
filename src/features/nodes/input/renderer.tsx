@@ -4,10 +4,14 @@ import { Keyboard, Variable, ShieldCheck } from "lucide-react";
 import type { InputNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { LockedBadge } from "@/components/ui/locked-badge";
 import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
-export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: InputNodeData }) {
+
+
+export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: InputNodeData & { isTranslationMode?: boolean } }) {
     const { setNodes } = useReactFlow();
+    const isTranslationMode = !!data.isTranslationMode;
 
     const updateData = (newData: Partial<InputNodeData>) => {
         setNodes((nds) =>
@@ -40,7 +44,7 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                         <Keyboard size={14} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">
-                        Wait for Reply
+                        Wait for Reply {isTranslationMode && <span className="ml-2 text-primary">(Translation)</span>}
                     </span>
                 </div>
             </div>
@@ -62,14 +66,17 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                     <div className="flex items-center gap-1.5 border-t border-border/50 pt-3">
                         <Variable size={10} className="text-muted-foreground" />
                         <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Save Answer To</label>
+                        {isTranslationMode && <LockedBadge />}
                     </div>
                     <div className="relative">
                         <VariablesCombobox 
                             value={data.variable || ""} 
                             onChange={(val) => updateData({ variable: val })} 
-                            placeholder="Select or create variable..." 
+                            placeholder="e.g. user_age" 
+                            className={isTranslationMode ? "opacity-50 pointer-events-none" : ""}
                         />
                     </div>
+
                 </div>
 
                 {/* Validation Type */}
@@ -77,11 +84,13 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                     <div className="flex items-center gap-1.5">
                         <ShieldCheck size={10} className="text-muted-foreground" />
                         <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Validation</label>
+                        {isTranslationMode && <LockedBadge />}
                     </div>
                     <select
-                        className="w-full bg-muted/50 rounded-lg border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer hover:bg-muted"
+                        className="w-full bg-muted/50 rounded-lg border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none disabled:opacity-50"
                         value={data.validationType}
                         onChange={(e) => updateData({ validationType: e.target.value as any })}
+                        disabled={isTranslationMode}
                     >
                         <option value="text">Any Text</option>
                         <option value="number">Number Only</option>

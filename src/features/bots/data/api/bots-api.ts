@@ -36,4 +36,13 @@ console.log(JSON.stringify(input))
     deleteBot: async (id: string): Promise<void> => {
         await apiClient.delete(`/flows/${id}`);
     },
+
+    getFlowTranslation: async (id: string, language: string): Promise<any> => {
+        const { data } = await apiClient.get(`/flows/${id}/translations/${language}`);
+        return data;
+    },
+
+    updateFlowTranslation: async (id: string, language: string, translatedData: any): Promise<void> => {
+        await apiClient.put(`/flows/${id}/translations/${language}`, { translatedData });
+    },
 };

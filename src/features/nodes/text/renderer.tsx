@@ -1,15 +1,19 @@
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { MessageSquare, Plus, X } from "lucide-react";
+import { MessageSquare, X } from "lucide-react";
+
 import type { TextNodeData } from "./schema";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { useReactFlow } from "@xyflow/react";
+import { LockedBadge } from "@/components/ui/locked-badge";
 import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 
-export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: TextNodeData }) {
+
+
+export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: TextNodeData & { isTranslationMode?: boolean } }) {
     const { setNodes } = useReactFlow();
-    const [newVar, setNewVar] = useState("");
+    const isTranslationMode = !!data.isTranslationMode;
+
 
     const updateData = (newData: Partial<TextNodeData>) => {
         setNodes((nds) =>
@@ -57,7 +61,7 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
                         <MessageSquare size={14} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">
-                        Text Message
+                        Text Message {isTranslationMode && <span className="ml-2 text-primary">(Translation)</span>}
                     </span>
                 </div>
             </div>
@@ -76,27 +80,35 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
 
                 {/* Variables Section */}
                 <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Variables</label>
+                    <div className="flex items-center gap-2">
+                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Variables</label>
+                        {isTranslationMode && <LockedBadge />}
+                    </div>
                     <div className="flex flex-wrap gap-1.5">
                         {(data.variables || []).map((v) => (
                             <span key={v} className="flex items-center gap-1 px-2 py-1 rounded-md bg-primary/5 border border-primary/20 text-[10px] font-medium text-primary group/var">
                                 {v}
-                                <button
-                                    onClick={() => removeVariable(v)}
-                                    className="hover:text-destructive transition-colors"
-                                >
-                                    <X size={10} />
-                                </button>
+                                {!isTranslationMode && (
+                                    <button
+                                        onClick={() => removeVariable(v)}
+                                        className="hover:text-destructive transition-colors"
+                                    >
+                                        <X size={10} />
+                                    </button>
+                                )}
                             </span>
                         ))}
 
-                        <div className="w-[140px]">
-                            <VariablesCombobox 
-                                value=""
-                                onChange={(val) => addVariable(val)}
-                                placeholder="Add variable..."
-                            />
-                        </div>
+                        {!isTranslationMode && (
+                            <div className="w-[140px]">
+                                <VariablesCombobox 
+                                    value=""
+                                    onChange={(val) => addVariable(val)}
+                                    placeholder="Add variable..."
+                                />
+                            </div>
+                        )}
+
                     </div>
                 </div>
             </div>

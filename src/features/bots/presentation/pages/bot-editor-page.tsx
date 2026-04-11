@@ -1,16 +1,21 @@
 import { FlowBuilder, type FlowBuilderRef } from "@/features/nodes/presentation/components/flow-builder";
-import { Link, useParams, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Save, Play, Settings, Loader2, Rocket, Archive, Variable } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useBot, useUpdateBot, useCreateBot, usePublishBot, useArchiveBot } from "../../data/queries/use-bots";
+import { useParams, useNavigate } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
+import { 
+    useBot, 
+    useUpdateBot, 
+    useCreateBot, 
+    usePublishBot, 
+    useArchiveBot,
+    useFlowTranslation,
+    useUpdateFlowTranslation
+} from "../../data/queries/use-bots";
 import { toast } from "sonner";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import type { Node, Edge } from "@xyflow/react";
 import { NodeType } from "@/features/nodes/node-types.constants";
-import { useState } from "react";
-import { BotSettingsDialog } from "@/features/settings/presentation/components/bot-settings-dialog";
 import { useVariablesStore } from "@/features/variables/store";
+
 import { hasValidOpenAIChatCompletionInput } from "@/features/integrations/openai/domain/chat-completion-validation";
 import { isValidAssistantThreadIdInput } from "@/features/integrations/openai/domain/assistant-thread-id-validation";
 import { BotEditorNavbar } from "../components/bot-editor-navbar";
@@ -22,12 +27,23 @@ export function BotEditorPage() {
     const navigate = useNavigate();
     const isNew = id === "new";
 
+    const [selectedLang, setSelectedLang] = useState("default");
+    const isTranslationMode = selectedLang !== "default";
+
     const { data: bot, isLoading } = useBot(id);
+    const { data: translationData, isLoading: isLoadingTranslation } = useFlowTranslation(id, selectedLang);
+    
     const updateBotMutation = useUpdateBot(id);
     const createBotMutation = useCreateBot();
     const publishBotMutation = usePublishBot();
     const archiveBotMutation = useArchiveBot();
+    const updateTranslationMutation = useUpdateFlowTranslation(id, selectedLang);
+    
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
+
+    const [, setSettingsOpen] = useState(false);
+
+
 
     const { variables, setVariables } = useVariablesStore();
     
@@ -188,6 +204,48 @@ export function BotEditorPage() {
 
     const handleSave = async () => {
         if (!flowBuilderRef.current) return;
+
+        if (isTranslationMode) {
+            const { nodes: localNodes } = flowBuilderRef.current.getFlowState();
+            
+            // Map frontend nodes back to backend node format for translation storage
+            const mappedNodes = localNodes.map(n => {
+                let backendData = { ...n.data };
+                // Reverse same mapping used in initialNodes for translation save
+                if (n.type === "ask_question") {
+                    backendData = {
+                        ...backendData,
+                        message: n.data.question,
+                        variableName: n.data.variable,
+                        inputType: n.data.validationType,
+                    };
+                } else if (n.type === "nps") {
+                    backendData = {
+                        ...backendData,
+                        message: n.data.message,
+                        variableName: n.data.variable,
+                        variableScope: n.data.variableScope,
+                    };
+                }
+                return {
+                    id: n.id,
+                    type: n.type,
+                    data: backendData,
+                    position: n.position
+                };
+            });
+
+            try {
+                await updateTranslationMutation.mutateAsync(mappedNodes);
+                toast.success(`${selectedLang.toUpperCase()} translation saved successfully!`);
+                return;
+            } catch (err) {
+                console.error(err);
+                toast.error("Failed to save translation.");
+                return;
+            }
+        }
+
         const integrationValidationError = getIntegrationValidationError();
         if (integrationValidationError) {
             toast.error(integrationValidationError);
@@ -197,30 +255,10 @@ export function BotEditorPage() {
         const { nodes: localNodes, edges: localEdges } = flowBuilderRef.current.getFlowState();
 
         const languageNodes = localNodes.filter((n) => n.type === NodeType.LANGUAGE);
-        const primaryLanguageNode = languageNodes[0];
-
-        const derivedLocalization = (() => {
-            if (!primaryLanguageNode) {
-                return bot?.settings?.localization;
-            }
-
-            const nodeData = primaryLanguageNode.data as Record<string, unknown>;
-            const nodeLanguages = Array.isArray(nodeData.languages)
-                ? (nodeData.languages as string[]).map((lang) => lang.trim()).filter(Boolean)
-                : [];
-            const uniqueLanguages = Array.from(new Set(nodeLanguages)).slice(0, MAX_LANGUAGE_NODE_LANGUAGES);
-            const defaultLanguage = typeof nodeData.defaultLanguage === "string" && nodeData.defaultLanguage.trim().length > 0
-                ? nodeData.defaultLanguage.trim()
-                : uniqueLanguages[0];
-
-            return {
-                isEnabled: uniqueLanguages.length > 0,
-                languages: uniqueLanguages,
-                defaultLanguage,
-            };
-        })();
 
         if (languageNodes.length > 1) {
+
+
             toast.warning("Multiple language nodes detected. Localization settings will follow the first language node in the flow.");
         }
 
@@ -453,6 +491,75 @@ export function BotEditorPage() {
         }
     };
 
+    const isPublished = bot?.status === "published";
+
+    const initialNodes = useMemo(() => {
+        const sourceNodes = isTranslationMode && translationData?.translatedData 
+            ? translationData.translatedData as any[]
+            : bot?.nodes;
+
+        return sourceNodes?.map((n: any) => {
+            let frontendData = { ...n.data };
+            if (n.type === "ask_question") {
+                frontendData = {
+                    ...frontendData,
+                    question: n.data.message || "",
+                    variable: n.data.variableName || "var",
+                    validationType: n.data.inputType || "text",
+                    timeoutSeconds: n.data.timeoutSeconds || 3600
+                };
+            } else if (n.type === "nps") {
+                frontendData = {
+                    ...frontendData,
+                    message: n.data.message || "",
+                    variable: n.data.variableName || "nps_score",
+                    variableScope: n.data.variableScope || "session",
+                    length: n.data.length ?? 10,
+                    startsAt: n.data.startsAt ?? 1,
+                    leftLabel: n.data.leftLabel,
+                    rightLabel: n.data.rightLabel,
+                    buttonLabel: n.data.buttonLabel || "Rate",
+                    timeoutSeconds: n.data.timeoutSeconds || 3600
+                };
+            } else if (n.type === "language") {
+                const settingsLocalization = bot?.settings?.localization;
+                const languageList = Array.isArray(n.data.languages) && n.data.languages.length > 0
+                    ? (n.data.languages as string[]).slice(0, MAX_LANGUAGE_NODE_LANGUAGES)
+                    : (settingsLocalization?.languages || []);
+                const localizationEnabled = typeof n.data.localizationEnabled === "boolean"
+                    ? n.data.localizationEnabled
+                    : (settingsLocalization?.isEnabled ?? languageList.length > 0);
+
+                frontendData = {
+                    ...frontendData,
+                    message: n.data.message || "Please select your language",
+                    variable: n.data.variable || "selected_language",
+                    timeoutSeconds: n.data.timeoutSeconds || 3600,
+                    localizationEnabled,
+                    languages: languageList,
+                    defaultLanguage: n.data.defaultLanguage || settingsLocalization?.defaultLanguage || languageList[0],
+                };
+            }
+            return {
+                id: n.id,
+                type: n.type,
+                position: n.position,
+                data: { 
+                    ...frontendData,
+                    isTranslationMode,
+                    branches: n.branches || []
+                }
+            };
+        }) || [];
+    }, [bot?.nodes, bot?.settings?.localization, translationData, isTranslationMode]);
+
+    const initialEdges = useMemo(() => bot?.edges?.map((e: any) => ({
+        id: e.id,
+        source: e.sourceNodeId,
+        sourceHandle: e.sourceBranchKey === "default" ? undefined : e.sourceBranchKey,
+        target: e.targetNodeId,
+    })) || [], [bot?.edges]);
+
     if (isLoading && !isNew) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
@@ -460,65 +567,6 @@ export function BotEditorPage() {
             </div>
         );
     }
-    const isPublished = bot?.status === "published";
-
-    // Map backend format back to frontend React Flow format
-    const initialNodes = bot?.nodes?.map((n: any) => {
-        let frontendData = { ...n.data };
-        if (n.type === "ask_question") {
-            frontendData = {
-                question: n.data.message || "",
-                variable: n.data.variableName || "var",
-                validationType: n.data.inputType || "text",
-                timeoutSeconds: n.data.timeoutSeconds || 3600
-            };
-        } else if (n.type === "nps") {
-            frontendData = {
-                message: n.data.message || "",
-                variable: n.data.variableName || "nps_score",
-                variableScope: n.data.variableScope || "session",
-                length: n.data.length ?? 10,
-                startsAt: n.data.startsAt ?? 1,
-                leftLabel: n.data.leftLabel,
-                rightLabel: n.data.rightLabel,
-                buttonLabel: n.data.buttonLabel || "Rate",
-                timeoutSeconds: n.data.timeoutSeconds || 3600
-            };
-        } else if (n.type === "language") {
-            const settingsLocalization = bot?.settings?.localization;
-            const languageList = Array.isArray(n.data.languages) && n.data.languages.length > 0
-                ? (n.data.languages as string[]).slice(0, MAX_LANGUAGE_NODE_LANGUAGES)
-                : (settingsLocalization?.languages || []);
-            const localizationEnabled = typeof n.data.localizationEnabled === "boolean"
-                ? n.data.localizationEnabled
-                : (settingsLocalization?.isEnabled ?? languageList.length > 0);
-
-            frontendData = {
-                message: n.data.message || "Please select your language",
-                variable: n.data.variable || "selected_language",
-                timeoutSeconds: n.data.timeoutSeconds || 3600,
-                localizationEnabled,
-                languages: languageList,
-                defaultLanguage: n.data.defaultLanguage || settingsLocalization?.defaultLanguage || languageList[0],
-            };
-        }
-        return {
-            id: n.id,
-            type: n.type,
-            position: n.position,
-            data: { 
-                ...frontendData,
-                branches: n.branches || []
-            }
-        };
-    }) || [];
-
-    const initialEdges = bot?.edges?.map((e: any) => ({
-        id: e.id,
-        source: e.sourceNodeId,
-        sourceHandle: e.sourceBranchKey === "default" ? undefined : e.sourceBranchKey,
-        target: e.targetNodeId,
-    })) || [];
 
     return (
         <div className="flex h-screen w-full flex-col bg-background">
@@ -530,6 +578,8 @@ export function BotEditorPage() {
                 activeTab="flow"
                 isEditingName={isEditingName}
                 tempName={tempName}
+                selectedLang={selectedLang}
+                onLangChange={setSelectedLang}
                 onUpdateTempName={setTempName}
                 onStartRename={() => setIsEditingName(true)}
                 onCancelRename={() => {
@@ -560,22 +610,28 @@ export function BotEditorPage() {
                     onSuccess: () => toast.success("Bot archived. You can now edit it."),
                     onError: () => toast.error("Failed to archive bot"),
                 })}
-                isSaving={updateBotMutation.isPending || createBotMutation.isPending}
+                isSaving={updateBotMutation.isPending || createBotMutation.isPending || updateTranslationMutation.isPending}
                 isPublishing={publishBotMutation.isPending}
                 isUnpublishing={archiveBotMutation.isPending}
+                isTranslationMode={isTranslationMode}
             />
 
             {/* Editor Content */}
             <main className="relative flex-1 overflow-hidden">
-                <FlowBuilder
-                    key={id}
-                    ref={flowBuilderRef}
-                    initialNodes={bot ? initialNodes : undefined}
-                    initialEdges={bot ? initialEdges : undefined}
-                />
+                {(isLoadingTranslation && isTranslationMode) ? (
+                    <div className="flex h-full w-full items-center justify-center bg-background/50 backdrop-blur-sm z-50">
+                        <Loader2 className="size-8 animate-spin text-primary" />
+                    </div>
+                ) : (
+                    <FlowBuilder
+                        key={`${id}-${selectedLang}`}
+                        ref={flowBuilderRef}
+                        initialNodes={initialNodes}
+                        initialEdges={initialEdges}
+                        isTranslationMode={isTranslationMode}
+                    />
+                )}
             </main>
-
-
         </div>
     );
 }

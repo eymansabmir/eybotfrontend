@@ -5,7 +5,7 @@ import { Variable, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import type { VariableManagerNodeData } from "./schema";
 
-export function VariableManagerNodeRenderer({ id, data, selected }: NodeProps & { data: VariableManagerNodeData }) {
+export function VariableManagerNodeRenderer({ selected }: NodeProps & { data: VariableManagerNodeData }) {
     const { variables, addVariable, removeVariable } = useVariablesStore();
     const [newVarName, setNewVarName] = useState("");
     const [isAdding, setIsAdding] = useState(false);

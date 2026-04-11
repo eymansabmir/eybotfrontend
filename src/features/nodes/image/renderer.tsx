@@ -5,11 +5,11 @@ import type { ImageNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
 import { MediaUploader, useResolveUrl } from "@/lib/storage";
+import { LockedBadge } from "@/components/ui/locked-badge";
 
-
-
-export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: ImageNodeData }) {
+export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: ImageNodeData & { isTranslationMode?: boolean } }) {
     const { setNodes } = useReactFlow();
+    const isTranslationMode = !!data.isTranslationMode;
 
     // Resolve storage path or absolute URL → displayable preview URL
     const { data: previewSrc } = useResolveUrl(data.url, "public");
@@ -45,7 +45,7 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
                         <ImageIcon size={14} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">
-                        Image Message
+                        Image Message {isTranslationMode && <span className="ml-2 text-primary">(Translation)</span>}
                     </span>
                 </div>
             </div>
@@ -57,16 +57,18 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
                         <div className="flex items-center gap-1.5">
                             <LinkIcon size={10} className="text-muted-foreground" />
                             <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Image URL (or Upload)</label>
+                            {isTranslationMode && <LockedBadge />}
                         </div>
                         <input
                             type="text"
-                            className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                            className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50"
                             value={data.url || ""}
                             placeholder="https://example.com/image.jpg"
                             onChange={(e) => updateData({ url: e.target.value })}
+                            readOnly={isTranslationMode}
                         />
                     </div>
-                    <MediaUploader onUploadSuccess={(path) => updateData({ url: path })} purpose="image" />
+                    {!isTranslationMode && <MediaUploader onUploadSuccess={(path) => updateData({ url: path })} purpose="image" />}
                 </div>
 
                 {/* Preview */}

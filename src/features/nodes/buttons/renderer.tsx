@@ -4,12 +4,16 @@ import { ListChecks, X, Type, Footprints } from "lucide-react";
 import type { ButtonsNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { LockedBadge } from "@/components/ui/locked-badge";
 import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
+
+
 
 type Interaction = NonNullable<ButtonsNodeData["interaction"]>;
 
-export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: ButtonsNodeData }) {
+export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: ButtonsNodeData & { isTranslationMode?: boolean } }) {
     const { setNodes } = useReactFlow();
+    const isTranslationMode = !!data.isTranslationMode;
 
     const ensureInteraction = (nodeData: ButtonsNodeData): Interaction => {
         const baseOptions = nodeData.buttons?.map((b) => ({ id: b.id, label: b.title, branchKey: b.id })) ?? [];
@@ -138,7 +142,7 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                         <ListChecks size={14} />
                     </div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">
-                        Interactive Buttons
+                        Interactive Buttons {isTranslationMode && <span className="ml-2 text-primary">(Translation)</span>}
                     </span>
                 </div>
             </div>
@@ -176,8 +180,11 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                 {/* Buttons Editor */}
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Buttons ({(data.buttons || []).length}/3)</label>
-                        {(data.buttons || []).length < 3 && (
+                        <div className="flex items-center gap-2">
+                           <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Buttons ({(data.buttons || []).length}/3)</label>
+                           {isTranslationMode && <LockedBadge />}
+                        </div>
+                        {!isTranslationMode && (data.buttons || []).length < 3 && (
                             <button
                                 onClick={addButton}
                                 className="text-[10px] text-primary hover:underline font-bold"
@@ -200,12 +207,14 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                                         value={button.title}
                                         onChange={(e) => updateButtonTitle(button.id, e.target.value)}
                                     />
-                                    <button
-                                        onClick={() => removeButton(button.id)}
-                                        className="text-muted-foreground hover:text-destructive opacity-0 group-hover/btn:opacity-100 transition-opacity"
-                                    >
-                                        <X size={14} />
-                                    </button>
+                                    {!isTranslationMode && (
+                                        <button
+                                            onClick={() => removeButton(button.id)}
+                                            className="text-muted-foreground hover:text-destructive opacity-0 group-hover/btn:opacity-100 transition-opacity"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
                                 </div>
                                 {/* Individual handle per button for branching */}
                                 <Handle
@@ -234,23 +243,27 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                 <div className="space-y-1.5">
                     <div className="flex items-center gap-1.5">
                         <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Capture selection in variable</label>
+                        {isTranslationMode && <LockedBadge />}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                         <VariablesCombobox 
                             value={data.interaction?.input?.variableName || ""} 
                             onChange={(val) => updateVariableSettings({ variableName: val })} 
                             placeholder="e.g. choice_key" 
+                            className={isTranslationMode ? "opacity-50 pointer-events-none" : ""}
                         />
                         <select
-                            className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+
+                            className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50"
                             value={data.interaction?.input?.variableScope || 'session'}
                             onChange={(e) => updateVariableSettings({ variableScope: e.target.value as 'session' | 'contact' })}
+                            disabled={isTranslationMode}
                         >
                             <option value="session">Session</option>
                             <option value="contact">Contact</option>
                         </select>
                     </div>
-                    <p className="text-[10px] text-muted-foreground">We'll store both the option ID and its label (using <code>_label</code> suffix).</p>
+                    {!isTranslationMode && <p className="text-[10px] text-muted-foreground">We'll store both the option ID and its label (using <code>_label</code> suffix).</p>}
                 </div>
             </div>
 
