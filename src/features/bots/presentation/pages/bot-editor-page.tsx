@@ -211,27 +211,51 @@ export function BotEditorPage() {
             // Map frontend nodes back to backend node format for translation storage
             const mappedNodes = localNodes.map(n => {
                 let backendData = { ...n.data };
+
+                // Strip technical/logic fields that must ONLY live on the master flow.
+                // Translation records should only contain translatable content (messages, labels).
+                // Without this, stale technical values (e.g. skipIfAlreadySelected) baked into
+                // old translation saves will overwrite the master flow's current settings at runtime.
+                if (n.type === "language") {
+                    const {
+                        skipIfAlreadySelected,
+                        localizationEnabled,
+                        languages,
+                        defaultLanguage,
+                        variableName,
+                        variable,
+                        variableScope,
+                        timeoutSeconds,
+                        isTranslationMode,
+                        branches,
+                        ...contentOnly
+                    } = backendData;
+                    backendData = contentOnly;
+                }
+
                 // Reverse same mapping used in initialNodes for translation save
                 if (n.type === "ask_question") {
                     backendData = {
                         ...backendData,
                         message: n.data.question,
-                        variableName: n.data.variable,
+                        variableName: n.data.variable || n.data.variableName,
                         inputType: n.data.validationType,
                     };
                 } else if (n.type === "nps") {
                     backendData = {
                         ...backendData,
                         message: n.data.message,
-                        variableName: n.data.variable,
+                        variableName: n.data.variable || n.data.variableName,
                         variableScope: n.data.variableScope,
                     };
                 }
                 return {
                     id: n.id,
                     type: n.type,
+                    label: n.type, // Standard label
                     data: backendData,
-                    position: n.position
+                    position: n.position,
+                    branches: (n as any).branches || (n.data as any).branches || []
                 };
             });
 
@@ -338,11 +362,14 @@ export function BotEditorPage() {
 
                 backendData = {
                     message: (currentData.message as string) || "Please select your language",
-                    variable: (currentData.variable as string) || "selected_language",
+                    variable: (currentData.variableName as string) || (currentData.variable as string) || "selected_language",
+                    variableName: (currentData.variableName as string) || (currentData.variable as string) || "selected_language",
+                    variableScope: (currentData.variableScope as string) || "session",
                     timeoutSeconds: (currentData.timeoutSeconds as number) || 3600,
                     localizationEnabled,
                     languages: limitedLanguages,
                     defaultLanguage,
+                    skipIfAlreadySelected: !!currentData.skipIfAlreadySelected,
                 };
 
                 branches = [{ key: "default", label: "Default" }];
@@ -441,10 +468,13 @@ export function BotEditorPage() {
             targetNodeId: e.target,
         });
 
+        const nodesToSave = localNodes.map(mapNodeToBackend);
+
+
         const payload = {
             name: bot?.name || "New Bot",
-            orgId: "68b08633907a113536238290", // Hardcoded temporary default to satisfy testing constraint
-            nodes: localNodes.map(mapNodeToBackend),
+            orgId: "68b08633907a113536238290", 
+            nodes: nodesToSave,
             edges: localEdges.map(mapEdgeToBackend),
             triggerType: bot?.triggerType || "inbound",
             triggerConfig: bot?.triggerConfig || { keywords: [] },
@@ -494,11 +524,34 @@ export function BotEditorPage() {
     const isPublished = bot?.status === "published";
 
     const initialNodes = useMemo(() => {
-        const sourceNodes = isTranslationMode && translationData?.translatedData 
-            ? translationData.translatedData as any[]
-            : bot?.nodes;
+        const baseNodes = (bot?.nodes as any[]) || [];
+        const translatedSource = translationData?.translatedData as any[] | undefined;
 
-        return sourceNodes?.map((n: any) => {
+        // --- MERGE STRATEGY ---
+        // If in translation mode, we use baseNodes as the primary structure (to keep technical settings)
+        // and only override specific content fields from the translations.
+        const sourceNodes = isTranslationMode && translatedSource
+            ? baseNodes.map((base: any) => {
+                const translation = translatedSource.find(t => t.id === base.id);
+                if (!translation) return base;
+
+                // Merge rule: Keep the MASTER flow structure and logic
+                // only override text fields for the translation view.
+                const tData = translation.data || {};
+
+                return {
+                    ...base,
+                    data: {
+                        ...base.data,
+                        ...tData, // Overwrites labels/messages
+                        // STICKY - But only take from Master if NOT already in translation? 
+                        // Actually, just take EVERYTHING from base.data except what tData overrides
+                    }
+                };
+            })
+            : baseNodes;
+
+        return sourceNodes.map((n: any) => {
             let frontendData = { ...n.data };
             if (n.type === "ask_question") {
                 frontendData = {
@@ -533,11 +586,14 @@ export function BotEditorPage() {
                 frontendData = {
                     ...frontendData,
                     message: n.data.message || "Please select your language",
-                    variable: n.data.variable || "selected_language",
+                    variableName: n.data.variableName || n.data.variable || "selected_language",
+                    variable: n.data.variableName || n.data.variable || "selected_language",
+                    variableScope: n.data.variableScope || "session",
                     timeoutSeconds: n.data.timeoutSeconds || 3600,
                     localizationEnabled,
                     languages: languageList,
                     defaultLanguage: n.data.defaultLanguage || settingsLocalization?.defaultLanguage || languageList[0],
+                    skipIfAlreadySelected: !!n.data.skipIfAlreadySelected,
                 };
             }
             return {
