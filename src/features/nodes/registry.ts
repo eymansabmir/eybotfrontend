@@ -28,6 +28,7 @@ import { nocodbNode } from "./nocodb";
 import { anthropicNode } from "./anthropic";
 import { deepseekNode } from "./deepseek";
 import { variableManagerNode } from "./variable-manager";
+import { MediaConditionalNode } from "./media-conditional";
 import type { NodeDefinition } from "./types";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
@@ -61,6 +62,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [anthropicNode.config.type]: anthropicNode,
     [deepseekNode.config.type]: deepseekNode,
     [variableManagerNode.config.type]: variableManagerNode,
+    [MediaConditionalNode.config.type]: MediaConditionalNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(
