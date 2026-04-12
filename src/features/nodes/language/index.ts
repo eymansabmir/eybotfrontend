@@ -16,6 +16,7 @@ export const languageNode: NodeDefinition<LanguageNodeData> = {
         variableScope: 'session',
         timeoutSeconds: 3600,
         localizationEnabled: false,
+        skipIfAlreadySelected: false,
         languages: [],
         defaultLanguage: undefined,
     },

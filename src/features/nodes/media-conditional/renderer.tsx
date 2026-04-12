@@ -252,7 +252,7 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
           </div>
 
           <div className="space-y-2">
-            {data.config.map((entry, idx) => {
+            {data.config.map((entry) => {
               const Icon = TYPE_ICONS[entry.type];
               return (
                 <div key={entry.id} className="relative flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/20 p-2.5">

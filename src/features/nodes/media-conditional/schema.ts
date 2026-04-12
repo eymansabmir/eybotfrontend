@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { NodeType } from "../node-types.constants";
 
 export const MediaConditionalEntrySchema = z.object({
   id: z.string(),
