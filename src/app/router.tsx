@@ -12,6 +12,8 @@ import { SettingsPage } from "@/features/settings/presentation/pages/settings-pa
 import { BotEditorPage } from "@/features/bots/presentation/pages/bot-editor-page"
 import { BotTestPage } from "@/features/bots/presentation/pages/bot-test-page"
 import { EmailOtpLoginPage } from "@/features/auth/presentation/pages/email-otp-login-page"
+import { VoiceTechPage } from "@/features/voice-tech/presentation/pages/voice-tech-page"
+
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
 
@@ -36,6 +38,13 @@ const campaignRoute = createRoute({
   path: "campaign",
   component: CampaignPage,
 })
+
+const voiceTechRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "voice-tech",
+  component: VoiceTechPage,
+})
+
 
 const campaignAnalyticsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -83,7 +92,9 @@ const routeTree = rootRoute.addChildren([
   dashboardRoute,
   botsRoute,
   campaignRoute,
+  voiceTechRoute,
   campaignAnalyticsRoute,
+
   usersRoute,
   settingsRoute,
   botEditorRoute,

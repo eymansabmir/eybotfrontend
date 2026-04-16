@@ -4,7 +4,9 @@ import {
   BotIcon,
   LayoutDashboardIcon,
   MegaphoneIcon,
+  PhoneCallIcon,
   Settings2Icon,
+
   UsersIcon,
 } from "lucide-react"
 import { Link, useRouterState } from "@tanstack/react-router"
@@ -34,6 +36,7 @@ const mainNav = [
   { label: "Dashboard", to: "/", icon: LayoutDashboardIcon },
   { label: "Bots", to: "/bots", icon: BotIcon },
   { label: "Campaign", to: "/campaign", icon: MegaphoneIcon },
+  { label: "Voice Tech", to: "/voice-tech", icon: PhoneCallIcon },
   { label: "Users", to: "/users", icon: UsersIcon },
 ]
 
