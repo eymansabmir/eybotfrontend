@@ -8,6 +8,7 @@ export const LanguageNodeSchema = z.object({
     localizationEnabled: z.boolean().optional(),
     languages: z.array(z.string()).max(10, "Maximum 10 languages are allowed in Language node").default([]),
     defaultLanguage: z.string().optional(),
+    skipIfAlreadySelected: z.boolean().default(false),
 });
 
 export type LanguageNodeData = z.infer<typeof LanguageNodeSchema>;
