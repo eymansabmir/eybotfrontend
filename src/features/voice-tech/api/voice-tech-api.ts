@@ -143,6 +143,21 @@ export const voiceTechApi = {
     return data.rule;
   },
 
+  /** Toggle rule status and optionally trigger campaign */
+  toggleRuleActive: async (payload: {
+    ruleId: string;
+    tenantId: string;
+    entityType: string;
+    isActive: boolean;
+    triggerCampaign?: boolean;
+  }): Promise<RoutingRule> => {
+    const { data } = await apiClient.post<{ success: boolean; rule: RoutingRule }>(
+      `${ROUTING}/rules/toggle-active`,
+      payload
+    );
+    return data.rule;
+  },
+
   /** Delete a routing rule */
   deleteRoutingRule: async (ruleId: string): Promise<void> => {
     await apiClient.delete(`${ROUTING}/rules/${ruleId}`);

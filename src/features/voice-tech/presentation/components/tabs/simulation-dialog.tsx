@@ -41,15 +41,22 @@ export function SimulationDialog({
   initialData
 }: SimulationDialogProps) {
   const [testData, setTestData] = useState<Record<string, string>>(initialData || {});
+  const [phone, setPhone] = useState<string>("");
   
-  // Sync testData when initialData is provided (e.g. from "Test Match")
+  // Sync testData when initialData is provided
   useEffect(() => {
     if (open && initialData) {
       setTestData(initialData);
+      // Try to find phone in initialData
+      const discoveredPhone = Object.entries(initialData).find(([k]) => 
+        ['phone', 'waid', 'mobile', 'contact'].includes(k.toLowerCase())
+      )?.[1];
+      if (discoveredPhone) setPhone(discoveredPhone);
     }
   }, [open, initialData]);
+
   const executeRouting = useExecuteRouting();
-  const [result, setResult] = useState<{ matchedRuleId: string | null; action: any } | null>(null);
+  const [result, setResult] = useState<{ matchedRuleId: string | null; action: any; providerResult?: any } | null>(null);
 
   const handleInputChange = (key: string, value: string) => {
     setTestData(prev => ({ ...prev, [key]: value }));
@@ -58,11 +65,12 @@ export function SimulationDialog({
   const handleSimulate = async () => {
     if (!configId) return;
     
-    // Aligned with ExecuteRoutingSchema in voice-tech.schemas.ts
     const payload = {
       tenantId,
       routingConfigId: configId,
-      attributes: testData
+      attributes: testData,
+      phone: phone || undefined,
+      executeProvider: !!phone // Only execute if phone is provided
     };
 
     try {
@@ -75,6 +83,7 @@ export function SimulationDialog({
 
   const reset = () => {
     setTestData({});
+    setPhone("");
     setResult(null);
   };
 
@@ -92,18 +101,35 @@ export function SimulationDialog({
              <DialogTitle>Routing Simulation</DialogTitle>
           </div>
           <DialogDescription>
-            Enter sample attributes below to test which routing rule and provider would be selected for an incoming call.
+            Enter sample attributes and a target phone number to test your routing logic and trigger a live test call.
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-4 space-y-6">
+          {/* Phone Target */}
+          <div className="p-3 rounded-xl bg-muted/30 border border-dashed space-y-2">
+             <Label htmlFor="sim-phone" className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest pl-1">
+                Live Test Number (Optional)
+             </Label>
+             <Input 
+                id="sim-phone"
+                placeholder="+1234567890" 
+                className="h-9 font-mono text-sm"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+             />
+             <p className="text-[10px] text-muted-foreground pl-1">
+                If provided, a real call will be initiated if a rule matches.
+             </p>
+          </div>
+
           {/* Input Form */}
           <div className="space-y-4">
              <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest pl-1">Test Payload</h4>
-             <div className="grid grid-cols-2 gap-4 max-h-[300px] overflow-y-auto pr-2">
+             <div className="grid grid-cols-2 gap-4 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
                 {attributes.length === 0 ? (
                   <div className="col-span-2 py-8 text-center border-2 border-dashed rounded-xl bg-muted/30">
-                     <p className="text-xs text-muted-foreground">No attributes found. Ingest some data first to see available fields.</p>
+                     <p className="text-xs text-muted-foreground">No attributes found. Ingest some data first.</p>
                   </div>
                 ) : (
                   attributes.map(attr => (
@@ -149,6 +175,16 @@ export function SimulationDialog({
                        </div>
                     </div>
                  </div>
+
+                 {phone && (
+                   <div className="mt-4 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                         <Send className="size-3 text-emerald-600" />
+                         <span className="text-[10px] font-bold text-emerald-700 uppercase">Live Call Triggered</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-emerald-600 font-bold">{phone}</span>
+                   </div>
+                 )}
   
                  <div className="mt-4 pt-4 border-t border-green-500/10 flex items-center justify-between">
                     <span className="text-[10px] font-semibold text-green-700/60">Resolved by Rule ID:</span>
@@ -187,7 +223,7 @@ export function SimulationDialog({
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="ghost" onClick={reset} className="text-xs font-bold">Clear All</Button>
           <Button 
-            disabled={!configId || Object.keys(testData).length === 0 || executeRouting.isPending}
+            disabled={!configId || (Object.keys(testData).length === 0 && !phone) || executeRouting.isPending}
             onClick={handleSimulate}
             className="gap-2 shadow-sm font-bold"
           >

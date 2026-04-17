@@ -183,18 +183,35 @@ export function useUpsertRoutingRule(tenantId: string) {
 
 /** Delete a routing rule */
 export function useDeleteRoutingRule(configId: string, tenantId: string) {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: voiceTechApi.deleteRoutingRule,
+    mutationFn: (ruleId: string) => voiceTechApi.deleteRoutingRule(ruleId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["voice-tech", "routing", configId, tenantId] });
       toast.success("Rule deleted");
-      qc.invalidateQueries({ 
-        queryKey: ["voice-tech", "routing", tenantId],
-        exact: false 
-      });
     },
-    onError: (err: Error) => {
+    onError: (err: any) => {
       toast.error(err.message || "Failed to delete rule");
+    },
+  });
+}
+
+export function useToggleRuleActive(configId: string, tenantId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: {
+      ruleId: string;
+      tenantId: string;
+      entityType: string;
+      isActive: boolean;
+      triggerCampaign?: boolean;
+    }) => voiceTechApi.toggleRuleActive(payload),
+    onSuccess: (rule) => {
+      queryClient.invalidateQueries({ queryKey: ["voice-tech", "routing", configId, tenantId] });
+      toast.success(rule.isActive ? "Rule activated" : "Rule deactivated");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Operation failed");
     },
   });
 }

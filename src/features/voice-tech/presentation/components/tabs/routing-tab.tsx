@@ -25,7 +25,15 @@ import { CreateRoutingRuleDialog } from "../rule-builder/create-rule-dialog";
 import { SimulationDialog } from "./simulation-dialog";
 import { CreateConfigDialog } from "./create-config-dialog";
 import { EntityMatchesDialog } from "./entity-matches-dialog";
-import { useRoutingConfigs, useRoutingConfig, useUpsertRoutingRule, useDeleteRoutingRule } from "../../../api/voice-tech-queries";
+import { 
+  useRoutingConfigs, 
+  useRoutingConfig, 
+  useUpsertRoutingRule, 
+  useDeleteRoutingRule,
+  useToggleRuleActive,
+  useQueryEntitiesByRule
+} from "../../../api/voice-tech-queries";
+import { CampaignConfirmationDialog } from "./campaign-confirmation-dialog";
 import type { EntityAttribute, RoutingRule } from "../../../types";
 import { useState } from "react";
 
@@ -43,12 +51,23 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
   const [activeRuleForMatches, setActiveRuleForMatches] = useState<RoutingRule | null>(null);
   const [isMatchesOpen, setIsMatchesOpen] = useState(false);
   const [simulationInitialData, setSimulationInitialData] = useState<Record<string, string> | undefined>(undefined);
+  const [confirmCampaignOpen, setConfirmCampaignOpen] = useState(false);
+  const [pendingActiveRule, setPendingActiveRule] = useState<RoutingRule | null>(null);
   
   const { data: configs, isLoading: isConfigsLoading } = useRoutingConfigs(tenantId);
   const { data: fullConfig, isLoading: isRulesLoading } = useRoutingConfig(selectedConfigId, tenantId);
 
   const upsertRule = useUpsertRoutingRule(tenantId);
   const deleteRule = useDeleteRoutingRule(selectedConfigId ?? "", tenantId);
+  const toggleRule = useToggleRuleActive(selectedConfigId ?? "", tenantId);
+
+  // For the confirmation dialog
+  const { data: entitiesCount } = useQueryEntitiesByRule({
+    tenantId,
+    entityType,
+    conditions: pendingActiveRule?.conditions ?? null,
+    enabled: !!pendingActiveRule && confirmCampaignOpen
+  });
 
   const handleSaveRule = (ruleData: any) => {
     if (!selectedConfigId) return;
@@ -60,6 +79,36 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
 
   const handleDeleteRule = (ruleId: string) => {
     deleteRule.mutate(ruleId);
+  };
+
+  const handleToggleActive = (rule: RoutingRule, active: boolean) => {
+    if (active) {
+      setPendingActiveRule(rule);
+      setConfirmCampaignOpen(true);
+    } else {
+      toggleRule.mutate({
+        ruleId: rule.id,
+        tenantId,
+        entityType,
+        isActive: false
+      });
+    }
+  };
+
+  const handleConfirmCampaign = (triggerCampaign: boolean) => {
+    if (!pendingActiveRule) return;
+    toggleRule.mutate({
+      ruleId: pendingActiveRule.id,
+      tenantId,
+      entityType,
+      isActive: true,
+      triggerCampaign
+    }, {
+      onSuccess: () => {
+        setConfirmCampaignOpen(false);
+        setPendingActiveRule(null);
+      }
+    });
   };
 
   const handleExecuteTest = (rule: RoutingRule) => {
@@ -190,6 +239,7 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
             rules={fullConfig?.rules ?? []} 
             onExecuteTest={handleExecuteTest}
             onQueryEntities={handleQueryEntities}
+            onToggleActive={handleToggleActive}
             onDelete={handleDeleteRule}
           />
         )}
@@ -228,6 +278,15 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
         rule={activeRuleForMatches}
         tenantId={tenantId}
         entityType={entityType}
+      />
+
+      <CampaignConfirmationDialog
+        open={confirmCampaignOpen}
+        onOpenChange={setConfirmCampaignOpen}
+        ruleName="Selected Rule"
+        matchCount={entitiesCount?.length ?? 0}
+        isPending={toggleRule.isPending}
+        onConfirm={handleConfirmCampaign}
       />
     </div>
   );

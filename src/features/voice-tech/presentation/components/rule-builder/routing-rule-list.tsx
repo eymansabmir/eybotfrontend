@@ -25,6 +25,7 @@ interface RoutingRuleListProps {
   rules: RoutingRule[];
   onExecuteTest: (rule: RoutingRule) => void;
   onQueryEntities: (rule: RoutingRule) => void;
+  onToggleActive: (rule: RoutingRule, active: boolean) => void;
   onDelete: (ruleId: string) => void;
 }
 
@@ -32,6 +33,7 @@ export function RoutingRuleList({
   rules, 
   onExecuteTest, 
   onQueryEntities,
+  onToggleActive,
   onDelete
 }: RoutingRuleListProps) {
   if (rules.length === 0) {
@@ -106,13 +108,27 @@ export function RoutingRuleList({
                        <Copy className="size-4" /> Duplicate Rule
                     </DropdownMenuItem>
                     {!rule.isActive ? (
-                       <DropdownMenuItem className="gap-2 py-2 font-medium text-emerald-600">
-                          <CheckCircle2 className="size-4" /> Activate Rule
+                       <DropdownMenuItem 
+                         onClick={() => onToggleActive(rule, true)} 
+                         className="gap-2 py-2 font-medium text-emerald-600"
+                       >
+                          <CheckCircle2 className="size-4" /> Activate & Start Campaign
                        </DropdownMenuItem>
                     ) : (
-                       <DropdownMenuItem className="gap-2 py-2 font-medium text-amber-600">
-                          <XSquare className="size-4" /> Deactivate Rule
-                       </DropdownMenuItem>
+                       <>
+                         <DropdownMenuItem 
+                           onClick={() => onToggleActive(rule, true)} 
+                           className="gap-2 py-2 font-medium text-emerald-600"
+                         >
+                            <Play className="size-4" /> Run Campaign Now
+                         </DropdownMenuItem>
+                         <DropdownMenuItem 
+                           onClick={() => onToggleActive(rule, false)} 
+                           className="gap-2 py-2 font-medium text-amber-600"
+                         >
+                            <XSquare className="size-4" /> Deactivate Rule
+                         </DropdownMenuItem>
+                       </>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 

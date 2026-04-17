@@ -1,4 +1,4 @@
-import { Users, Search, AlertCircle, Loader2 } from "lucide-react";
+import { Users, Search, AlertCircle, Loader2, Database } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -7,6 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useQueryEntitiesByRule } from "../../../api/voice-tech-queries";
 import type { RoutingRule } from "../../../types";
 
@@ -74,25 +75,49 @@ export function EntityMatchesDialog({
               </div>
             </div>
           ) : entities.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-20 text-center px-8">
-              <Search className="size-8 text-muted-foreground/40" />
-              <p className="font-semibold text-sm mt-2">No records matched</p>
-              <p className="text-xs text-muted-foreground max-w-xs">
-                No records in <span className="font-mono font-medium">"{entityType}"</span> satisfy
-                all conditions in this rule. Check that your CSV was uploaded to the correct category and
-                that the field values match exactly.
-              </p>
+            <div className="flex flex-col items-center justify-center gap-4 py-20 text-center px-10">
+              <div className="size-16 rounded-full bg-muted/30 flex items-center justify-center">
+                 <Search className="size-8 text-muted-foreground/30" />
+              </div>
+              <div>
+                <p className="font-bold text-base">No matches found in this dataset</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                   We scanned <span className="font-mono font-bold">"{entityType}"</span> but no records satisfied your rule conditions.
+                </p>
+              </div>
+
+              <div className="w-full max-w-sm mt-4 p-4 rounded-xl border bg-muted/10 text-left space-y-3">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Troubleshooting Guide</p>
+                 <div className="space-y-2">
+                    <div className="flex gap-2">
+                       <div className="size-4 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[9px] font-bold">1</span>
+                       </div>
+                       <p className="text-[11px] leading-relaxed">
+                          <strong>Data Synchronization:</strong> If you just added new fields, try re-uploading your CSV to the <span className="font-mono">"{entityType}"</span> category.
+                       </p>
+                    </div>
+                    <div className="flex gap-2">
+                       <div className="size-4 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[9px] font-bold">2</span>
+                       </div>
+                       <p className="text-[11px] leading-relaxed">
+                          <strong>Field Precision:</strong> Ensure the attributes in your rule match the CSV headers exactly (case-insensitive).
+                       </p>
+                    </div>
+                 </div>
+              </div>
             </div>
           ) : (
             /* Clean flat table — all attribute keys as columns */
-            <div className="overflow-auto max-h-[400px] border rounded-lg shadow-inner bg-muted/5">
+            <div className="overflow-auto max-h-[400px] border-t">
               <table className="w-full text-sm border-collapse">
                 <thead className="sticky top-0 z-10 bg-background shadow-sm">
-                  <tr className="border-b">
+                  <tr className="border-b bg-muted/30">
                     {columns.map((col) => (
                       <th
                         key={col}
-                        className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-widest text-muted-foreground bg-muted/30 whitespace-nowrap border-r last:border-r-0"
+                        className="px-4 py-3 text-left text-[11px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap border-r last:border-r-0"
                       >
                         {col}
                       </th>
@@ -103,13 +128,13 @@ export function EntityMatchesDialog({
                   {entities.map((entity, i) => (
                     <tr
                       key={entity.id}
-                      className={`transition-colors hover:bg-primary/5 ${i % 2 === 0 ? "bg-background" : "bg-muted/10"}`}
+                      className={`transition-colors hover:bg-primary/5 ${i % 2 === 0 ? "bg-background" : "bg-muted/5 font-medium text-foreground/80"}`}
                     >
                       {columns.map((col) => (
-                        <td key={col} className="px-4 py-2.5 text-xs font-medium text-foreground/80 whitespace-nowrap border-r last:border-r-0">
+                        <td key={col} className="px-4 py-2.5 text-[11px] font-mono whitespace-nowrap border-r last:border-r-0">
                           {entity.attributes?.[col] != null
                             ? (typeof entity.attributes[col] === 'boolean' 
-                                ? <Badge variant="outline" className={`text-[10px] uppercase font-bold px-1.5 h-4 ${entity.attributes[col] ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-rose-600 bg-rose-50 border-rose-200'}`}>{String(entity.attributes[col])}</Badge>
+                                ? <Badge variant="outline" className={`text-[9px] uppercase font-black px-1.5 h-4 ${entity.attributes[col] ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'}`}>{String(entity.attributes[col])}</Badge>
                                 : String(entity.attributes[col]))
                             : <span className="text-muted-foreground/30">—</span>}
                         </td>
@@ -120,6 +145,19 @@ export function EntityMatchesDialog({
               </table>
             </div>
           )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t bg-muted/20 flex items-center justify-between">
+           <div className="flex items-center gap-2">
+              <Database className="size-3.5 text-muted-foreground" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Target Dataset: {entityType}</span>
+           </div>
+           {!isLoading && entities.length > 0 && (
+             <Button size="sm" variant="ghost" className="h-7 text-[10px] font-bold uppercase tracking-widest gap-2">
+                <Search className="size-3" /> Find More
+             </Button>
+           )}
         </div>
       </DialogContent>
     </Dialog>
