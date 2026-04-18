@@ -146,7 +146,7 @@ export function BotTestPage() {
     return (
         <div className="flex h-screen w-full flex-col bg-background">
             {/* Header */}
-            <header className="flex items-center justify-between border-b px-6 py-3 bg-card/50 backdrop-blur-md">
+            <header className="flex items-center justify-between border-b px-6 py-3 bg-card/50 dark:bg-[var(--node-bg)] backdrop-blur-md z-10 relative">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" asChild className="rounded-full">
                         <Link to="/bot/$id" params={{ id }}>

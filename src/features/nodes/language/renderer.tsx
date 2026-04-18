@@ -329,6 +329,20 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                                 <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground" />
                             </div>
                         </div>
+
+                        {/* Skip Logic Toggle */}
+                        <div className="flex items-center justify-between bg-primary/5 p-2 rounded-xl border border-primary/10 mt-1">
+                            <div className="flex flex-col gap-0.5">
+                                <label className="text-[9px] font-bold text-primary/80 uppercase tracking-tight">Skip logic</label>
+                                <p className="text-[8px] text-muted-foreground leading-none font-medium">Skip if already selected</p>
+                            </div>
+                            <Switch 
+                                checked={data.skipIfAlreadySelected || false} 
+                                size="sm"
+                                onCheckedChange={(checked) => updateData({ skipIfAlreadySelected: checked })}
+                                disabled={!isEnabled}
+                            />
+                        </div>
                     </div>
                 </div>
 

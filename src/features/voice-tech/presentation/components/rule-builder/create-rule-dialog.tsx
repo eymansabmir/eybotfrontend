@@ -14,7 +14,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Smartphone } from "lucide-react";
+import { MessageCircle, Smartphone } from "lucide-react";
 import { StepperSidebar, type StepConfig } from "@/features/campaign/presentation/components/wizard/stepper-sidebar";
 import { ConditionBuilder } from "./condition-builder";
 import { ProviderBadge } from "../shared/provider-badge";
@@ -59,8 +59,28 @@ export function CreateRoutingRuleDialog({
   
   const [provider, setProvider] = useState<VoiceProvider>("elevenlabs");
   const [agentId, setAgentId] = useState("");
+  const [transport, setTransport] = useState<"telephony" | "whatsapp">("telephony");
+  const [agentPhoneNumberId, setAgentPhoneNumberId] = useState("");
+  const [whatsappPhoneNumberId, setWhatsappPhoneNumberId] = useState("");
+  const [whatsappTemplateName, setWhatsappTemplateName] = useState("");
+  const [whatsappTemplateLanguageCode, setWhatsappTemplateLanguageCode] = useState("en_US");
+  const [defaultWhatsappUserId, setDefaultWhatsappUserId] = useState("");
+  const [sarvamOrchestratorBaseUrl, setSarvamOrchestratorBaseUrl] = useState("");
+  const [sarvamTelephonyEndpoint, setSarvamTelephonyEndpoint] = useState("");
+  const [sarvamWhatsappEndpoint, setSarvamWhatsappEndpoint] = useState("");
+  const [sarvamBatchEndpoint, setSarvamBatchEndpoint] = useState("");
+  const [vapiPhoneNumberId, setVapiPhoneNumberId] = useState("");
+  const [vapiBaseUrl, setVapiBaseUrl] = useState("");
+  const [vapiTelephonyEndpoint, setVapiTelephonyEndpoint] = useState("");
+  const [vapiWhatsappEndpoint, setVapiWhatsappEndpoint] = useState("");
+  const [vapiBatchIntervalMs, setVapiBatchIntervalMs] = useState("250");
   const [priority, setPriority] = useState("10");
   const [isActive, setIsActive] = useState(true);
+
+  const isElevenLabs = provider === "elevenlabs";
+  const isSarvam = provider === "sarvam";
+  const isVapi = provider === "vapi";
+  const usesTransportConfig = isElevenLabs || isSarvam || isVapi;
 
   const resetForm = useCallback(() => {
     setStep(0);
@@ -70,6 +90,21 @@ export function CreateRoutingRuleDialog({
     });
     setProvider("elevenlabs");
     setAgentId("");
+    setTransport("telephony");
+    setAgentPhoneNumberId("");
+    setWhatsappPhoneNumberId("");
+    setWhatsappTemplateName("");
+    setWhatsappTemplateLanguageCode("en_US");
+    setDefaultWhatsappUserId("");
+    setSarvamOrchestratorBaseUrl("");
+    setSarvamTelephonyEndpoint("");
+    setSarvamWhatsappEndpoint("");
+    setSarvamBatchEndpoint("");
+    setVapiPhoneNumberId("");
+    setVapiBaseUrl("");
+    setVapiTelephonyEndpoint("");
+    setVapiWhatsappEndpoint("");
+    setVapiBatchIntervalMs("250");
     setPriority("10");
     setIsActive(true);
   }, []);
@@ -92,16 +127,93 @@ export function CreateRoutingRuleDialog({
        // Deep validation of conditions could be added here
        return conditions.children.length > 0;
     }
-    if (step === 1) return agentId.trim().length > 0;
+    if (step === 1) {
+      if (agentId.trim().length === 0) return false;
+      if (!usesTransportConfig) return true;
+
+      if (isSarvam) return true;
+      if (isVapi) return vapiPhoneNumberId.trim().length > 0;
+
+      if (transport === "telephony") {
+        return agentPhoneNumberId.trim().length > 0;
+      }
+
+      return (
+        whatsappPhoneNumberId.trim().length > 0 &&
+        whatsappTemplateName.trim().length > 0 &&
+        whatsappTemplateLanguageCode.trim().length > 0
+      );
+    }
     if (step === 2) return priority.trim().length > 0;
     return false;
   })();
 
   const handleSave = () => {
+    const config: Record<string, unknown> = {};
+
+    if (usesTransportConfig) {
+      config.transport = transport;
+    }
+
+    if (isElevenLabs) {
+
+      if (transport === "telephony") {
+        config.agentPhoneNumberId = agentPhoneNumberId.trim();
+      } else {
+        config.whatsappPhoneNumberId = whatsappPhoneNumberId.trim();
+        config.whatsappCallPermissionRequestTemplateName = whatsappTemplateName.trim();
+        config.whatsappCallPermissionRequestTemplateLanguageCode = whatsappTemplateLanguageCode.trim();
+        if (defaultWhatsappUserId.trim().length > 0) {
+          config.whatsappUserId = defaultWhatsappUserId.trim();
+        }
+      }
+    }
+
+    if (isSarvam) {
+      if (sarvamOrchestratorBaseUrl.trim().length > 0) {
+        config.orchestratorBaseUrl = sarvamOrchestratorBaseUrl.trim();
+      }
+      if (sarvamTelephonyEndpoint.trim().length > 0) {
+        config.telephonyEndpoint = sarvamTelephonyEndpoint.trim();
+      }
+      if (sarvamWhatsappEndpoint.trim().length > 0) {
+        config.whatsappEndpoint = sarvamWhatsappEndpoint.trim();
+      }
+      if (sarvamBatchEndpoint.trim().length > 0) {
+        config.batchEndpoint = sarvamBatchEndpoint.trim();
+      }
+      if (defaultWhatsappUserId.trim().length > 0) {
+        config.whatsappUserId = defaultWhatsappUserId.trim();
+      }
+    }
+
+    if (isVapi) {
+      config.phoneNumberId = vapiPhoneNumberId.trim();
+      if (vapiBaseUrl.trim().length > 0) {
+        config.baseUrl = vapiBaseUrl.trim();
+      }
+      if (vapiTelephonyEndpoint.trim().length > 0) {
+        config.telephonyEndpoint = vapiTelephonyEndpoint.trim();
+      }
+      if (vapiWhatsappEndpoint.trim().length > 0) {
+        config.whatsappEndpoint = vapiWhatsappEndpoint.trim();
+      }
+      if (vapiBatchIntervalMs.trim().length > 0) {
+        const parsed = Number(vapiBatchIntervalMs);
+        if (!Number.isNaN(parsed) && parsed >= 0) {
+          config.batchIntervalMs = parsed;
+        }
+      }
+      if (defaultWhatsappUserId.trim().length > 0) {
+        config.whatsappUserId = defaultWhatsappUserId.trim();
+      }
+    }
+
     const action: RoutingRuleAction = {
       type: "VOICE_PROVIDER",
       provider,
       agentId,
+      config: Object.keys(config).length > 0 ? config : undefined,
     };
 
     onSave({
@@ -116,14 +228,14 @@ export function CreateRoutingRuleDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[800px] md:max-w-[950px] p-0 gap-0 overflow-hidden h-[600px] md:h-[650px]">
-        <div className="grid grid-cols-[280px_1fr] h-full">
+      <DialogContent className="max-w-[95vw] sm:max-w-[800px] md:max-w-[950px] p-0 gap-0 overflow-hidden h-[92vh] md:h-[650px] max-h-[92vh]">
+        <div className="grid grid-cols-[280px_1fr] h-full min-h-0">
           {/* Left: Stepper Sidebar */}
           <StepperSidebar steps={STEPS} currentStep={step} />
 
           {/* Right: Step Content */}
-          <div className="flex flex-col h-full bg-background">
-            <div className="flex-1 overflow-y-auto p-8">
+          <div className="flex flex-col h-full min-h-0 bg-background overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-y-auto vt-scrollbar p-8">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={step}
@@ -188,6 +300,214 @@ export function CreateRoutingRuleDialog({
                             </div>
                             <p className="text-[10px] text-muted-foreground">This ID should exist in your chosen provider's dashboard.</p>
                          </div>
+
+                         {usesTransportConfig && (
+                           <>
+                             <div className="space-y-2 rounded-xl border bg-muted/20 p-3">
+                               <Label>Call Channel</Label>
+                               <Select value={transport} onValueChange={(v) => setTransport(v as "telephony" | "whatsapp")}>
+                                 <SelectTrigger>
+                                   <SelectValue />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                   <SelectItem value="telephony">Telephony Voice Call</SelectItem>
+                                   <SelectItem value="whatsapp">WhatsApp Voice Call</SelectItem>
+                                 </SelectContent>
+                               </Select>
+                               <p className="text-[10px] text-muted-foreground">
+                                 Choose how {isElevenLabs ? "ElevenLabs" : isSarvam ? "Sarvam" : "Vapi"} should place calls for this rule.
+                               </p>
+                             </div>
+
+                             {isElevenLabs && transport === "telephony" ? (
+                               <div className="space-y-2">
+                                 <Label>Agent Phone Number ID</Label>
+                                 <Input
+                                   value={agentPhoneNumberId}
+                                   onChange={(e) => setAgentPhoneNumberId(e.target.value)}
+                                   placeholder="e.g. pn_abc123"
+                                 />
+                                 <p className="text-[10px] text-muted-foreground">Required for ElevenLabs telephony endpoint.</p>
+                               </div>
+                             ) : isElevenLabs && transport === "whatsapp" ? (
+                               <div className="space-y-3 rounded-xl border vt-whatsapp-panel p-3">
+                                 <div className="flex items-center gap-2">
+                                   <MessageCircle className="size-4" />
+                                   <p className="text-xs font-bold uppercase tracking-wide vt-whatsapp-chip px-1.5 py-0.5 rounded-sm">WhatsApp Voice Setup</p>
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>WhatsApp Phone Number ID</Label>
+                                   <Input
+                                     value={whatsappPhoneNumberId}
+                                     onChange={(e) => setWhatsappPhoneNumberId(e.target.value)}
+                                     placeholder="e.g. wpn_abc123"
+                                   />
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>Permission Template Name</Label>
+                                   <Input
+                                     value={whatsappTemplateName}
+                                     onChange={(e) => setWhatsappTemplateName(e.target.value)}
+                                     placeholder="e.g. call_permission_template"
+                                   />
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>Template Language Code</Label>
+                                   <Input
+                                     value={whatsappTemplateLanguageCode}
+                                     onChange={(e) => setWhatsappTemplateLanguageCode(e.target.value)}
+                                     placeholder="e.g. en_US"
+                                   />
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>Default WhatsApp User ID (Optional)</Label>
+                                   <Input
+                                     value={defaultWhatsappUserId}
+                                     onChange={(e) => setDefaultWhatsappUserId(e.target.value)}
+                                     placeholder="e.g. 15551234567"
+                                   />
+                                   <p className="text-[10px] text-muted-foreground">
+                                     If left empty, you can provide user ID while triggering a specific call.
+                                   </p>
+                                 </div>
+                               </div>
+                             ) : isSarvam ? (
+                               <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
+                                 <div className="flex items-center gap-2">
+                                   <MessageCircle className="size-4" />
+                                   <p className="text-xs font-bold uppercase tracking-wide">Sarvam Orchestrator Settings</p>
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>Orchestrator Base URL (Optional)</Label>
+                                   <Input
+                                     value={sarvamOrchestratorBaseUrl}
+                                     onChange={(e) => setSarvamOrchestratorBaseUrl(e.target.value)}
+                                     placeholder="https://your-orchestrator.example.com"
+                                   />
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>Telephony Endpoint (Optional)</Label>
+                                   <Input
+                                     value={sarvamTelephonyEndpoint}
+                                     onChange={(e) => setSarvamTelephonyEndpoint(e.target.value)}
+                                     placeholder="/v1/voice/telephony/outbound-call"
+                                   />
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>WhatsApp Endpoint (Optional)</Label>
+                                   <Input
+                                     value={sarvamWhatsappEndpoint}
+                                     onChange={(e) => setSarvamWhatsappEndpoint(e.target.value)}
+                                     placeholder="/v1/voice/whatsapp/outbound-call"
+                                   />
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>Batch Endpoint (Optional)</Label>
+                                   <Input
+                                     value={sarvamBatchEndpoint}
+                                     onChange={(e) => setSarvamBatchEndpoint(e.target.value)}
+                                     placeholder="/v1/voice/batch-calling/submit"
+                                   />
+                                 </div>
+
+                                 {transport === "whatsapp" && (
+                                   <div className="space-y-2">
+                                     <Label>Default WhatsApp User ID (Optional)</Label>
+                                     <Input
+                                       value={defaultWhatsappUserId}
+                                       onChange={(e) => setDefaultWhatsappUserId(e.target.value)}
+                                       placeholder="e.g. 15551234567"
+                                     />
+                                   </div>
+                                 )}
+
+                                 <p className="text-[10px] text-muted-foreground">
+                                   Sarvam adapter follows LiveKit best practices internally (STT turn detection, flush signal, low endpointing delay).
+                                 </p>
+                               </div>
+                             ) : isVapi ? (
+                               <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
+                                 <div className="flex items-center gap-2">
+                                   <MessageCircle className="size-4" />
+                                   <p className="text-xs font-bold uppercase tracking-wide">Vapi Call Settings</p>
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>Phone Number ID</Label>
+                                   <Input
+                                     value={vapiPhoneNumberId}
+                                     onChange={(e) => setVapiPhoneNumberId(e.target.value)}
+                                     placeholder="e.g. pn_abc123"
+                                   />
+                                   <p className="text-[10px] text-muted-foreground">
+                                     Required Vapi number used to place outbound calls.
+                                   </p>
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>API Base URL (Optional)</Label>
+                                   <Input
+                                     value={vapiBaseUrl}
+                                     onChange={(e) => setVapiBaseUrl(e.target.value)}
+                                     placeholder="https://api.vapi.ai"
+                                   />
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>Telephony Endpoint (Optional)</Label>
+                                   <Input
+                                     value={vapiTelephonyEndpoint}
+                                     onChange={(e) => setVapiTelephonyEndpoint(e.target.value)}
+                                     placeholder="/call"
+                                   />
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>WhatsApp Endpoint (Optional)</Label>
+                                   <Input
+                                     value={vapiWhatsappEndpoint}
+                                     onChange={(e) => setVapiWhatsappEndpoint(e.target.value)}
+                                     placeholder="/call"
+                                   />
+                                 </div>
+
+                                 <div className="space-y-2">
+                                   <Label>Batch Interval (ms)</Label>
+                                   <Input
+                                     type="number"
+                                     min="0"
+                                     value={vapiBatchIntervalMs}
+                                     onChange={(e) => setVapiBatchIntervalMs(e.target.value)}
+                                     placeholder="250"
+                                   />
+                                 </div>
+
+                                 {transport === "whatsapp" && (
+                                   <div className="space-y-2">
+                                     <Label>Default WhatsApp User/Number (Optional)</Label>
+                                     <Input
+                                       value={defaultWhatsappUserId}
+                                       onChange={(e) => setDefaultWhatsappUserId(e.target.value)}
+                                       placeholder="e.g. +15551234567"
+                                     />
+                                   </div>
+                                 )}
+
+                                 <p className="text-[10px] text-muted-foreground">
+                                   Vapi calls use assistantId from Agent ID and send rule attributes via assistantOverrides.variableValues.
+                                 </p>
+                               </div>
+                             ) : null}
+                           </>
+                         )}
                       </div>
                     </div>
                   )}
@@ -233,7 +553,7 @@ export function CreateRoutingRuleDialog({
             </div>
 
             {/* Footer */}
-            <div className="border-t border-border px-8 py-4 flex items-center justify-between bg-muted/20">
+            <div className="border-t border-border px-8 py-4 flex items-center justify-between bg-muted/20 shrink-0 sticky bottom-0">
               <p className="text-xs text-muted-foreground italic">
                 Step {step + 1} of {STEPS.length}
               </p>

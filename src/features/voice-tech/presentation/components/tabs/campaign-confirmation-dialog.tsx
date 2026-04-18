@@ -1,4 +1,4 @@
-import { AlertCircle, Play, X } from "lucide-react";
+import { AlertCircle, Play } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -28,13 +28,14 @@ export function CampaignConfirmationDialog({
 }: CampaignConfirmationDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[400px] max-h-[85vh] overflow-y-auto vt-scrollbar">
         <DialogHeader>
           <div className="size-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-4">
              <Play className="size-6 ml-0.5" />
           </div>
           <DialogTitle>Activate Rule & Start Campaign?</DialogTitle>
           <DialogDescription className="text-xs pt-2">
+            <span className="font-semibold">Rule:</span> {ruleName} <br />
             This rule matches <span className="font-bold text-foreground">{matchCount} entities</span> in your current dataset. 
             Activating it will initiate outbound calls for all matching records.
           </DialogDescription>

@@ -1,4 +1,4 @@
-import type { AttributeType } from "../../types";
+import type { AttributeType } from "../../../types";
 
 const TYPE_STYLES: Record<AttributeType, { bg: string; text: string }> = {
   string: { bg: "bg-blue-500/10", text: "text-blue-600" },

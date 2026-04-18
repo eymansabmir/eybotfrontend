@@ -43,6 +43,13 @@ const mainNav = [
 const footerNav = [
   { label: "Settings", to: "/settings", icon: Settings2Icon },
 ]
+const EyLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M4 6h6v2.2H6.4v3.2h3.5v2.2H6.4v3.8H10V19.6H4V6z" />
+    <path d="M20 6h-2.5l-3.2 6.5L11.1 6H8.6l4.8 9.5v4.1h2.4v-4.1L20 6z" />
+  </svg>
+)
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
 
@@ -57,12 +64,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center gap-3 px-2">
-            <div className="grid size-9 place-items-center rounded-xl bg-primary/10 text-primary">
-              <BotIcon className="size-4" />
+            <div className="grid size-9 place-items-center rounded-xl bg-[#FFE600] text-black shadow-sm">
+              <EyLogo className="size-5" />
             </div>
             <div className="leading-tight">
               <p className="text-sm font-semibold">Ernst & Young</p>
-              <p className="text-xs text-muted-foreground">Shape the future with confidence</p>
+              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Workspace</p>
             </div>
           </div>
         </SidebarHeader>
@@ -93,29 +100,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-
-          {/* <SidebarSeparator /> */}
-
-          {/* <SidebarGroup>
-            <SidebarGroupLabel>Shortcuts</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Flow Builder" disabled>
-                    <SparklesIcon className="size-4" />
-                    <span>Flow Builder</span>
-                    <Badge variant="outline">Beta</Badge>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Settings" disabled>
-                    <Settings2Icon className="size-4" />
-                    <span>Workspace Settings</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup> */}
         </SidebarContent>
 
         <SidebarFooter>
@@ -170,13 +154,12 @@ function Header() {
       <div className="mx-auto flex w-full max-w-6xl items-center gap-4">
         <SidebarTrigger />
         <Separator orientation="vertical" className="h-6" />
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">EY</p>
-          <p className="font-medium">Ernst & Young</p>
-        </div>
+        {/* Removed duplicate EY text as requested to keep only one EY icon in the navbar/sidebar */}
         <div className="ml-auto flex items-center gap-2">
           <Input className="w-56" placeholder="Quick search" />
-          <Button size="sm">New flow</Button>
+          <Button size="sm" className="bg-[#FFE600] text-black hover:brightness-95 transition-all shadow-sm">
+            New flow
+          </Button>
           <Button variant="ghost" size="icon">
             <BellIcon className="size-4" />
           </Button>

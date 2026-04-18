@@ -37,6 +37,7 @@ export const NodeType = {
   ANTHROPIC: 'anthropic',
   DEEPSEEK: 'deepseek',
   VARIABLE_MANAGER: 'variable_manager',
+  MEDIA_CONDITIONAL: 'media_conditional',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];

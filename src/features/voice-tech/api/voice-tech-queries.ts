@@ -124,12 +124,12 @@ export function useExecuteRouting() {
 }
 
 // ─── Query Entities by Rule ──────────────────────────────────────────
-import type { RoutingConditionNode } from "../types";
+import type { RoutingCondition } from "../types";
 
 export function useQueryEntitiesByRule(params: {
   tenantId: string;
   entityType: string;
-  conditions: RoutingConditionNode | null;
+  conditions: RoutingCondition | null;
   enabled: boolean;
 }) {
   return useQuery({
@@ -167,7 +167,7 @@ export function useUpsertRoutingRule(tenantId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: voiceTechApi.upsertRoutingRule,
-    onSuccess: (rule) => {
+    onSuccess: () => {
       toast.success("Rule saved successfully");
       // Invalidate the specific config AND the list
       qc.invalidateQueries({ 

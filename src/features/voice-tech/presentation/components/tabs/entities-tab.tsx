@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Database, Plus, Tag, ChevronRight, Upload } from "lucide-react";
+import { Database, Plus, Tag, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,

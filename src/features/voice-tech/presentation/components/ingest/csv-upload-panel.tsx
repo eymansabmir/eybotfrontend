@@ -51,7 +51,7 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
   const ingestMutation = useIngestFileAsync(tenantId);
   const { upload, state: uploadState, reset: resetUpload } = useFileUpload({ 
     purpose: "campaign_csv",
-    onSuccess: (url, result) => {
+    onSuccess: (_url, result) => {
         // Once uploaded, trigger ingestion with the real path
         ingestMutation.mutate({ 
             tenantId, 

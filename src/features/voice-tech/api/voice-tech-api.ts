@@ -7,7 +7,8 @@ import type {
   Entity,
   IngestFileBody,
   RoutingRule,
-  RoutingRuleAction,
+  RoutingExecutionResult,
+  ToggleRuleActiveResponse,
 } from "../types";
 
 const ENTITIES = "/voice-tech/entities";
@@ -113,10 +114,13 @@ export const voiceTechApi = {
     tenantId: string;
     routingConfigId: string;
     attributes: Record<string, unknown>;
-  }): Promise<{ matchedRuleId: string | null; action: RoutingRuleAction }> => {
+    userId?: string;
+    phone?: string;
+    executeProvider?: boolean;
+  }): Promise<RoutingExecutionResult> => {
     const { data } = await apiClient.post<{ 
       success: boolean; 
-      result: { matchedRuleId: string | null; action: RoutingRuleAction } 
+      result: RoutingExecutionResult 
     }>(
       `${ROUTING}/execute`,
       payload
@@ -156,6 +160,26 @@ export const voiceTechApi = {
       payload
     );
     return data.rule;
+  },
+
+  /** Trigger a campaign run for a rule and return campaign stats */
+  runRuleCampaign: async (payload: {
+    ruleId: string;
+    tenantId: string;
+    entityType: string;
+  }): Promise<ToggleRuleActiveResponse> => {
+    const { data } = await apiClient.post<{ success: boolean } & ToggleRuleActiveResponse>(
+      `${ROUTING}/rules/toggle-active`,
+      {
+        ...payload,
+        isActive: true,
+        triggerCampaign: true,
+      }
+    );
+    return {
+      rule: data.rule,
+      campaign: data.campaign,
+    };
   },
 
   /** Delete a routing rule */

@@ -92,7 +92,7 @@ export function SimulationDialog({
       if (!v) reset();
       onOpenChange(v);
     }}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[88vh] overflow-y-auto vt-scrollbar">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
              <div className="size-8 rounded-lg bg-primary/10 grid place-items-center text-primary">

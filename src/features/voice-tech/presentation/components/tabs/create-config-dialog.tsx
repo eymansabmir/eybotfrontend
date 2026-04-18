@@ -52,7 +52,7 @@ export function CreateConfigDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto vt-scrollbar">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
              <div className="size-8 rounded-lg bg-primary/10 grid place-items-center text-primary">

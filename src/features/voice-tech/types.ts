@@ -66,6 +66,36 @@ export interface RoutingRule {
   updatedAt: string;
 }
 
+export interface VoiceProviderExecutionResult {
+  accepted: boolean;
+  providerReference?: string;
+  message?: string;
+}
+
+export interface RoutingExecutionResult {
+  matchedRuleId: string | null;
+  action: RoutingRuleAction;
+  providerResult?: VoiceProviderExecutionResult;
+}
+
+export interface VoiceCampaignResult {
+  total: number;
+  initiated: number;
+  failed: number;
+  details: Array<{
+    entityId: string;
+    phone?: string;
+    success: boolean;
+    ref?: string;
+    error?: string;
+  }>;
+}
+
+export interface ToggleRuleActiveResponse {
+  rule: RoutingRule;
+  campaign?: VoiceCampaignResult | null;
+}
+
 /** GET /routing list — no rules array (summary only) */
 export interface RoutingConfigSummary {
   id: string;

@@ -25,6 +25,7 @@ import { CreateRoutingRuleDialog } from "../rule-builder/create-rule-dialog";
 import { SimulationDialog } from "./simulation-dialog";
 import { CreateConfigDialog } from "./create-config-dialog";
 import { EntityMatchesDialog } from "./entity-matches-dialog";
+import { RuleCallLaunchpadDialog } from "./rule-call-launchpad-dialog";
 import { 
   useRoutingConfigs, 
   useRoutingConfig, 
@@ -53,6 +54,9 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
   const [simulationInitialData, setSimulationInitialData] = useState<Record<string, string> | undefined>(undefined);
   const [confirmCampaignOpen, setConfirmCampaignOpen] = useState(false);
   const [pendingActiveRule, setPendingActiveRule] = useState<RoutingRule | null>(null);
+  const [isCallLaunchpadOpen, setIsCallLaunchpadOpen] = useState(false);
+  const [activeRuleForCall, setActiveRuleForCall] = useState<RoutingRule | null>(null);
+  const [callLaunchMode, setCallLaunchMode] = useState<"single" | "bulk">("single");
   
   const { data: configs, isLoading: isConfigsLoading } = useRoutingConfigs(tenantId);
   const { data: fullConfig, isLoading: isRulesLoading } = useRoutingConfig(selectedConfigId, tenantId);
@@ -130,6 +134,18 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
   const handleQueryEntities = (rule: RoutingRule) => {
     setActiveRuleForMatches(rule);
     setIsMatchesOpen(true);
+  };
+
+  const handleSingleCall = (rule: RoutingRule) => {
+    setCallLaunchMode("single");
+    setActiveRuleForCall(rule);
+    setIsCallLaunchpadOpen(true);
+  };
+
+  const handleBulkCall = (rule: RoutingRule) => {
+    setCallLaunchMode("bulk");
+    setActiveRuleForCall(rule);
+    setIsCallLaunchpadOpen(true);
   };
 
   return (
@@ -239,6 +255,8 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
             rules={fullConfig?.rules ?? []} 
             onExecuteTest={handleExecuteTest}
             onQueryEntities={handleQueryEntities}
+            onSingleCall={handleSingleCall}
+            onBulkCall={handleBulkCall}
             onToggleActive={handleToggleActive}
             onDelete={handleDeleteRule}
           />
@@ -287,6 +305,21 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
         matchCount={entitiesCount?.length ?? 0}
         isPending={toggleRule.isPending}
         onConfirm={handleConfirmCampaign}
+      />
+
+      <RuleCallLaunchpadDialog
+        open={isCallLaunchpadOpen}
+        onOpenChange={(open) => {
+          setIsCallLaunchpadOpen(open);
+          if (!open) {
+            setActiveRuleForCall(null);
+          }
+        }}
+        tenantId={tenantId}
+        entityType={entityType}
+        configId={selectedConfigId}
+        rule={activeRuleForCall}
+        initialMode={callLaunchMode}
       />
     </div>
   );

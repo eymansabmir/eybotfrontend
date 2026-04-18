@@ -6,7 +6,10 @@ import {
   XSquare,
   ArrowRight,
   Trash2,
-  Copy
+  Copy,
+  Phone,
+  Users,
+  MessageCircle,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -25,6 +28,8 @@ interface RoutingRuleListProps {
   rules: RoutingRule[];
   onExecuteTest: (rule: RoutingRule) => void;
   onQueryEntities: (rule: RoutingRule) => void;
+  onSingleCall: (rule: RoutingRule) => void;
+  onBulkCall: (rule: RoutingRule) => void;
   onToggleActive: (rule: RoutingRule, active: boolean) => void;
   onDelete: (ruleId: string) => void;
 }
@@ -33,9 +38,14 @@ export function RoutingRuleList({
   rules, 
   onExecuteTest, 
   onQueryEntities,
+  onSingleCall,
+  onBulkCall,
   onToggleActive,
   onDelete
 }: RoutingRuleListProps) {
+  const getTransport = (rule: RoutingRule): "telephony" | "whatsapp" =>
+    rule.action.config?.transport === "whatsapp" ? "whatsapp" : "telephony";
+
   if (rules.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed rounded-2xl bg-muted/20">
@@ -51,7 +61,10 @@ export function RoutingRuleList({
   return (
     <div className="border rounded-2xl bg-background overflow-hidden shadow-sm">
       <div className="divide-y divide-border/60">
-        {rules.sort((a, b) => a.priority - b.priority).map((rule) => (
+        {rules.sort((a, b) => a.priority - b.priority).map((rule) => {
+          const transport = getTransport(rule);
+          const isWhatsapp = transport === "whatsapp";
+          return (
           <div key={rule.id} className="group hover:bg-muted/30 transition-all flex items-center gap-6 p-4">
             
             {/* Priority Hub */}
@@ -82,6 +95,10 @@ export function RoutingRuleList({
                   <div className="min-w-0">
                      <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none">Agent ID</p>
                      <p className="text-[11px] font-mono truncate mt-1">{rule.action.agentId}</p>
+                  <p className="text-[10px] mt-1 inline-flex items-center gap-1 rounded-full bg-background/70 border px-1.5 py-0.5">
+                    {isWhatsapp ? <MessageCircle className="size-3 text-emerald-600" /> : <Phone className="size-3 text-indigo-600" />}
+                    <span className="font-semibold">{isWhatsapp ? "WhatsApp Voice" : "Telephony"}</span>
+                  </p>
                   </div>
                </div>
             </div>
@@ -102,6 +119,14 @@ export function RoutingRuleList({
                     <DropdownMenuItem onClick={() => onQueryEntities(rule)} className="gap-2 py-2">
                       <Search className="size-4 text-blue-500" />
                       <span className="font-medium">View Entity Matches</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onSingleCall(rule)} className="gap-2 py-2">
+                      {isWhatsapp ? <MessageCircle className="size-4 text-emerald-500" /> : <Phone className="size-4 text-indigo-500" />}
+                      <span className="font-medium">{isWhatsapp ? "Call WhatsApp User" : "Call Particular User"}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onBulkCall(rule)} className="gap-2 py-2">
+                      <Users className="size-4 text-rose-500" />
+                      <span className="font-medium">{isWhatsapp ? "Bulk WhatsApp Campaign" : "Bulk Call Campaign"}</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="gap-2 py-2 text-muted-foreground">
@@ -141,7 +166,8 @@ export function RoutingRuleList({
                </DropdownMenu>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

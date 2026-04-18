@@ -40,7 +40,7 @@ export function EntityMatchesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col p-0 overflow-hidden gap-0">
+      <DialogContent className="max-w-3xl max-h-[88vh] flex flex-col p-0 overflow-hidden gap-0">
         {/* Header */}
         <DialogHeader className="px-6 pt-5 pb-4 border-b">
           <div className="flex items-center gap-3">
@@ -60,7 +60,7 @@ export function EntityMatchesDialog({
         </DialogHeader>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto vt-scrollbar">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground">
               <Loader2 className="size-6 animate-spin" />
@@ -110,7 +110,7 @@ export function EntityMatchesDialog({
             </div>
           ) : (
             /* Clean flat table — all attribute keys as columns */
-            <div className="overflow-auto max-h-[400px] border-t">
+            <div className="overflow-auto max-h-[400px] border-t vt-scrollbar">
               <table className="w-full text-sm border-collapse">
                 <thead className="sticky top-0 z-10 bg-background shadow-sm">
                   <tr className="border-b bg-muted/30">
