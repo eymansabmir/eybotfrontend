@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Handle, Position, useReactFlow } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
 import { Save, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { DEFAULT_ORG_ID } from "@/features/integrations/openai/domain/openai.constants";
 import { useHttpRequestCredentials, useHttpRequestPreview } from "@/features/integrations/http-request/hooks/use-http-request-integration";
@@ -17,7 +16,6 @@ import type { HttpRequestNodeData } from "./schema";
 
 export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { data: HttpRequestNodeData }) {
   const { setNodes } = useReactFlow();
-  const [configOpen, setConfigOpen] = useState(false);
   const [credentialsOpen, setCredentialsOpen] = useState(false);
   const [draft, setDraft] = useState<HttpRequestConfigDraft>(() => createHttpRequestConfigDraft(data));
   const [testResponseText, setTestResponseText] = useState<string | undefined>(undefined);
@@ -26,12 +24,13 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
   const credentialsQuery = useHttpRequestCredentials(DEFAULT_ORG_ID);
   const previewMutation = useHttpRequestPreview();
 
-  const openConfig = () => {
-    setDraft(createHttpRequestConfigDraft(data));
-    setTestResponseText(undefined);
-    setResponsePathSuggestions([]);
-    setConfigOpen(true);
-  };
+  useEffect(() => {
+    if (selected) {
+      setDraft(createHttpRequestConfigDraft(data));
+      setTestResponseText(undefined);
+      setResponsePathSuggestions([]);
+    }
+  }, [selected, data]);
 
   const updateNodeData = (newData: Partial<HttpRequestNodeData>) => {
     setNodes((nodes) =>
@@ -64,7 +63,6 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
         proxyCredentialsId: draft.proxyCredentialsId || undefined,
       });
 
-      setConfigOpen(false);
       toast.success("HTTP Request node updated");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Invalid JSON input");
@@ -108,92 +106,96 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
   const isConfigured = !!data.url;
 
   return (
-    <>
+    <div className="relative">
+      {/* 1) Condensed Block Face */}
       <div
-        onClick={openConfig}
-        className={cn(
-          "group relative flex min-w-40 max-w-60 cursor-pointer rounded-lg border bg-background p-3 transition-all hover:shadow-md",
-          selected ? "border-primary ring-1 ring-primary" : "border-border shadow-sm",
-        )}
+          className={cn(
+              "flex flex-col justify-center relative w-[220px] min-h-[85px] rounded-xl border p-3.5 select-none transition-all cursor-pointer",
+              "bg-[var(--node-bg)] border-[var(--border-dim)] hover:shadow-md",
+              selected && "border-2 border-[var(--ey-yellow)] shadow-[0_0_10px_rgba(255,230,0,0.15)] -m-[1px]"
+          )}
       >
-        <Handle
-          type="target"
-          position={Position.Top}
-          className="size-2 border-2 border-background bg-muted-foreground transition-transform! group-hover:scale-125"
-        />
+          <Handle
+              type="target"
+              position={Position.Top}
+              className="h-3 w-3 border-2 border-[var(--border-dim)] bg-background shadow-sm hover:scale-125 transition-transform"
+          />
 
-        <div className="flex w-full flex-col gap-2">
-          <div className="flex items-start gap-2">
-            <div className="mt-0.5 shrink-0 rounded bg-amber-100 p-1 dark:bg-amber-900/40">
-              <Zap className="size-3.5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className={cn(
-                "truncate text-sm font-medium",
-                isConfigured ? "text-foreground" : "text-muted-foreground"
-              )}>
-                {isConfigured ? `${data.method} Request` : "Configure..."}
-              </p>
-              {data.url && (
-                <p className="truncate text-[10px] text-muted-foreground font-mono">
-                  {data.url}
-                </p>
-              )}
-            </div>
+          <div className="flex flex-col gap-2.5 w-full">
+              <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300">
+                      <Zap className="size-4" />
+                  </div>
+                  <span className="text-sm font-semibold truncate text-foreground leading-none pr-1">HTTP Request</span>
+              </div>
+
+              <div className="min-w-0 flex flex-col mt-0.5">
+                  <div className="bg-black/5 dark:bg-black/20 rounded-md p-2 border border-[var(--border-dim)] mt-0.5">
+                        <span className="text-[11px] text-foreground/70 line-clamp-3 leading-snug whitespace-pre-wrap">
+                            {isConfigured ? `${data.method} Request` : "Configure..."}
+                        </span>
+                    </div>
+                  
+                  {data.url && (
+                      <div className="text-[9px] text-muted-foreground tracking-wide mt-1 max-w-full truncate font-mono">
+                          {data.url}
+                      </div>
+                  )}
+
+                  {data.responseMapping && data.responseMapping.length > 0 && (
+                      <div className="text-[10px] text-[var(--ey-yellow)] tracking-wide font-bold mt-1 max-w-full truncate">
+                          ➔ @{data.responseMapping[0].variableName}{data.responseMapping.length > 1 ? ', ...' : ''}
+                      </div>
+                  )}
+              </div>
           </div>
 
-          {data.responseMapping && data.responseMapping.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 overflow-hidden border-t border-border/40 pt-2">
-              <span className="shrink-0 text-[8px] font-medium italic text-muted-foreground tracking-wider">Set</span>
-              {data.responseMapping.map((m, i) => (
-                <span key={i} className="truncate rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-                  {m.variableName}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id="default"
-          className="size-2 border-2 border-background bg-primary transition-transform! group-hover:scale-125"
-        />
+          <Handle
+              type="source"
+              position={Position.Bottom}
+              className="h-3 w-3 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
+          />
       </div>
 
-      <Dialog open={configOpen} onOpenChange={setConfigOpen}>
-        <DialogContent className="flex max-h-[85vh] max-w-sm flex-col overflow-hidden p-0" onClick={(e) => e.stopPropagation()}>
-          <DialogHeader className="px-5 pt-5">
-            <DialogTitle className="flex items-center gap-2 text-base">
-               <Zap className="size-5 text-amber-500" />
-               HTTP Request
-            </DialogTitle>
-            <DialogDescription className="px-5 text-xs text-muted-foreground">
-              Configure request details and response mapping.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
-            <HttpRequestConfigForm
-              draft={draft}
-              credentials={credentialsQuery.data ?? []}
-              onDraftChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
-              onConnectAccount={() => setCredentialsOpen(true)}
-              onTestRequest={onTestRequest}
-              testingRequest={previewMutation.isPending}
-              testResponseText={testResponseText}
-              responsePathSuggestions={responsePathSuggestions}
-            />
-          </div>
-          <div className="flex justify-end border-t border-border/50 px-5 py-3 bg-muted/20">
-            <Button onClick={onSaveConfig} size="sm" className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium">
-              <Save className="size-3.5" />
-              Save config
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* 2) Popover Configuration Panel */}
+      {selected && (
+          <div 
+              className="absolute top-0 left-[230px] w-[380px] bg-[var(--node-bg)] border border-[var(--border-dim)] rounded-xl shadow-2xl z-[100] cursor-auto nodrag nopan flex flex-col overflow-hidden"
+          >
+              <div className="flex items-center justify-between border-b border-[var(--border-dim)] px-4 py-3 bg-muted/20">
+                  <div className="flex items-center gap-2">
+                      <Zap className="size-4 text-muted-foreground" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Configure HTTP Request</span>
+                  </div>
+              </div>
+              
+              <div className="flex-1 max-h-[500px] overflow-y-auto custom-scrollbar p-4 text-foreground">
+                  <HttpRequestConfigForm
+                      draft={draft}
+                      credentials={credentialsQuery.data ?? []}
+                      onDraftChange={(patch) => setDraft((prev) => ({ ...prev, ...patch }))}
+                      onConnectAccount={() => setCredentialsOpen(true)}
+                      onTestRequest={onTestRequest}
+                      testingRequest={previewMutation.isPending}
+                      testResponseText={testResponseText}
+                      responsePathSuggestions={responsePathSuggestions}
+                  />
+              </div>
 
+              <div className="flex justify-end border-t border-[var(--border-dim)] px-4 py-3 bg-muted/10">
+                  <Button 
+                      onClick={onSaveConfig} 
+                      size="sm" 
+                      className="h-8 gap-1.5 font-bold shadow-sm bg-[var(--ey-yellow)] text-black hover:brightness-95 transition-all w-full"
+                  >
+                      <Save className="size-3.5" />
+                      Save Configuration
+                  </Button>
+              </div>
+          </div>
+      )}
+
+      {/* Global Credentials Dialog */}
       <HttpRequestCredentialsDialog
         orgId={DEFAULT_ORG_ID}
         open={credentialsOpen}
@@ -202,7 +204,7 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
           setDraft((prev) => ({ ...prev, credentialId: credential.id }));
         }}
       />
-    </>
+    </div>
   );
 }
 

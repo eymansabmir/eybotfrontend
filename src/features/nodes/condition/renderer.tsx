@@ -1,9 +1,11 @@
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
 import { GitBranch, Plus, Trash2, ChevronDown } from "lucide-react";
+
 import type { ConditionNodeData, ConditionExpression, Comparator } from "./schema";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
+import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 const COMPARATORS: { value: Comparator; label: string }[] = [
     { value: "eq", label: "=" },
@@ -37,17 +39,17 @@ function LeafEditor({
     depth: number;
 }) {
     return (
-        <div className={cn("flex items-center gap-1.5 rounded-lg border border-border/50 bg-background/60 p-1.5", depth > 0 && "ml-3")}>
+        <div className={cn("flex items-center gap-1.5 rounded-lg border border-[var(--border-dim)] bg-background p-1.5 my-1.5", depth > 0 && "ml-3")}>
             <input
                 type="text"
-                className="w-24 bg-muted/50 rounded-md border border-border/40 px-2 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-primary/20"
+                className="flex-1 bg-muted/30 rounded border border-[var(--border-dim)] px-2 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
                 value={expr.variable}
                 placeholder="{{variable}}"
                 onChange={(e) => onChange({ ...expr, variable: e.target.value })}
             />
-            <div className="relative">
+            <div className="relative w-24">
                 <select
-                    className="appearance-none bg-muted/50 rounded-md border border-border/40 pl-2 pr-5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
+                    className="w-full appearance-none bg-muted/30 rounded border border-[var(--border-dim)] pl-2 pr-5 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] cursor-pointer truncate"
                     value={expr.comparator}
                     onChange={(e) => onChange({ ...expr, comparator: e.target.value as Comparator })}
                 >
@@ -60,14 +62,14 @@ function LeafEditor({
             {!NO_VALUE_COMPARATORS.has(expr.comparator) && (
                 <input
                     type="text"
-                    className="w-20 bg-muted/50 rounded-md border border-border/40 px-2 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-primary/20"
+                    className="flex-1 bg-muted/30 rounded border border-[var(--border-dim)] px-2 py-1 text-[10px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
                     value={expr.value ?? ""}
                     placeholder="value"
                     onChange={(e) => onChange({ ...expr, value: e.target.value })}
                 />
             )}
             {onRemove && (
-                <button onClick={onRemove} className="text-muted-foreground hover:text-destructive transition-colors shrink-0">
+                <button onClick={onRemove} className="text-muted-foreground hover:text-destructive transition-colors shrink-0 p-0.5">
                     <Trash2 size={10} />
                 </button>
             )}
@@ -117,25 +119,25 @@ function GroupEditor({
     const isAnd = expr.operator === "AND";
 
     return (
-        <div className={cn("rounded-xl border p-2 space-y-1.5", depth === 0 ? "border-border/50 bg-muted/10" : "border-border/30 bg-muted/20 ml-3")}>
-            <div className="flex items-center gap-2">
+        <div className={cn("rounded-lg border p-2 space-y-1 my-1.5", depth === 0 ? "border-[var(--border-dim)] bg-muted/5" : "border-[var(--border-dim)] bg-muted/10 ml-3")}>
+            <div className="flex items-center gap-2 mb-1.5">
                 <button
                     onClick={toggleOperator}
                     className={cn(
-                        "rounded-md px-2 py-0.5 text-[9px] font-bold transition-colors",
+                        "rounded px-2 py-0.5 text-[9px] font-bold transition-colors select-none",
                         isAnd
-                            ? "bg-blue-500/15 text-blue-600 hover:bg-blue-500/25"
-                            : "bg-amber-500/15 text-amber-600 hover:bg-amber-500/25"
+                            ? "bg-zinc-500/10 text-zinc-600 dark:text-zinc-300 hover:bg-blue-500/20"
+                            : "bg-zinc-500/10 text-zinc-600 dark:text-zinc-300 hover:bg-amber-500/20"
                     )}
                 >
                     {expr.operator}
                 </button>
-                <span className="text-[9px] text-muted-foreground">
-                    {isAnd ? "all conditions must match" : "any condition must match"}
+                <span className="text-[9px] text-muted-foreground italic">
+                    {isAnd ? "all must match" : "any can match"}
                 </span>
                 <div className="flex-1" />
                 {onRemove && (
-                    <button onClick={onRemove} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <button onClick={onRemove} className="text-muted-foreground hover:text-destructive transition-colors p-0.5">
                         <Trash2 size={10} />
                     </button>
                 )}
@@ -161,19 +163,19 @@ function GroupEditor({
                 </div>
             ))}
 
-            <div className="flex items-center gap-2 pt-0.5">
+            <div className="flex items-center gap-3 pt-1 pl-1">
                 <button
                     onClick={addLeaf}
-                    className="flex items-center gap-1 text-[9px] text-primary hover:text-primary/80 font-medium transition-colors"
+                    className="flex items-center gap-1 text-[9px] text-[var(--ey-yellow)] hover:underline font-bold transition-colors"
                 >
-                    <Plus size={9} /> Condition
+                    <Plus size={8} /> Condition
                 </button>
                 {depth < 2 && (
                     <button
                         onClick={addGroup}
                         className="flex items-center gap-1 text-[9px] text-muted-foreground hover:text-foreground font-medium transition-colors"
                     >
-                        <Plus size={9} /> Group
+                        <Plus size={8} /> Group
                     </button>
                 )}
             </div>
@@ -195,70 +197,81 @@ export function ConditionNodeRenderer({ id, data, selected }: NodeProps & { data
     const expr = data.expression;
     const rootIsGroup = expr && !isLeaf(expr);
 
+    const ensureCondition = () => {
+        if (!expr) {
+            updateExpression({ operator: "AND", rules: [{ variable: "", comparator: "eq", value: "" }] });
+        }
+    };
+
     return (
-        <div
-            className={cn(
-                "group relative min-w-[300px] rounded-2xl border bg-card p-0 transition-all hover:shadow-xl",
-                selected ? "border-primary shadow-lg ring-4 ring-primary/10" : "border-border"
-            )}
-        >
-            <Handle
-                type="target"
-                position={Position.Top}
-                className="h-4 w-4 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
-            />
-
-            <div className="flex items-center gap-2 border-b border-border/50 bg-muted/30 px-4 py-2.5 rounded-t-2xl">
-                <div className="rounded-lg bg-blue-500/10 p-1.5 text-blue-500">
-                    <GitBranch size={14} />
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">
-                    Condition
-                </span>
-                <div className="ml-auto flex items-center gap-2">
-                    <span className="rounded-md bg-green-500/10 px-2 py-0.5 text-[9px] font-bold text-green-600">Yes</span>
-                    <span className="rounded-md bg-red-500/10 px-2 py-0.5 text-[9px] font-bold text-red-600">No</span>
-                </div>
-            </div>
-
-            <div className="p-4">
-                {expr ? (
-                    rootIsGroup ? (
-                        <GroupEditor
-                            expr={expr as { operator: "AND" | "OR"; rules: ConditionExpression[] }}
-                            onChange={updateExpression}
-                            depth={0}
+        <NodeFrame
+            selected={selected}
+            icon={<GitBranch size={16} />}
+            title="Condition Logic"
+            popoverTitle="Configure Condition"
+            summary={expr ? "Condition rules configured" : "No condition configured"}
+            showPopover={selected}
+            showBottomHandle={false}
+            popoverClassName="w-[360px]"
+            compactBody={
+                <div className="flex flex-col gap-1.5 w-full">
+                    <div className="relative bg-background rounded px-2 py-1 text-[10px] font-bold text-foreground border border-[var(--border-dim)] shadow-sm flex items-center">
+                        <div className="w-1.5 h-1.5 rounded bg-green-500 mr-2" />
+                        <span className="truncate pr-2">Condition Met</span>
+                        <Handle
+                            type="source"
+                            id="yes"
+                            position={Position.Right}
+                            className="right-[-18px] top-1/2 -translate-y-1/2 h-3 w-3 bg-muted-foreground border-2 border-background hover:bg-green-500 transition-colors"
                         />
+                    </div>
+                    <div className="relative bg-muted/10 rounded px-2 py-1 flex items-center">
+                        <div className="w-1.5 h-1.5 rounded bg-red-500/50 mr-2" />
+                        <span className="truncate text-[9px] text-muted-foreground/80 font-medium">Otherwise / No</span>
+                        <Handle
+                            type="source"
+                            id="no"
+                            position={Position.Right}
+                            className="right-[-18px] top-1/2 -translate-y-1/2 h-3 w-3 bg-muted-foreground/30 border-2 border-background border-dashed hover:bg-red-500 transition-colors"
+                        />
+                    </div>
+                </div>
+            }
+            popoverBody={
+                <>
+                    {expr ? (
+                        rootIsGroup ? (
+                            <GroupEditor
+                                expr={expr as { operator: "AND" | "OR"; rules: ConditionExpression[] }}
+                                onChange={updateExpression}
+                                depth={0}
+                            />
+                        ) : (
+                            <LeafEditor
+                                expr={expr as { variable: string; comparator: Comparator; value?: any }}
+                                onChange={updateExpression}
+                                depth={0}
+                            />
+                        )
                     ) : (
-                        <LeafEditor
-                            expr={expr as { variable: string; comparator: Comparator; value?: any }}
-                            onChange={updateExpression}
-                            depth={0}
-                        />
-                    )
-                ) : (
-                    <div className="text-[10px] text-muted-foreground italic text-center py-2">No condition set</div>
-                )}
-            </div>
+                        <div className="flex flex-col items-center justify-center p-6 text-center border border-dashed border-[var(--border-dim)] rounded-lg bg-muted/10">
+                            <span className="text-[10px] text-muted-foreground mb-3">No condition configured</span>
+                            <button
+                                onClick={ensureCondition}
+                                className="px-3 py-1.5 rounded-md bg-[var(--ey-yellow)] text-black text-[10px] font-bold hover:brightness-95 transition-all"
+                            >
+                                Add Condition
+                            </button>
+                        </div>
+                    )}
 
-            {/* Yes branch */}
-            <Handle
-                type="source"
-                position={Position.Right}
-                id="yes"
-                style={{ top: "40%" }}
-                className="h-4 w-4 border-2 border-background bg-green-500 shadow-sm hover:scale-125 transition-transform"
-            />
-            {/* No branch */}
-            <Handle
-                type="source"
-                position={Position.Right}
-                id="no"
-                style={{ top: "60%" }}
-                className="h-4 w-4 border-2 border-background bg-red-500 shadow-sm hover:scale-125 transition-transform"
-            />
-
-            <div className="absolute inset-y-0 -left-px w-[2px] scale-y-0 bg-blue-500 transition-transform group-hover:scale-y-100 rounded-l-2xl" />
-        </div>
+                    <div className="pt-2 border-t border-[var(--border-dim)]">
+                        <p className="text-[9px] text-muted-foreground leading-relaxed pr-2">
+                            When a user hits this node, if the condition evaluates to <span className="text-green-500 font-bold">True</span>, they follow the <b>Condition Met</b> path. Otherwise, they follow the <b>Otherwise</b> path.
+                        </p>
+                    </div>
+                </>
+            }
+        />
     );
 }

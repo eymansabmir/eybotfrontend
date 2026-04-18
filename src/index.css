@@ -5,8 +5,91 @@
 @custom-variant dark (&:is(.dark *));
 @plugin "tailwindcss-animate";
 
+@font-face {
+  font-family: "EYInterstate";
+  src: url("/fonts/ey-interstate/EYINTERSTATE-REGULAR.TTF") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EYInterstate";
+  src: url("/fonts/ey-interstate/EYINTERSTATE-ITALIC.TTF") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EYInterstate";
+  src: url("/fonts/ey-interstate/EYINTERSTATE-LIGHT.TTF") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EYInterstate";
+  src: url("/fonts/ey-interstate/EYINTERSTATE-LIGHTITALIC.TTF") format("truetype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EYInterstate";
+  src: url("/fonts/ey-interstate/EYINTERSTATE-LIGHTBOLD.TTF") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EYInterstate";
+  src: url("/fonts/ey-interstate/EYINTERSTATE-LIGHTBOLDIT.TTF") format("truetype");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EYInterstate";
+  src: url("/fonts/ey-interstate/EYINTERSTATE-LIGHTBOLD.TTF") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EYInterstate";
+  src: url("/fonts/ey-interstate/EYINTERSTATE-LIGHTBOLDIT.TTF") format("truetype");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EYInterstate";
+  src: url("/fonts/ey-interstate/EYINTERSTATE-BOLD.TTF") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EYInterstate";
+  src: url("/fonts/ey-interstate/EYINTERSTATE-BOLDITALIC.TTF") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 @theme {
-  --font-sans: "Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif";
+  --font-sans: "EYInterstate";
+  --font-serif: "EYInterstate";
+  --font-mono: "EYInterstate";
+  --font-display: "EYInterstate";
 }
 
 
@@ -59,25 +142,32 @@
   --sidebar-accent-foreground: oklch(0.23 0.02 250);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.93 0.19 98);
+
+  /* EY Revamp Custom Tokens (Light Mode) */
+  --ey-yellow: #FFE600;
+  --node-bg: #FFFFFF;
+  --canvas-bg: #F9FAFB;
+  --border-dim: #E5E7EB;
 }
 
 .dark {
-  --background: oklch(0.23 0.02 250); /* EY black base */
+  /* Global EY dark palette: canvas as app background, node-bg as all elevated surfaces */
+  --background: var(--canvas-bg);
   --foreground: oklch(0.99 0 0);
 
-  --card: oklch(0.28 0.02 250);
+  --card: var(--node-bg);
   --card-foreground: oklch(0.99 0 0);
 
-  --popover: oklch(0.28 0.02 250);
+  --popover: var(--node-bg);
   --popover-foreground: oklch(0.99 0 0);
 
   --primary: oklch(0.93 0.19 98);
   --primary-foreground: oklch(0.23 0.02 250);
 
-  --secondary: oklch(0.30 0.02 250);
+  --secondary: oklch(0.26 0.01 250);
   --secondary-foreground: oklch(0.99 0 0);
 
-  --muted: oklch(0.30 0.02 250);
+  --muted: oklch(0.24 0.01 250);
   --muted-foreground: oklch(0.70 0.02 250);
 
   --accent: oklch(0.93 0.19 98);
@@ -85,8 +175,8 @@
 
   --destructive: oklch(0.704 0.191 22.216);
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: var(--border-dim);
+  --input: oklch(1 0 0 / 18%);
   --ring: oklch(0.93 0.19 98);
 
   --chart-1: oklch(0.93 0.19 98);
@@ -95,20 +185,27 @@
   --chart-4: oklch(0.55 0.12 98);
   --chart-5: oklch(0.47 0.10 98);
 
-  --sidebar: oklch(0.28 0.02 250);
+  --sidebar: var(--node-bg);
   --sidebar-foreground: oklch(0.99 0 0);
   --sidebar-primary: oklch(0.93 0.19 98);
   --sidebar-primary-foreground: oklch(0.23 0.02 250);
   --sidebar-accent: oklch(0.93 0.19 98);
   --sidebar-accent-foreground: oklch(0.23 0.02 250);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: var(--border-dim);
   --sidebar-ring: oklch(0.93 0.19 98);
+
+  /* EY Revamp Custom Tokens (Dark Mode) */
+  --ey-yellow: #FFE600;
+  --node-bg: #242424;
+  --canvas-bg: #1A1A1A;
+  --border-dim: #333333;
 }
 
 
 body {
   margin: 0;
   min-height: 100vh;
+  font-family: var(--font-sans);
   background-color: var(--background);
   color: var(--foreground);
 }
@@ -156,6 +253,12 @@ body {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* EY Revamp Custom Tokens */
+  --color-ey-yellow: var(--ey-yellow);
+  --color-node-bg: var(--node-bg);
+  --color-canvas-bg: var(--canvas-bg);
+  --color-border-dim: var(--border-dim);
 }
 
 @layer base {

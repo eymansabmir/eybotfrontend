@@ -8,11 +8,11 @@ export function StartNodeRenderer({ selected }: NodeProps & { data: StartNodeDat
     return (
         <div
             className={cn(
-                "group relative flex items-center gap-3 rounded-full border bg-card px-6 py-3 transition-all hover:shadow-lg",
-                selected ? "border-primary shadow-md ring-2 ring-primary/20" : "border-border"
+                "group relative flex items-center gap-3 rounded-full border bg-[var(--node-bg)] px-6 py-3 transition-all hover:shadow-lg cursor-pointer",
+                selected ? "border-2 border-[var(--ey-yellow)] shadow-[0_0_10px_rgba(255,230,0,0.15)] -m-[1px]" : "border-[var(--border-dim)]"
             )}
         >
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--ey-yellow)]/10 text-[var(--ey-yellow)]">
                 <PlayCircle size={16} />
             </div>
 
@@ -23,11 +23,11 @@ export function StartNodeRenderer({ selected }: NodeProps & { data: StartNodeDat
             <Handle
                 type="source"
                 position={Position.Bottom}
-                className="h-4 w-4 border-2 border-background bg-primary shadow-sm hover:scale-125 transition-transform"
+                className="h-4 w-4 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
             />
 
             {/* Animated pulse effect */}
-            <div className="absolute inset-0 rounded-full bg-primary/5 animate-pulse -z-10" />
+            <div className="absolute inset-0 rounded-full bg-[var(--ey-yellow)]/5 animate-pulse -z-10" />
         </div>
     );
 }
