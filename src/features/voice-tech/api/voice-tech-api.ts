@@ -109,6 +109,12 @@ export const voiceTechApi = {
     return data.config;
   },
 
+  deleteRoutingConfig: async (tenantId: string, id: string): Promise<void> => {
+    await apiClient.delete(`${ROUTING}/${id}`, {
+      params: { tenantId }
+    });
+  },
+
   /** Execute routing — simulate which provider matches given entity data */
   executeRouting: async (payload: {
     tenantId: string;
@@ -185,5 +191,28 @@ export const voiceTechApi = {
   /** Delete a routing rule */
   deleteRoutingRule: async (ruleId: string): Promise<void> => {
     await apiClient.delete(`${ROUTING}/rules/${ruleId}`);
+  },
+
+  /** Delete an entire dataset (EntityType) */
+  deleteEntityType: async (tenantId: string, name: string): Promise<void> => {
+    await apiClient.delete(`${ENTITIES}/entity-types/${name}`, {
+      params: { tenantId }
+    });
+  },
+
+  /** Execute bulk routing for multiple entity types */
+  bulkExecuteRouting: async (payload: {
+    tenantId: string;
+    routingConfigId: string;
+    entityTypes: string[];
+  }): Promise<{ totalProcessed: number; initiated: number; failed: number; skipped: number }> => {
+    const { data } = await apiClient.post<{ 
+      success: boolean; 
+      result: { totalProcessed: number; initiated: number; failed: number; skipped: number } 
+    }>(
+      `${ROUTING}/bulk-execute`,
+      payload
+    );
+    return data.result;
   },
 } as const;

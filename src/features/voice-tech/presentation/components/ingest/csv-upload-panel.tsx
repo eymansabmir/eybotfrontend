@@ -12,9 +12,21 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useIngestFileAsync, useJobStatusPolling } from "../../../api/voice-tech-queries";
 import { useFileUpload } from "@/lib/storage";
+import { 
+  useIngestFileAsync, 
+  useJobStatusPolling,
+  useEntityTypes 
+} from "../../../api/voice-tech-queries";
 import type { IngestJobStatus } from "../../../types";
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxList,
+  ComboboxItem,
+  ComboboxEmpty,
+} from "@/components/ui/combobox";
 
 const ALLOWED_EXT = [".csv", ".xls", ".xlsx"];
 
@@ -42,6 +54,8 @@ interface CsvUploadPanelProps {
 export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadPanelProps) {
   const qc = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  const { data: entityTypes = [] } = useEntityTypes(tenantId);
   const [localType, setLocalType] = useState(initialType);
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -112,12 +126,33 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
     <div className="space-y-3">
       <div className="space-y-2 pb-2">
          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Storage Category / Dataset Name</p>
-         <Input 
-            value={localType}
-            onChange={(e) => setLocalType(e.target.value)}
-            placeholder="e.g. support_knowledge"
-            className="h-8 text-xs font-mono"
-         />
+         
+         <Combobox 
+            value={localType} 
+            onValueChange={(val) => setLocalType(val as string)}
+         >
+            <ComboboxInput 
+               placeholder="Select or type new category..."
+               className="h-8 text-xs font-mono w-full"
+               onChange={(e) => setLocalType(e.target.value)}
+            />
+            <ComboboxContent>
+               <ComboboxList>
+                  {entityTypes.map((type) => (
+                     <ComboboxItem key={type} value={type}>
+                        {type}
+                     </ComboboxItem>
+                  ))}
+                  {localType && !entityTypes.includes(localType) && (
+                     <ComboboxItem value={localType} className="text-primary font-bold">
+                        Create "{localType}"
+                     </ComboboxItem>
+                  )}
+               </ComboboxList>
+               <ComboboxEmpty>No existing categories found.</ComboboxEmpty>
+            </ComboboxContent>
+         </Combobox>
+
          <p className="text-[10px] text-muted-foreground italic">Naming this uniquely prevents mixing data from different CSVs.</p>
       </div>
 

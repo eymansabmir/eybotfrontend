@@ -1,6 +1,17 @@
 import { useState } from "react";
-import { Database, Plus, Tag, Upload } from "lucide-react";
+import { Database, Plus, Tag, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Sheet,
   SheetContent,
@@ -10,7 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { CsvUploadPanel } from "../ingest/csv-upload-panel";
-import { useEntityTypes, useVoiceTechAttributes } from "../../../api/voice-tech-queries";
+import { useDeleteEntityType, useEntityTypes, useVoiceTechAttributes } from "../../../api/voice-tech-queries";
 import type { EntityAttribute } from "../../../types";
 
 interface EntitiesTabProps {
@@ -51,9 +62,21 @@ function AttributeRow({ attr }: { attr: EntityAttribute }) {
 
 export function EntitiesTab({ tenantId, entityType, onEntityTypeChange }: EntitiesTabProps) {
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [deletingType, setDeletingType] = useState<string | null>(null);
 
   const { data: entityTypes = [], isLoading: typesLoading } = useEntityTypes(tenantId);
   const { data: attributes = [], isLoading: attrsLoading } = useVoiceTechAttributes(tenantId, entityType);
+  
+  const deleteMutation = useDeleteEntityType(tenantId);
+
+  const handleDelete = (name: string) => {
+    deleteMutation.mutate(name, {
+        onSuccess: () => {
+            if (entityType === name) onEntityTypeChange("");
+            setDeletingType(null);
+        }
+    });
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -97,28 +120,61 @@ export function EntitiesTab({ tenantId, entityType, onEntityTypeChange }: Entiti
             </div>
           ) : (
             entityTypes.map((type) => (
-              <button
-                key={type}
-                onClick={() => onEntityTypeChange(type)}
-                className={`flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left group relative overflow-hidden
-                  ${entityType === type
-                    ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
-                    : "border-border/60 bg-background hover:border-border hover:bg-muted/30"
-                  }`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                   <Tag className={`size-3 ${entityType === type ? 'text-primary' : 'text-muted-foreground'}`} />
-                   <span className={`text-[11px] font-bold font-mono tracking-tight truncate ${entityType === type ? 'text-primary' : 'text-foreground'}`}>
-                      {type}
-                   </span>
-                </div>
-                <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest opacity-60">Ready for Logic</p>
-                {entityType === type && (
-                  <div className="absolute top-1 right-1">
-                     <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+              <div key={type} className="group relative">
+                <button
+                  onClick={() => onEntityTypeChange(type)}
+                  className={`flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left w-full h-full relative overflow-hidden
+                    ${entityType === type
+                      ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
+                      : "border-border/60 bg-background hover:border-border hover:bg-muted/30"
+                    }`}
+                >
+                  <div className="flex items-center gap-2 mb-1 pr-6">
+                     <Tag className={`size-3 ${entityType === type ? 'text-primary' : 'text-muted-foreground'}`} />
+                     <span className={`text-[11px] font-bold font-mono tracking-tight truncate ${entityType === type ? 'text-primary' : 'text-foreground'}`}>
+                        {type}
+                     </span>
                   </div>
-                )}
-              </button>
+                  <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest opacity-60">Ready for Logic</p>
+                  {entityType === type && (
+                    <div className="absolute top-1 right-1">
+                       <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+                    </div>
+                  )}
+                </button>
+
+                {/* Delete Button - only visible on hover */}
+                <AlertDialog open={deletingType === type} onOpenChange={(open) => !open && setDeletingType(null)}>
+                    <AlertDialogTrigger asChild>
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="absolute bottom-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={(e) => { e.stopPropagation(); setDeletingType(type); }}
+                        >
+                            <Trash2 className="size-3" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Dataset?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to delete <span className="font-bold text-foreground">"{type}"</span>? 
+                                This will permanently remove all associated entities and attributes. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                                onClick={() => handleDelete(type)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                                {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+              </div>
             ))
           )}
         </div>

@@ -4,7 +4,9 @@ import {
   ChevronRight, 
   Target,
   FlaskConical,
-  Activity
+  Activity,
+  Zap,
+  Trash2
 } from "lucide-react";
 import { 
   Card, 
@@ -20,19 +22,31 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
 import { RoutingRuleList } from "../rule-builder/routing-rule-list";
 import { CreateRoutingRuleDialog } from "../rule-builder/create-rule-dialog";
 import { SimulationDialog } from "./simulation-dialog";
 import { CreateConfigDialog } from "./create-config-dialog";
 import { EntityMatchesDialog } from "./entity-matches-dialog";
 import { RuleCallLaunchpadDialog } from "./rule-call-launchpad-dialog";
+import { BulkCallDialog } from "./bulk-call-dialog";
 import { 
   useRoutingConfigs, 
   useRoutingConfig, 
   useUpsertRoutingRule, 
   useDeleteRoutingRule,
   useToggleRuleActive,
-  useQueryEntitiesByRule
+  useQueryEntitiesByRule,
+  useDeleteRoutingConfig
 } from "../../../api/voice-tech-queries";
 import { CampaignConfirmationDialog } from "./campaign-confirmation-dialog";
 import type { EntityAttribute, RoutingRule } from "../../../types";
@@ -53,9 +67,11 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
   const [isMatchesOpen, setIsMatchesOpen] = useState(false);
   const [simulationInitialData, setSimulationInitialData] = useState<Record<string, string> | undefined>(undefined);
   const [confirmCampaignOpen, setConfirmCampaignOpen] = useState(false);
+  const [isBulkProcessOpen, setIsBulkProcessOpen] = useState(false);
   const [pendingActiveRule, setPendingActiveRule] = useState<RoutingRule | null>(null);
   const [isCallLaunchpadOpen, setIsCallLaunchpadOpen] = useState(false);
   const [activeRuleForCall, setActiveRuleForCall] = useState<RoutingRule | null>(null);
+  const [isDeleteConfigOpen, setIsDeleteConfigOpen] = useState(false);
   const [callLaunchMode, setCallLaunchMode] = useState<"single" | "bulk">("single");
   
   const { data: configs, isLoading: isConfigsLoading } = useRoutingConfigs(tenantId);
@@ -64,6 +80,7 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
   const upsertRule = useUpsertRoutingRule(tenantId);
   const deleteRule = useDeleteRoutingRule(selectedConfigId ?? "", tenantId);
   const toggleRule = useToggleRuleActive(selectedConfigId ?? "", tenantId);
+  const deleteConfig = useDeleteRoutingConfig(tenantId);
 
   // For the confirmation dialog
   const { data: entitiesCount } = useQueryEntitiesByRule({
@@ -111,6 +128,16 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
       onSuccess: () => {
         setConfirmCampaignOpen(false);
         setPendingActiveRule(null);
+      }
+    });
+  };
+
+  const handleDeleteConfig = () => {
+    if (!selectedConfigId) return;
+    deleteConfig.mutate(selectedConfigId, {
+      onSuccess: () => {
+         setSelectedConfigId(null);
+         setIsDeleteConfigOpen(false);
       }
     });
   };
@@ -172,20 +199,33 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
                      <Plus className="size-3" />
                   </Button>
                </div>
-               <Select 
-                  value={selectedConfigId ?? ""} 
-                  onValueChange={setSelectedConfigId}
-                  disabled={isConfigsLoading}
-               >
-                  <SelectTrigger className="w-full text-sm h-10 border-border bg-background">
-                    <SelectValue placeholder={isConfigsLoading ? "Loading..." : "Select Config"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {configs?.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-               </Select>
+                <div className="flex items-center gap-2">
+                   <div className="flex-1">
+                      <Select 
+                         value={selectedConfigId ?? ""} 
+                         onValueChange={setSelectedConfigId}
+                         disabled={isConfigsLoading}
+                      >
+                         <SelectTrigger className="w-full text-sm h-10 border-border bg-background">
+                           <SelectValue placeholder={isConfigsLoading ? "Loading..." : "Select Config"} />
+                         </SelectTrigger>
+                         <SelectContent>
+                           {configs?.map((c) => (
+                             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                           ))}
+                         </SelectContent>
+                      </Select>
+                   </div>
+                   <Button 
+                     variant="ghost" 
+                     size="icon" 
+                     className="size-10 shrink-0 text-destructive hover:bg-destructive/10"
+                     disabled={!selectedConfigId || isConfigsLoading}
+                     onClick={() => setIsDeleteConfigOpen(true)}
+                   >
+                      <Trash2 className="size-4" />
+                   </Button>
+                </div>
             </div>
 
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
@@ -230,6 +270,16 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
               >
                  <FlaskConical className="size-3.5" />
                  Simulate Routing
+              </Button>
+
+              <Button 
+                size="sm" 
+                className="h-8 gap-2 text-xs font-bold"
+                onClick={() => setIsBulkProcessOpen(true)}
+                disabled={!selectedConfigId}
+              >
+                 <Zap className="size-3.5 fill-current" />
+                 Bulk Process Orchestrator
               </Button>
            </div>
         </div>
@@ -321,6 +371,36 @@ export function RoutingTab({ tenantId, entityType, attributes }: RoutingTabProps
         rule={activeRuleForCall}
         initialMode={callLaunchMode}
       />
+
+      <BulkCallDialog
+        open={isBulkProcessOpen}
+        onOpenChange={setIsBulkProcessOpen}
+        tenantId={tenantId}
+        configId={selectedConfigId!}
+        configName={fullConfig?.name ?? ""}
+      />
+
+      <AlertDialog open={isDeleteConfigOpen} onOpenChange={setIsDeleteConfigOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Routing Stack?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the <strong>{fullConfig?.name}</strong> routing configuration and all its associated rules. 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfig}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteConfig.isPending}
+            >
+              {deleteConfig.isPending ? "Deleting..." : "Delete Permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -153,11 +153,15 @@ export function useCreateRoutingConfig() {
   return useMutation({
     mutationFn: voiceTechApi.createRoutingConfig,
     onSuccess: (config) => {
-      toast.success(`Config "${config.name}" created`);
-      qc.invalidateQueries({ queryKey: ["voice-tech", "routing", config.tenantId] });
+      if (config?.name) {
+        toast.success(`Config "${config.name}" created`);
+      }
+      if (config?.tenantId) {
+        qc.invalidateQueries({ queryKey: ["voice-tech", "routing", config.tenantId] });
+      }
     },
-    onError: (err: Error) => {
-      toast.error(err.message || "Failed to create config");
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to create config");
     },
   });
 }
@@ -208,10 +212,55 @@ export function useToggleRuleActive(configId: string, tenantId: string) {
     }) => voiceTechApi.toggleRuleActive(payload),
     onSuccess: (rule) => {
       queryClient.invalidateQueries({ queryKey: ["voice-tech", "routing", configId, tenantId] });
-      toast.success(rule.isActive ? "Rule activated" : "Rule deactivated");
+      if (rule) {
+        toast.success(rule.isActive ? "Rule activated" : "Rule deactivated");
+      }
     },
     onError: (err: any) => {
       toast.error(err.message || "Operation failed");
+    },
+  });
+}
+
+/** Delete an entire dataset */
+export function useDeleteEntityType(tenantId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => voiceTechApi.deleteEntityType(tenantId, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["voice-tech", "entity-types", tenantId] });
+      toast.success("Dataset deleted successfully");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete dataset");
+    },
+  });
+}
+
+/** Bulk execute routing */
+export function useBulkExecuteRouting() {
+  return useMutation({
+    mutationFn: voiceTechApi.bulkExecuteRouting,
+    onSuccess: (result) => {
+      toast.success(`Bulk process completed: ${result.initiated} calls initiated`);
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Bulk process failed");
+    },
+  });
+}
+
+/** Delete a routing configuration (stack) */
+export function useDeleteRoutingConfig(tenantId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (configId: string) => voiceTechApi.deleteRoutingConfig(tenantId, configId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["voice-tech", "routing", tenantId] });
+      toast.success("Routing stack deleted successfully");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete stack");
     },
   });
 }
