@@ -4,7 +4,8 @@ import {
   Send,  
   ArrowRight,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Database
 } from "lucide-react";
 import {
   Dialog,
@@ -26,7 +27,7 @@ import { useEffect } from "react";
 interface SimulationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  attributes: EntityAttribute[];
+  attributes: EntityAttribute[] | Record<string, EntityAttribute[]>;
   configId: string | null;
   tenantId: string;
   initialData?: Record<string, string>;
@@ -65,10 +66,15 @@ export function SimulationDialog({
   const handleSimulate = async () => {
     if (!configId) return;
     
+    // Cleanup empty values to avoid polluting the context
+    const cleanedData = Object.fromEntries(
+      Object.entries(testData).filter(([_, v]) => v.trim() !== "")
+    );
+
     const payload = {
       tenantId,
       routingConfigId: configId,
-      attributes: testData,
+      attributes: cleanedData,
       phone: phone || undefined,
       executeProvider: !!phone // Only execute if phone is provided
     };
@@ -86,6 +92,10 @@ export function SimulationDialog({
     setPhone("");
     setResult(null);
   };
+
+  const hasAttributes = Array.isArray(attributes) 
+    ? attributes.length > 0 
+    : Object.keys(attributes).length > 0;
 
   return (
     <Dialog open={open} onOpenChange={(v) => {
@@ -126,23 +136,53 @@ export function SimulationDialog({
           {/* Input Form */}
           <div className="space-y-4">
              <h4 className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest pl-1">Test Payload</h4>
-             <div className="grid grid-cols-2 gap-4 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                {attributes.length === 0 ? (
-                  <div className="col-span-2 py-8 text-center border-2 border-dashed rounded-xl bg-muted/30">
+             <div className="space-y-6 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                {!hasAttributes ? (
+                  <div className="py-8 text-center border-2 border-dashed rounded-xl bg-muted/30">
                      <p className="text-xs text-muted-foreground">No attributes found. Ingest some data first.</p>
                   </div>
+                ) : Array.isArray(attributes) ? (
+                  <div className="grid grid-cols-2 gap-4">
+                     {attributes.map(attr => (
+                        <div key={attr.key} className="space-y-1.5">
+                        <Label htmlFor={`sim-${attr.key}`} className="text-xs font-semibold">{attr.key}</Label>
+                        <Input 
+                           id={`sim-${attr.key}`}
+                           placeholder={`Value...`} 
+                           className="h-8 text-xs font-mono"
+                           value={testData[attr.key] || ""}
+                           onChange={(e) => handleInputChange(attr.key, e.target.value)}
+                        />
+                        </div>
+                     ))}
+                  </div>
                 ) : (
-                  attributes.map(attr => (
-                    <div key={attr.key} className="space-y-1.5">
-                      <Label htmlFor={`sim-${attr.key}`} className="text-xs font-semibold">{attr.key}</Label>
-                      <Input 
-                        id={`sim-${attr.key}`}
-                        placeholder={`Value...`} 
-                        className="h-8 text-xs font-mono"
-                        value={testData[attr.key] || ""}
-                        onChange={(e) => handleInputChange(attr.key, e.target.value)}
-                      />
-                    </div>
+                  Object.entries(attributes).map(([entity, attrs]) => (
+                     <div key={entity} className="space-y-3 p-3 rounded-xl border border-border/60 bg-muted/20">
+                        <div className="flex items-center gap-2 mb-1">
+                           <div className="size-5 rounded bg-primary/10 grid place-items-center text-primary">
+                              <Database className="size-3" />
+                           </div>
+                           <span className="text-[10px] font-bold uppercase tracking-wider text-primary/80">{entity} Dataset</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                           {attrs.map(attr => {
+                              const fullKey = `${entity}.${attr.key}`;
+                              return (
+                                 <div key={fullKey} className="space-y-1.5">
+                                    <Label htmlFor={`sim-${fullKey}`} className="text-xs font-semibold">{attr.key}</Label>
+                                    <Input 
+                                       id={`sim-${fullKey}`}
+                                       placeholder={`Value...`} 
+                                       className="h-8 text-xs font-mono"
+                                       value={testData[fullKey] || ""}
+                                       onChange={(e) => handleInputChange(fullKey, e.target.value)}
+                                    />
+                                 </div>
+                              );
+                           })}
+                        </div>
+                     </div>
                   ))
                 )}
              </div>

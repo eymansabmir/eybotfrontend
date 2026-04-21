@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Upload,
@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useFileUpload } from "@/lib/storage";
 import { 
   useIngestFileAsync, 
@@ -56,7 +55,15 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
   const inputRef = useRef<HTMLInputElement>(null);
   
   const { data: entityTypes = [] } = useEntityTypes(tenantId);
-  const [localType, setLocalType] = useState(initialType);
+  const [localType, setLocalType] = useState(initialType || "");
+  const filteredEntityTypes = useMemo(() => {
+    const query = localType?.toLowerCase() || "";
+    if (!query) return entityTypes;
+    return entityTypes.filter(t => t && typeof t === "string" && t.toLowerCase().includes(query));
+  }, [entityTypes, localType]);
+
+  const hasExactMatch = entityTypes.some(t => t && typeof t === "string" && t.toLowerCase() === (localType?.toLowerCase() || ""));
+
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -130,26 +137,31 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
          <Combobox 
             value={localType} 
             onValueChange={(val) => setLocalType(val as string)}
+            open={(localType?.length || 0) > 0}
          >
             <ComboboxInput 
                placeholder="Select or type new category..."
                className="h-8 text-xs font-mono w-full"
+               value={localType}
                onChange={(e) => setLocalType(e.target.value)}
             />
             <ComboboxContent>
                <ComboboxList>
-                  {entityTypes.map((type) => (
+                  {filteredEntityTypes.map((type) => (
                      <ComboboxItem key={type} value={type}>
                         {type}
                      </ComboboxItem>
                   ))}
-                  {localType && !entityTypes.includes(localType) && (
-                     <ComboboxItem value={localType} className="text-primary font-bold">
+                  {localType && !hasExactMatch && (
+                     <ComboboxItem value={localType} className="text-primary font-bold border-t border-border/50 mt-1">
                         Create "{localType}"
                      </ComboboxItem>
                   )}
                </ComboboxList>
-               <ComboboxEmpty>No existing categories found.</ComboboxEmpty>
+               {!localType && <div className="p-2 text-[10px] text-muted-foreground text-center">Start typing to search or create...</div>}
+               {localType && filteredEntityTypes.length === 0 && !hasExactMatch && (
+                   <ComboboxEmpty>New Category</ComboboxEmpty>
+               )}
             </ComboboxContent>
          </Combobox>
 

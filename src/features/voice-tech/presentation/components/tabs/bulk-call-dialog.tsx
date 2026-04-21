@@ -2,8 +2,7 @@ import { useState } from "react";
 import { 
   Zap, 
   Database, 
-  CheckCircle2, 
-  Loader2, 
+  CheckCircle2,  
   AlertTriangle,
   ChevronRight,
   PhoneCall
@@ -18,7 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { useBulkExecuteRouting, useEntityTypes } from "../../../api/voice-tech-queries";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +26,7 @@ interface BulkCallDialogProps {
   tenantId: string;
   configId: string;
   configName: string;
+  sourceEntityTypes: string[];
 }
 
 export function BulkCallDialog({ 
@@ -35,7 +34,8 @@ export function BulkCallDialog({
   onOpenChange, 
   tenantId, 
   configId,
-  configName 
+  configName,
+  sourceEntityTypes
 }: BulkCallDialogProps) {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [step, setStep] = useState<"select" | "processing" | "results">("select");
@@ -44,9 +44,16 @@ export function BulkCallDialog({
     initiated: number;
     failed: number;
     skipped: number;
+    excluded: number;
   } | null>(null);
 
-  const { data: entityTypes = [] } = useEntityTypes(tenantId);
+  const { data: allEntityTypes = [] } = useEntityTypes(tenantId);
+  
+  // Filter list to only show what's selected in the main workspace
+  const entityTypes = sourceEntityTypes.length > 0 
+    ? allEntityTypes.filter(t => sourceEntityTypes.includes(t))
+    : allEntityTypes;
+
   const bulkExecute = useBulkExecuteRouting();
 
   const toggleType = (type: string) => {
@@ -64,8 +71,14 @@ export function BulkCallDialog({
       routingConfigId: configId,
       entityTypes: selectedTypes
     }, {
-      onSuccess: (data) => {
-        setResult(data);
+      onSuccess: (data: any) => {
+        setResult({
+          totalProcessed: data.totalProcessed,
+          initiated: data.initiated,
+          failed: data.failed,
+          skipped: data.skipped,
+          excluded: data.excluded ?? 0
+        });
         setStep("results");
       },
       onError: () => {
@@ -155,26 +168,30 @@ export function BulkCallDialog({
 
           {step === "results" && result && (
             <div className="space-y-6">
-               <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="p-4 rounded-2xl bg-muted/40 border border-border flex flex-col">
-                     <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Total Processed</span>
+                     <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Total Scanned</span>
                      <span className="text-2xl font-black">{result.totalProcessed}</span>
                   </div>
-                  <div className="p-4 rounded-2xl bg-green-500/10 border border-green-500/20 flex flex-col">
-                     <span className="text-[10px] font-bold text-green-600 uppercase mb-1 flex items-center gap-1">
+                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col">
+                     <span className="text-[10px] font-bold text-emerald-600 uppercase mb-1 flex items-center gap-1">
                         <PhoneCall className="size-2.5" /> Initiated
                      </span>
-                     <span className="text-2xl font-black text-green-700">{result.initiated}</span>
+                     <span className="text-2xl font-black text-emerald-700">{result.initiated}</span>
                   </div>
-                  <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex flex-col">
-                     <span className="text-[10px] font-bold text-red-600 uppercase mb-1">Failed Matches</span>
-                     <span className="text-2xl font-black text-red-700">{result.failed}</span>
+                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col">
+                     <span className="text-[10px] font-bold text-amber-600 uppercase mb-1">Excluded (Logic)</span>
+                     <span className="text-2xl font-black text-amber-700">{result.excluded}</span>
                   </div>
-                  <div className="p-4 rounded-2xl bg-muted/20 border border-border flex flex-col">
-                     <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1">No Phone / Skip</span>
+                  <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex flex-col">
+                     <span className="text-[10px] font-bold text-rose-600 uppercase mb-1">Failed (Errors)</span>
+                     <span className="text-2xl font-black text-rose-700">{result.failed}</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-muted/20 border border-border flex flex-col col-span-2">
+                     <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Skipped (No Phone Number)</span>
                      <span className="text-2xl font-black">{result.skipped}</span>
                   </div>
-               </div>
+                </div>
 
                <div className="rounded-xl border bg-primary/5 p-4 flex items-center justify-center gap-3">
                   <CheckCircle2 className="size-5 text-green-600" />

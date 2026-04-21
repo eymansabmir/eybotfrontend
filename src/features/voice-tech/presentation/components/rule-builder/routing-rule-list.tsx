@@ -6,10 +6,9 @@ import {
   XSquare,
   ArrowRight,
   Trash2,
-  Copy,
   Phone,
-  Users,
   MessageCircle,
+  Settings2,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -29,8 +28,8 @@ interface RoutingRuleListProps {
   onExecuteTest: (rule: RoutingRule) => void;
   onQueryEntities: (rule: RoutingRule) => void;
   onSingleCall: (rule: RoutingRule) => void;
-  onBulkCall: (rule: RoutingRule) => void;
   onToggleActive: (rule: RoutingRule, active: boolean) => void;
+  onEdit: (rule: RoutingRule) => void;
   onDelete: (ruleId: string) => void;
 }
 
@@ -39,8 +38,8 @@ export function RoutingRuleList({
   onExecuteTest, 
   onQueryEntities,
   onSingleCall,
-  onBulkCall,
   onToggleActive,
+  onEdit,
   onDelete
 }: RoutingRuleListProps) {
   const getTransport = (rule: RoutingRule): "telephony" | "whatsapp" =>
@@ -124,36 +123,24 @@ export function RoutingRuleList({
                       {isWhatsapp ? <MessageCircle className="size-4 text-emerald-500" /> : <Phone className="size-4 text-indigo-500" />}
                       <span className="font-medium">{isWhatsapp ? "Call WhatsApp User" : "Call Particular User"}</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onBulkCall(rule)} className="gap-2 py-2">
-                      <Users className="size-4 text-rose-500" />
-                      <span className="font-medium">{isWhatsapp ? "Bulk WhatsApp Campaign" : "Bulk Call Campaign"}</span>
+                    <DropdownMenuItem onClick={() => onEdit(rule)} className="gap-2 py-2">
+                       <Settings2 className="size-4 text-primary" />
+                       <span className="font-medium">Edit Rule Details</span>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="gap-2 py-2 text-muted-foreground">
-                       <Copy className="size-4" /> Duplicate Rule
-                    </DropdownMenuItem>
-                    {!rule.isActive ? (
+                    {rule.isActive ? (
+                       <DropdownMenuItem 
+                         onClick={() => onToggleActive(rule, false)} 
+                         className="gap-2 py-2 font-medium text-amber-600"
+                       >
+                          <XSquare className="size-4" /> Deactivate Rule
+                       </DropdownMenuItem>
+                    ) : (
                        <DropdownMenuItem 
                          onClick={() => onToggleActive(rule, true)} 
                          className="gap-2 py-2 font-medium text-emerald-600"
                        >
-                          <CheckCircle2 className="size-4" /> Activate & Start Campaign
+                          <CheckCircle2 className="size-4" /> Activate Rule
                        </DropdownMenuItem>
-                    ) : (
-                       <>
-                         <DropdownMenuItem 
-                           onClick={() => onToggleActive(rule, true)} 
-                           className="gap-2 py-2 font-medium text-emerald-600"
-                         >
-                            <Play className="size-4" /> Run Campaign Now
-                         </DropdownMenuItem>
-                         <DropdownMenuItem 
-                           onClick={() => onToggleActive(rule, false)} 
-                           className="gap-2 py-2 font-medium text-amber-600"
-                         >
-                            <XSquare className="size-4" /> Deactivate Rule
-                         </DropdownMenuItem>
-                       </>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 

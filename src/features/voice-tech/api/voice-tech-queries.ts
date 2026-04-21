@@ -191,7 +191,7 @@ export function useDeleteRoutingRule(configId: string, tenantId: string) {
   return useMutation({
     mutationFn: (ruleId: string) => voiceTechApi.deleteRoutingRule(ruleId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["voice-tech", "routing", configId, tenantId] });
+      queryClient.invalidateQueries({ queryKey: VT_KEYS.routingConfig(configId, tenantId) });
       toast.success("Rule deleted");
     },
     onError: (err: any) => {
@@ -211,7 +211,7 @@ export function useToggleRuleActive(configId: string, tenantId: string) {
       triggerCampaign?: boolean;
     }) => voiceTechApi.toggleRuleActive(payload),
     onSuccess: (rule) => {
-      queryClient.invalidateQueries({ queryKey: ["voice-tech", "routing", configId, tenantId] });
+      queryClient.invalidateQueries({ queryKey: VT_KEYS.routingConfig(configId, tenantId) });
       if (rule) {
         toast.success(rule.isActive ? "Rule activated" : "Rule deactivated");
       }

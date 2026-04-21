@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 interface ConditionGroupProps {
   node: { operator: LogicalOperator; children: RoutingCondition[] };
-  attributes: EntityAttribute[];
+  attributes: EntityAttribute[] | Record<string, EntityAttribute[]>;
   depth?: number;
   onChange: (updated: { operator: LogicalOperator; children: RoutingCondition[] }) => void;
   onRemove?: () => void;
@@ -38,20 +38,33 @@ export function ConditionGroup({
 }: ConditionGroupProps) {
   const [collapsed, setCollapsed] = useState(false);
 
+  // We use a simple ref-based tracking for stable keys within this session
+  // This avoids index-based keys which cause issues with deletion and animations
+  const [childIds] = useState(() => new WeakMap<object, string>());
+  const getStableKey = (child: RoutingCondition, index: number) => {
+    if (typeof child !== 'object' || child === null) return index.toString();
+    let id = childIds.get(child);
+    if (!id) {
+      id = Math.random().toString(36).substring(2, 9);
+      childIds.set(child, id);
+    }
+    return id;
+  };
+
   const updateChild = (index: number, updated: RoutingCondition) => {
     const children = node.children.map((c, i) => (i === index ? updated : c));
     onChange({ ...node, children });
   };
 
   const removeChild = (index: number) => {
+    // If it's a sub-group with only 1 child, we might want to remove the group itself
     if (node.children.length === 1 && !isRoot && onRemove) {
       onRemove();
       return;
     }
     
-    if (node.children.length > 1) {
-      onChange({ ...node, children: node.children.filter((_, i) => i !== index) });
-    }
+    // Otherwise, just remove the child from this group (allows 0 children temporarily)
+    onChange({ ...node, children: node.children.filter((_, i) => i !== index) });
   };
 
   const addLeaf = () =>
@@ -151,7 +164,7 @@ export function ConditionGroup({
                 const isLeaf = "field" in child;
                 return (
                   <motion.div
-                    key={index}
+                    key={getStableKey(child, index)}
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
@@ -172,9 +185,10 @@ export function ConditionGroup({
                       <ConditionRow
                         leaf={child as ConditionLeaf}
                         attributes={attributes}
+                        depth={depth}
                         onChange={(updated) => updateChild(index, updated)}
                         onRemove={() => removeChild(index)}
-                        canRemove={node.children.length > 1 || !isRoot}
+                        canRemove={true} // Always allow removal
                       />
                     ) : (
                       <ConditionGroup
@@ -188,6 +202,25 @@ export function ConditionGroup({
                   </motion.div>
                 );
               })}
+
+              {node.children.length === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl bg-muted/5 text-center space-y-3"
+                >
+                  <div className="size-10 rounded-full bg-primary/10 grid place-items-center text-primary">
+                    <Plus className="size-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold">No conditions added</p>
+                    <p className="text-[11px] text-muted-foreground">Every rule needs at least one condition to match users.</p>
+                  </div>
+                  <Button size="sm" variant="default" onClick={addLeaf} className="h-8 gap-2 font-bold">
+                     <Plus className="size-3.5" /> Start Building Logic
+                  </Button>
+                </motion.div>
+              )}
             </div>
           </motion.div>
         )}

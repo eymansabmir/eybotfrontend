@@ -1,18 +1,47 @@
-import { Trash2 } from "lucide-react";
+import { Trash2, Database, Search, Target, Activity, Settings2, ChevronRight, Check } from "lucide-react";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ChevronsUpDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 import type { ConditionLeaf, EntityAttribute } from "../../../types";
 import { OPERATOR_LABELS } from "../../../types";
+import { useMemo, useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface ConditionRowProps {
   leaf: ConditionLeaf;
-  attributes: EntityAttribute[];
+  attributes: EntityAttribute[] | Record<string, EntityAttribute[]>;
+  depth?: number;
   onChange: (updated: ConditionLeaf) => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -20,19 +49,72 @@ interface ConditionRowProps {
 
 export function ConditionRow({
   leaf,
-  attributes,
+  attributes: groupedAttributes,
+  depth = 0,
   onChange,
   onRemove,
   canRemove,
 }: ConditionRowProps) {
-  const selectedAttr = attributes.find((a) => a.key === leaf.field);
+  // Normalize attributes to a Record structure
+  const attributesMap = useMemo(() => {
+    if (Array.isArray(groupedAttributes)) {
+      return { "Default": groupedAttributes };
+    }
+    return groupedAttributes;
+  }, [groupedAttributes]);
 
-  const handleFieldChange = (key: string) => {
-    const attr = attributes.find((a) => a.key === key);
+  const entities = useMemo(() => Object.keys(attributesMap), [attributesMap]);
+  
+  // Internal state for the selection flow
+  const initialEntity = useMemo(() => {
+    if (!leaf.field) return entities[0] || null;
+    const parts = leaf.field.split('.');
+    return parts.length > 1 ? parts[0] : (entities[0] || null);
+  }, [leaf.field, entities]);
+
+  const [selectedEntity, setSelectedEntity] = useState<string | null>(initialEntity);
+  const [entitySearch, setEntitySearch] = useState("");
+  const [entityOpen, setEntityOpen] = useState(false);
+  const [accordionValue, setAccordionValue] = useState<string | undefined>(
+    !leaf.field ? "item-1" : undefined
+  );
+
+  // Sync internal entity when leaf changes externally
+  useEffect(() => {
+    if (leaf.field) {
+      const parts = leaf.field.split('.');
+      if (parts.length > 1) setSelectedEntity(parts[0]);
+    }
+  }, [leaf.field]);
+
+  const filteredEntities = useMemo(() => {
+    if (!entitySearch) return entities;
+    return entities.filter(e => e.toLowerCase().includes(entitySearch.toLowerCase()));
+  }, [entities, entitySearch]);
+
+  const currentAttributes = selectedEntity ? attributesMap[selectedEntity] || [] : [];
+  const selectedAttrKey = leaf.field.includes('.') ? leaf.field.split('.').pop() : leaf.field;
+  const selectedAttr = currentAttributes.find(a => a.key === selectedAttrKey);
+
+  const handleEntityChange = (entity: string) => {
+    setSelectedEntity(entity);
+    setEntityOpen(false);
+    
+    // Progress to Step 2 (if not already opened, though we use auto-progression logic)
+    setAccordionValue("item-1"); 
+
+    // If entity changed, we reset the field to the first available attribute
+    const firstAttr = attributesMap[entity]?.[0];
+    if (firstAttr) {
+      handleFieldChange(`${entity}.${firstAttr.key}`, firstAttr);
+    }
+  };
+
+  const handleFieldChange = (fullKey: string, attr: EntityAttribute) => {
     onChange({
-      field: key,
-      operator: attr?.operators[0] ?? "equals",
-      value: attr?.type === "boolean" ? "true" : "",
+      field: fullKey,
+      operator: attr.operators[0] ?? "equals",
+      value: attr.type === "boolean" ? "true" : "",
     });
   };
 
@@ -47,119 +129,256 @@ export function ConditionRow({
   const operators = selectedAttr?.operators ?? ["equals", "not_equals"];
   const attrType = selectedAttr?.type ?? "string";
 
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
-      {/* Field selector */}
-      <Select value={leaf.field} onValueChange={handleFieldChange}>
-        <SelectTrigger className="h-8 min-w-[130px] text-xs">
-          <SelectValue placeholder="Select attribute" />
-        </SelectTrigger>
-        <SelectContent>
-          {attributes.map((attr) => (
-            <SelectItem key={attr.key} value={attr.key} className="text-xs">
-              {attr.key}
-              <span className="ml-2 text-muted-foreground uppercase text-[10px]">
-                {attr.type}
-              </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Operator selector */}
-      <Select
-        value={leaf.operator}
-        onValueChange={handleOperatorChange}
-        disabled={!leaf.field}
-      >
-        <SelectTrigger className="h-8 min-w-[110px] text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {operators.map((op) => (
-            <SelectItem key={op} value={op} className="text-xs">
-              {OPERATOR_LABELS[op] ?? op}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Value input — adapts to attribute type */}
-      <div className="flex-1">
-        {attrType === "boolean" ? (
-          <Select
-            value={String(leaf.value)}
-            onValueChange={handleValueChange}
-            disabled={!leaf.field}
-          >
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="true">True</SelectItem>
-              <SelectItem value="false">False</SelectItem>
-            </SelectContent>
-          </Select>
-        ) : attrType === "enum" && selectedAttr?.values?.length ? (
-          <Select
-            value={String(leaf.value)}
-            onValueChange={handleValueChange}
-            disabled={!leaf.field}
-          >
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Select value" />
-            </SelectTrigger>
-            <SelectContent>
-              {selectedAttr.values.map((v) => (
-                <SelectItem key={v} value={v} className="text-xs">
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : attrType === "date" ? (
-          <Input
-            type="date"
-            className="h-8 text-xs"
-            value={String(leaf.value ?? "")}
-            onChange={(e) => handleValueChange(e.target.value)}
-            disabled={!leaf.field}
-          />
-        ) : attrType === "number" ? (
-          <Input
-            type="number"
-            className="h-8 text-xs"
-            placeholder="Enter value"
-            value={String(leaf.value ?? "")}
-            onChange={(e) => handleValueChange(e.target.value)}
-            disabled={!leaf.field}
-          />
-        ) : (
-          <Input
-            type="text"
-            className="h-8 text-xs"
-            placeholder={
-              ["in", "not_in"].includes(leaf.operator)
-                ? "value1, value2, …"
-                : "Enter value"
-            }
-            value={String(leaf.value ?? "")}
-            onChange={(e) => handleValueChange(e.target.value)}
-            disabled={!leaf.field}
-          />
-        )}
+  // Build a summary string for the collapsed view
+  const summary = useMemo(() => {
+    if (!leaf.field) return "New Match Condition";
+    const attrName = selectedAttr?.key || leaf.field;
+    const opLabel = OPERATOR_LABELS[leaf.operator] || leaf.operator;
+    return (
+      <div className="flex items-center gap-2 text-xs">
+        <Badge variant="outline" className="h-4 px-1 text-[9px] font-mono bg-primary/5 uppercase">
+          {selectedEntity}
+        </Badge>
+        <span className="font-bold text-foreground">{attrName}</span>
+        <span className="text-muted-foreground italic px-0.5">{opLabel}</span>
+        <span className="font-mono bg-muted/60 px-1.5 py-0.5 rounded text-primary font-bold">
+          {String(leaf.value || "...")}
+        </span>
       </div>
+    );
+  }, [leaf, selectedEntity, selectedAttr]);
 
-      {/* Remove button */}
-      <button
-        type="button"
-        onClick={onRemove}
-        disabled={!canRemove}
-        aria-label="Remove condition"
-        className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-30"
+  return (
+    <div className="group relative">
+      <div className="absolute -left-2 top-0 bottom-0 w-1 bg-primary/10 group-hover:bg-primary transition-colors rounded-full" />
+      
+      <Accordion 
+        type="single" 
+        collapsible 
+        value={accordionValue}
+        onValueChange={setAccordionValue}
+        className={cn(
+          "w-full border rounded-xl bg-background shadow-sm overflow-hidden transition-all duration-300",
+          depth > 0 && "border-primary/10 shadow-none bg-background/50",
+          accordionValue && "ring-1 ring-primary/20"
+        )}
       >
-        <Trash2 className="size-3.5" />
-      </button>
+        <AccordionItem value="item-1" className="border-none">
+          <div className={cn(
+            "flex items-center px-4 py-1 gap-2 transition-colors",
+            accordionValue ? "bg-primary/5" : "bg-muted/20"
+          )}>
+            <div className="flex-1 min-w-0">
+              <AccordionTrigger className="w-full py-3 hover:no-underline font-normal text-xs text-left">
+                {summary}
+              </AccordionTrigger>
+            </div>
+            
+            <div className="flex items-center gap-1 shrink-0 px-2 relative z-50">
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()} // Stop Radix from handling pointer
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onRemove();
+                  toast.success("Condition removed");
+                }}
+                disabled={!canRemove}
+                className="size-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-red-500/15 hover:text-red-500 transition-all active:scale-95 disabled:opacity-10 disabled:cursor-not-allowed border border-transparent hover:border-red-500/20"
+                title={!canRemove ? "At least one condition is required" : "Remove condition"}
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
+          </div>
+
+          <AccordionContent className="px-5 pb-5 pt-3 grid grid-cols-1 md:grid-cols-2 gap-6 ring-1 ring-border/50 bg-muted/5">
+            {/* Step 1: Search Entity */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-3"
+            >
+              <div className="flex items-center gap-2">
+                <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold">1</div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Context / Entity</label>
+              </div>
+              
+              <Popover open={entityOpen} onOpenChange={setEntityOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={entityOpen}
+                    className="w-full justify-between h-9 text-xs font-semibold bg-background"
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      {selectedEntity ? (
+                        <>
+                          <Database className="size-3.5 text-primary" />
+                          <span className="truncate">{selectedEntity}</span>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground font-normal italic">Search for a dataset...</span>
+                      )}
+                    </div>
+                    <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Type a dataset name..." 
+                      value={entitySearch}
+                      onValueChange={setEntitySearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>
+                        <p className="py-6 text-xs text-muted-foreground font-medium">No datasets found matching "{entitySearch}"</p>
+                      </CommandEmpty>
+                      <CommandGroup heading="Available Datasets">
+                        {entities.map((entity) => (
+                          <CommandItem
+                            key={entity}
+                            value={entity}
+                            onSelect={() => handleEntityChange(entity)}
+                            className="text-xs cursor-pointer"
+                          >
+                            <Database className="mr-2 size-3.5 opacity-50" />
+                            <div className="flex flex-col">
+                              <span className="font-bold">{entity}</span>
+                              <span className="text-[9px] text-muted-foreground">
+                                {attributesMap[entity]?.length || 0} attributes available
+                              </span>
+                            </div>
+                            <Check
+                              className={cn(
+                                "ml-auto size-4",
+                                selectedEntity === entity ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </motion.div>
+
+            {/* Step 2: Select Property */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={selectedEntity ? { opacity: 1, x: 0 } : { opacity: 0.3, x: 20 }}
+              className={cn("space-y-3 transition-opacity", !selectedEntity && "pointer-events-none")}
+            >
+              <div className="flex items-center gap-2">
+                <div className="size-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-bold">2</div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pick Property / Attribute</label>
+              </div>
+
+              <Select 
+                value={selectedAttrKey} 
+                onValueChange={(val) => {
+                  const attr = currentAttributes.find(a => a.key === val);
+                  if (attr && selectedEntity) handleFieldChange(`${selectedEntity}.${val}`, attr);
+                }}
+              >
+                <SelectTrigger className="h-9 text-xs bg-background">
+                  <SelectValue placeholder="Select attribute..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {currentAttributes.map((attr) => (
+                    <SelectItem key={attr.key} value={attr.key} className="text-xs">
+                       <div className="flex items-center gap-2">
+                          <Target className="size-3 text-muted-foreground" />
+                          <span className="font-bold">{attr.key}</span>
+                          <span className="text-[9px] uppercase font-mono text-muted-foreground border px-1 rounded bg-muted/40">{attr.type}</span>
+                       </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </motion.div>
+
+            {/* Step 3: Logic & Values */}
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={leaf.field ? { opacity: 1, height: "auto" } : { opacity: 0, height: 0 }}
+              className={cn("col-span-full space-y-4 pt-4 border-t border-dashed overflow-hidden")}
+            >
+               <div className="flex items-center gap-2 mb-1">
+                <div className="size-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 text-[10px] font-bold">3</div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Define Match Logic</label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-bold uppercase text-muted-foreground pl-1">Operator</label>
+                  <Select
+                    value={leaf.operator}
+                    onValueChange={handleOperatorChange}
+                  >
+                    <SelectTrigger className="h-9 text-xs bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {operators.map((op) => (
+                        <SelectItem key={op} value={op} className="text-xs">
+                          {OPERATOR_LABELS[op] ?? op}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-bold uppercase text-muted-foreground pl-1">Target Value</label>
+                  {attrType === "boolean" ? (
+                    <Select
+                      value={String(leaf.value)}
+                      onValueChange={handleValueChange}
+                    >
+                      <SelectTrigger className="h-9 text-xs bg-background">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">True</SelectItem>
+                        <SelectItem value="false">False</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : attrType === "enum" && selectedAttr?.values?.length ? (
+                    <Select
+                      value={String(leaf.value)}
+                      onValueChange={handleValueChange}
+                    >
+                      <SelectTrigger className="h-9 text-xs bg-background">
+                        <SelectValue placeholder="Select value" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedAttr.values.map((v) => (
+                          <SelectItem key={v} value={v} className="text-xs">
+                            {v}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      type={attrType === "number" ? "number" : attrType === "date" ? "date" : "text"}
+                      className="h-9 text-xs bg-background font-mono"
+                      placeholder={["in", "not_in"].includes(leaf.operator) ? "val1, val2..." : "e.g. Gold Tier"}
+                      value={String(leaf.value ?? "")}
+                      onChange={(e) => handleValueChange(e.target.value)}
+                    />
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 }

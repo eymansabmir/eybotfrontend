@@ -82,7 +82,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
     return (
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="max-w-[95vw] sm:max-w-[700px] md:max-w-[800px] lg:max-w-[950px] p-0 gap-0 overflow-hidden h-[600px] md:h-[650px]">
-                <div className="grid grid-cols-[280px_1fr] h-full">
+                <div className="grid grid-cols-[auto_1fr] h-full">
                     {/* Left: Stepper Sidebar */}
                     <StepperSidebar steps={STEPS} currentStep={step} />
 

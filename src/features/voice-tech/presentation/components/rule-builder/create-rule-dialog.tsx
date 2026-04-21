@@ -14,7 +14,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { MessageCircle, Smartphone } from "lucide-react";
+import { MessageCircle, Smartphone, AlertTriangle } from "lucide-react";
 import { StepperSidebar, type StepConfig } from "@/features/campaign/presentation/components/wizard/stepper-sidebar";
 import { ConditionBuilder } from "./condition-builder";
 import { ProviderBadge } from "../shared/provider-badge";
@@ -36,9 +36,12 @@ const STEPS: StepConfig[] = [
 interface CreateRoutingRuleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  attributes: EntityAttribute[];
+  attributes: EntityAttribute[] | Record<string, EntityAttribute[]>;
   onSave: (rule: any) => void;
   isSaving?: boolean;
+  editingRule?: any; // The rule being edited, if any
+  nextPriority?: number; // Suggested next priority (max + 1)
+  existingPriorities?: number[]; // All priorities in the current config
 }
 
 export function CreateRoutingRuleDialog({ 
@@ -46,7 +49,10 @@ export function CreateRoutingRuleDialog({
   onOpenChange, 
   attributes,
   onSave,
-  isSaving = false
+  isSaving = false,
+  editingRule,
+  nextPriority = 1,
+  existingPriorities = []
 }: CreateRoutingRuleDialogProps) {
   const [step, setStep] = useState(0);
   const prevIsSaving = useRef(isSaving);
@@ -74,8 +80,62 @@ export function CreateRoutingRuleDialog({
   const [vapiTelephonyEndpoint, setVapiTelephonyEndpoint] = useState("");
   const [vapiWhatsappEndpoint, setVapiWhatsappEndpoint] = useState("");
   const [vapiBatchIntervalMs, setVapiBatchIntervalMs] = useState("250");
-  const [priority, setPriority] = useState("10");
+  const [priority, setPriority] = useState(String(nextPriority));
   const [isActive, setIsActive] = useState(true);
+
+  // Initialize form when opening or editing changes
+  useEffect(() => {
+    if (editingRule) {
+      setConditions(editingRule.conditions);
+      setProvider(editingRule.action.provider);
+      setAgentId(editingRule.action.agentId);
+      setIsActive(editingRule.isActive ?? true);
+      setPriority(String(editingRule.priority));
+      
+      const config = editingRule.action.config || {};
+      setTransport(config.transport || "telephony");
+      setAgentPhoneNumberId(config.agentPhoneNumberId || "");
+      setWhatsappPhoneNumberId(config.whatsappPhoneNumberId || "");
+      setWhatsappTemplateName(config.whatsappCallPermissionRequestTemplateName || "");
+      setWhatsappTemplateLanguageCode(config.whatsappCallPermissionRequestTemplateLanguageCode || "en_US");
+      setDefaultWhatsappUserId(config.whatsappUserId || "");
+      setSarvamOrchestratorBaseUrl(config.orchestratorBaseUrl || "");
+      setSarvamTelephonyEndpoint(config.telephonyEndpoint || "");
+      setSarvamWhatsappEndpoint(config.whatsappEndpoint || "");
+      setSarvamBatchEndpoint(config.batchEndpoint || "");
+      setVapiPhoneNumberId(config.phoneNumberId || "");
+      setVapiBaseUrl(config.baseUrl || "");
+      setVapiTelephonyEndpoint(config.telephonyEndpoint || "");
+      setVapiWhatsappEndpoint(config.whatsappEndpoint || "");
+      setVapiBatchIntervalMs(String(config.batchIntervalMs || "250"));
+    } else if (open) {
+      // Reset form for NEW rule
+      setStep(0);
+      setConditions({
+        operator: "AND",
+        children: [{ field: "", operator: "equals", value: "" }]
+      });
+      setProvider("elevenlabs");
+      setAgentId("");
+      setTransport("telephony");
+      setAgentPhoneNumberId("");
+      setWhatsappPhoneNumberId("");
+      setWhatsappTemplateName("");
+      setWhatsappTemplateLanguageCode("en_US");
+      setDefaultWhatsappUserId("");
+      setSarvamOrchestratorBaseUrl("");
+      setSarvamTelephonyEndpoint("");
+      setSarvamWhatsappEndpoint("");
+      setSarvamBatchEndpoint("");
+      setVapiPhoneNumberId("");
+      setVapiBaseUrl("");
+      setVapiTelephonyEndpoint("");
+      setVapiWhatsappEndpoint("");
+      setVapiBatchIntervalMs("250");
+      setPriority(String(nextPriority));
+      setIsActive(true);
+    }
+  }, [editingRule, nextPriority, open]);
 
   const isElevenLabs = provider === "elevenlabs";
   const isSarvam = provider === "sarvam";
@@ -105,9 +165,9 @@ export function CreateRoutingRuleDialog({
     setVapiTelephonyEndpoint("");
     setVapiWhatsappEndpoint("");
     setVapiBatchIntervalMs("250");
-    setPriority("10");
+    setPriority(String(nextPriority));
     setIsActive(true);
-  }, []);
+  }, [nextPriority]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -121,6 +181,13 @@ export function CreateRoutingRuleDialog({
     }
     prevIsSaving.current = isSaving;
   }, [isSaving, open, handleClose]);
+
+  const priorityNum = parseInt(priority, 10);
+  const isPriorityCollision = !editingRule 
+    ? existingPriorities.includes(priorityNum)
+    : priorityNum !== editingRule.priority && existingPriorities.includes(priorityNum);
+  
+  const isPriorityJump = !editingRule && priorityNum > nextPriority;
 
   const canContinue = (() => {
     if (step === 0) {
@@ -144,7 +211,15 @@ export function CreateRoutingRuleDialog({
         whatsappTemplateLanguageCode.trim().length > 0
       );
     }
-    if (step === 2) return priority.trim().length > 0;
+    if (step === 2) {
+      return (
+        priority.trim().length > 0 && 
+        !isNaN(priorityNum) && 
+        priorityNum >= 1 &&
+        !isPriorityCollision &&
+        !isPriorityJump
+      );
+    }
     return false;
   })();
 
@@ -217,7 +292,8 @@ export function CreateRoutingRuleDialog({
     };
 
     onSave({
-      priority: parseInt(priority, 10),
+      id: editingRule?.id, // Important for updates
+      priority: priorityNum,
       isActive,
       conditions,
       action,
@@ -229,7 +305,7 @@ export function CreateRoutingRuleDialog({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-[95vw] sm:max-w-[800px] md:max-w-[950px] p-0 gap-0 overflow-hidden h-[92vh] md:h-[650px] max-h-[92vh]">
-        <div className="grid grid-cols-[280px_1fr] h-full min-h-0">
+        <div className="grid grid-cols-[auto_1fr] h-full min-h-0">
           {/* Left: Stepper Sidebar */}
           <StepperSidebar steps={STEPS} currentStep={step} />
 
@@ -254,7 +330,7 @@ export function CreateRoutingRuleDialog({
                       </div>
                       <ConditionBuilder 
                         value={conditions} 
-                        attributes={attributes} 
+                        attributes={attributes as any} 
                         onChange={setConditions} 
                       />
                     </div>
@@ -524,11 +600,24 @@ export function CreateRoutingRuleDialog({
                          <div className="space-y-2">
                             <Label>Rule Priority</Label>
                             <Input 
-                              type="number" 
-                              value={priority} 
-                              onChange={(e) => setPriority(e.target.value)}
-                              min="1" 
+                               type="number" 
+                               value={priority} 
+                               onChange={(e) => setPriority(e.target.value)}
+                               min="1" 
+                               className={isPriorityCollision || isPriorityJump ? "border-rose-500 focus-visible:ring-rose-500 shadow-sm shadow-rose-500/10" : ""}
                             />
+                            {isPriorityCollision && (
+                              <p className="text-[10px] text-rose-500 font-bold uppercase tracking-tight flex items-center gap-1.5 mt-2 transition-all">
+                                <AlertTriangle className="size-3" />
+                                Priority {priorityNum} is already taken in this stack
+                              </p>
+                            )}
+                            {isPriorityJump && (
+                              <p className="text-[10px] text-amber-600 font-bold uppercase tracking-tight flex items-center gap-1.5 mt-2 transition-all">
+                                <AlertTriangle className="size-3" />
+                                Sequence Error: Next available priority is {nextPriority}.
+                              </p>
+                            )}
                          </div>
 
                          <div className="flex items-center gap-4 p-4 rounded-xl border bg-muted/20">

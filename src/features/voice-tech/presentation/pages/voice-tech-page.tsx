@@ -10,10 +10,10 @@ import { useVoiceTechAttributes } from "../../api/voice-tech-queries";
 export function VoiceTechPage() {
   const [tenantId, setTenantId] = useState("tenant-ey-001");
   const [activeTab, setActiveTab] = useState("entities");
-  const [entityType, setEntityType] = useState("user");
+  const [entityType, setEntityType] = useState<string | null>(null);
 
   // Attributes are still needed by the RoutingTab for building rule conditions
-  const { data: attributes = [] } = useVoiceTechAttributes(tenantId, entityType);
+  const { data: attributes = [] } = useVoiceTechAttributes(tenantId, entityType || "");
 
   return (
     <div className="space-y-6">
