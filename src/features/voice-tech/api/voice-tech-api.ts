@@ -1,6 +1,8 @@
 import { apiClient } from "@/lib/api-client";
 import type {
+  CreateIntegrationCredentialInput,
   EntityAttribute,
+  IntegrationCredential,
   IngestJob,
   RoutingConfigSummary,
   RoutingConfig,
@@ -198,6 +200,30 @@ export const voiceTechApi = {
     await apiClient.delete(`${ENTITIES}/entity-types/${name}`, {
       params: { tenantId }
     });
+  },
+
+  listCredentialsByType: async (orgId: string, type: string): Promise<IntegrationCredential[]> => {
+    const { data } = await apiClient.get<IntegrationCredential[]>("/integrations/credentials", {
+      params: {
+        orgId,
+        type,
+        includeInactive: false,
+        includeRevoked: false,
+      },
+    });
+    return data;
+  },
+
+  createIntegrationCredential: async (input: CreateIntegrationCredentialInput): Promise<IntegrationCredential> => {
+    const { data } = await apiClient.post<IntegrationCredential>('/integrations/credentials', {
+      orgId: input.orgId,
+      name: input.name,
+      type: input.type,
+      secret: input.secret,
+      metadata: input.metadata,
+      isActive: input.isActive ?? true,
+    });
+    return data;
   },
 
   /** Execute bulk routing for multiple entity types */

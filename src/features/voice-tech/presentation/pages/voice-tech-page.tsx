@@ -5,15 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { EntitiesTab } from "../components/tabs/entities-tab";
 import { RoutingTab } from "../components/tabs/routing-tab";
-import { useVoiceTechAttributes } from "../../api/voice-tech-queries";
 
 export function VoiceTechPage() {
   const [tenantId, setTenantId] = useState("tenant-ey-001");
   const [activeTab, setActiveTab] = useState("entities");
   const [entityType, setEntityType] = useState<string | null>(null);
-
-  // Attributes are still needed by the RoutingTab for building rule conditions
-  const { data: attributes = [] } = useVoiceTechAttributes(tenantId, entityType || "");
 
   return (
     <div className="space-y-6">
@@ -74,7 +70,7 @@ export function VoiceTechPage() {
           <TabsContent value="entities" className="focus-visible:outline-none m-0">
             <EntitiesTab
               tenantId={tenantId}
-              entityType={entityType}
+              entityType={entityType ?? ""}
               onEntityTypeChange={setEntityType}
             />
           </TabsContent>
@@ -83,7 +79,6 @@ export function VoiceTechPage() {
             <RoutingTab
               tenantId={tenantId}
               entityType={entityType}
-              attributes={attributes}
             />
           </TabsContent>
         </div>

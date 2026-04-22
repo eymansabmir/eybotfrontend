@@ -1,10 +1,8 @@
-import { Trash2, Database, Search, Target, Activity, Settings2, ChevronRight, Check, Plus } from "lucide-react";
+import { Trash2, Database, Search, Target, Activity, Settings2, ChevronRight, Check } from "lucide-react";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -176,11 +174,6 @@ export function ConditionRow({
       if (parts.length > 1) setSelectedEntity(parts[0]);
     }
   }, [leaf.field]);
-
-  const filteredEntities = useMemo(() => {
-    if (!entitySearch) return entities;
-    return entities.filter(e => e.toLowerCase().includes(entitySearch.toLowerCase()));
-  }, [entities, entitySearch]);
 
   const currentAttributes = selectedEntity ? attributesMap[selectedEntity] || [] : [];
   

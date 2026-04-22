@@ -211,7 +211,7 @@ export function SimulationDialog({
                     <div className="space-y-2">
                        <div className="space-y-1">
                           <p className="text-[10px] font-bold text-green-700/60 uppercase">Selected Provider</p>
-                          <ProviderBadge provider={result.action.provider} />
+                          <ProviderBadge provider={result.action.voiceProvider} />
                        </div>
                     </div>
                  </div>
