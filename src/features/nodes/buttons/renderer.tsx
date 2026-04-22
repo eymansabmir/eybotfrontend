@@ -2,18 +2,13 @@ import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
 import { ListChecks, X, Type, Footprints } from "lucide-react";
 import type { ButtonsNodeData } from "./schema";
-import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
-import { LockedBadge } from "@/components/ui/locked-badge";
-import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
-
-
+import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 type Interaction = NonNullable<ButtonsNodeData["interaction"]>;
 
-export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: ButtonsNodeData & { isTranslationMode?: boolean } }) {
+export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: ButtonsNodeData }) {
     const { setNodes } = useReactFlow();
-    const isTranslationMode = !!data.isTranslationMode;
 
     const ensureInteraction = (nodeData: ButtonsNodeData): Interaction => {
         const baseOptions = nodeData.buttons?.map((b) => ({ id: b.id, label: b.title, branchKey: b.id })) ?? [];
@@ -49,7 +44,6 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
             nds.map((node) => {
                 if (node.id === id) {
                     const mergedData = { ...node.data, ...newData };
-                    // Sync interaction options when buttons change
                     if (newData.buttons && mergedData.interaction?.input?.type === 'choice') {
                         mergedData.interaction = {
                             ...mergedData.interaction,
@@ -63,7 +57,6 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                             },
                         };
                     }
-                    // Sync node-level branches with buttons for backend validation
                     const updatedNode: typeof node = { ...node, data: mergedData };
                     if (newData.buttons) {
                         (updatedNode as any).branches = [
@@ -111,164 +104,129 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
     };
 
     const removeButton = (btnId: string) => {
-        updateData({
-            buttons: (data.buttons || []).filter(b => b.id !== btnId)
-        });
+        updateData({ buttons: (data.buttons || []).filter(b => b.id !== btnId) });
     };
 
     const updateButtonTitle = (btnId: string, newTitle: string) => {
-        updateData({
-            buttons: (data.buttons || []).map(b => b.id === btnId ? { ...b, title: newTitle } : b)
-        });
+        updateData({ buttons: (data.buttons || []).map(b => b.id === btnId ? { ...b, title: newTitle } : b) });
     };
 
     return (
-        <div
-            className={cn(
-                "group relative min-w-[280px] rounded-2xl border bg-card p-0 transition-all hover:shadow-xl",
-                selected ? "border-primary shadow-lg ring-4 ring-primary/10" : "border-border"
-            )}
-        >
-            <Handle
-                type="target"
-                position={Position.Top}
-                className="h-4 w-4 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
-            />
-
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border/50 bg-muted/30 px-4 py-2.5 rounded-t-2xl">
-                <div className="flex items-center gap-2">
-                    <div className="rounded-md bg-purple-500/10 p-1.5 text-purple-500">
-                        <ListChecks size={14} />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">
-                        Interactive Buttons {isTranslationMode && <span className="ml-2 text-primary">(Translation)</span>}
-                    </span>
-                </div>
-            </div>
-
-            <div className="p-4 space-y-4">
-                {/* Body Text */}
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5">
-                        <Type size={10} className="text-muted-foreground" />
-                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Body Text</label>
-                    </div>
-                    <textarea
-                        className="w-full min-h-[60px] bg-muted/50 rounded-xl border border-border/50 p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none transition-all"
-                        value={data.body}
-                        placeholder="Type your message..."
-                        onChange={(e) => updateData({ body: e.target.value })}
-                    />
-                </div>
-
-                {/* Footer Text */}
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5">
-                        <Footprints size={10} className="text-muted-foreground" />
-                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Footer (Optional)</label>
-                    </div>
-                    <input
-                        type="text"
-                        className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                        value={data.footer || ""}
-                        placeholder="Footer text..."
-                        onChange={(e) => updateData({ footer: e.target.value })}
-                    />
-                </div>
-
-                {/* Buttons Editor */}
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                           <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Buttons ({(data.buttons || []).length}/3)</label>
-                           {isTranslationMode && <LockedBadge />}
+        <NodeFrame
+            selected={selected}
+            icon={<ListChecks size={16} />}
+            title="Interactive Buttons"
+            popoverTitle="Configure Buttons"
+            summary={data.body ? data.body : "Configure button message"}
+            showPopover={selected}
+            showBottomHandle={false}
+            compactBody={
+                <div className="flex flex-col gap-1.5 w-full mt-0.5">
+                    {data.buttons?.map((b) => (
+                        <div key={b.id} className="relative bg-background rounded px-2 py-1 text-[10px] font-medium text-foreground border border-[var(--border-dim)] shadow-sm flex items-center">
+                            <span className="truncate">{b.title || "Unnamed"}</span>
+                            <Handle
+                                type="source"
+                                id={b.id}
+                                position={Position.Right}
+                                className="right-[-18px] top-1/2 -translate-y-1/2 h-3 w-3 bg-muted-foreground border-2 border-background hover:bg-[var(--ey-yellow)] transition-colors"
+                            />
                         </div>
-                        {!isTranslationMode && (data.buttons || []).length < 3 && (
-                            <button
-                                onClick={addButton}
-                                className="text-[10px] text-primary hover:underline font-bold"
-                            >
-                                + Add Button
-                            </button>
-                        )}
+                    ))}
+                    <div className="relative bg-muted/10 rounded px-2 py-1 flex items-center">
+                        <span className="truncate text-[9px] text-muted-foreground/50">Timeout Branch</span>
+                        <Handle
+                            type="source"
+                            id="timeout"
+                            position={Position.Right}
+                            className="right-[-18px] top-1/2 -translate-y-1/2 h-3 w-3 bg-muted-foreground/30 border-2 border-background border-dashed"
+                        />
+                    </div>
+                </div>
+            }
+            popoverContentClassName="p-4 space-y-5"
+            popoverBody={
+                <>
+                    <div className="space-y-1.5">
+                        <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                            <Type size={10} /> Body Message
+                        </label>
+                        <textarea
+                            className="w-full min-h-[80px] bg-background rounded-lg border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-y transition-all"
+                            value={data.body}
+                            placeholder="Type your message..."
+                            onChange={(e) => updateData({ body: e.target.value })}
+                        />
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                        {data.buttons?.map((button) => (
-                            <div
-                                key={button.id}
-                                className="relative group/btn"
-                            >
-                                <div className="flex items-center gap-2">
+                    <div className="space-y-1.5">
+                        <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                            <Footprints size={10} /> Footer (Optional)
+                        </label>
+                        <input
+                            type="text"
+                            className="w-full bg-background rounded-lg border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                            value={data.footer || ""}
+                            placeholder="Footer text..."
+                            onChange={(e) => updateData({ footer: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Buttons ({(data.buttons || []).length}/3)</label>
+                            {(data.buttons || []).length < 3 && (
+                                <button
+                                    onClick={addButton}
+                                    className="text-[10px] text-[var(--ey-yellow)] hover:underline font-bold"
+                                >
+                                    + Add Button
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            {data.buttons?.map((button) => (
+                                <div key={button.id} className="relative flex items-center gap-2 group/btn">
                                     <input
                                         type="text"
-                                        className="flex-1 bg-muted/50 rounded-lg border border-border/50 py-2 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-center placeholder:text-muted-foreground/30"
+                                        className="flex-1 bg-background rounded-md border border-[var(--border-dim)] py-1.5 px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all text-center"
                                         value={button.title}
                                         onChange={(e) => updateButtonTitle(button.id, e.target.value)}
                                     />
-                                    {!isTranslationMode && (
-                                        <button
-                                            onClick={() => removeButton(button.id)}
-                                            className="text-muted-foreground hover:text-destructive opacity-0 group-hover/btn:opacity-100 transition-opacity"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    )}
+                                    <button
+                                        onClick={() => removeButton(button.id)}
+                                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                                    >
+                                        <X size={14} />
+                                    </button>
                                 </div>
-                                {/* Individual handle per button for branching */}
-                                <Handle
-                                    type="source"
-                                    position={Position.Right}
-                                    id={button.id}
-                                    className="right-[-28px]! h-4 w-4 border-2 border-background bg-primary shadow-sm hover:scale-125 transition-transform"
-                                />
-                            </div>
-                        ))}
-
-                        {/* Timeout branch */}
-                        <div className="relative flex items-center justify-center rounded-lg border border-dashed border-border bg-transparent py-2 px-3 text-[10px] text-muted-foreground">
-                            Timeout (1hr)
-                            <Handle
-                                type="source"
-                                position={Position.Right}
-                                id="timeout"
-                                className="right-[-28px]! h-4 w-4 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
-                            />
+                            ))}
                         </div>
                     </div>
-                </div>
 
-                {/* Variable capture */}
-                <div className="space-y-1.5">
-                    <div className="flex items-center gap-1.5">
-                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Capture selection in variable</label>
-                        {isTranslationMode && <LockedBadge />}
+                    <div className="rounded-lg bg-muted/20 border border-[var(--border-dim)] p-3 space-y-2">
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Capture Response</label>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                className="flex-1 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                value={data.interaction?.input?.variableName || ""}
+                                placeholder="Variable Name"
+                                onChange={(e) => updateVariableSettings({ variableName: e.target.value })}
+                            />
+                            <select
+                                className="w-24 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                value={data.interaction?.input?.variableScope || 'session'}
+                                onChange={(e) => updateVariableSettings({ variableScope: e.target.value as 'session' | 'contact' })}
+                            >
+                                <option value="session">Session</option>
+                                <option value="contact">Contact</option>
+                            </select>
+                        </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <VariablesCombobox 
-                            value={data.interaction?.input?.variableName || ""} 
-                            onChange={(val) => updateVariableSettings({ variableName: val })} 
-                            placeholder="e.g. choice_key" 
-                            className={isTranslationMode ? "opacity-50 pointer-events-none" : ""}
-                        />
-                        <select
-
-                            className="bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50"
-                            value={data.interaction?.input?.variableScope || 'session'}
-                            onChange={(e) => updateVariableSettings({ variableScope: e.target.value as 'session' | 'contact' })}
-                            disabled={isTranslationMode}
-                        >
-                            <option value="session">Session</option>
-                            <option value="contact">Contact</option>
-                        </select>
-                    </div>
-                    {!isTranslationMode && <p className="text-[10px] text-muted-foreground">We'll store both the option ID and its label (using <code>_label</code> suffix).</p>}
-                </div>
-            </div>
-
-            {/* Visual background element */}
-            <div className="absolute inset-y-0 -left-px w-[2px] scale-y-0 bg-purple-500 transition-transform group-hover:scale-y-100 rounded-l-2xl" />
-        </div>
+                </>
+            }
+        />
     );
 }

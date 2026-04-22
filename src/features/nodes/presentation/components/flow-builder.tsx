@@ -2,6 +2,7 @@ import React, { useCallback, useRef, forwardRef, useImperativeHandle } from "rea
 import {
     ReactFlow,
     Background,
+    Controls,
     applyEdgeChanges,
     applyNodeChanges,
     addEdge,
@@ -90,23 +91,16 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
             const data = node.data as any;
             if (!data) return;
 
-            // Direct variable fields (Input, NPS, Language, File)
             if (typeof data.variable === 'string' && data.variable.trim()) foundVars.add(data.variable.trim());
             if (typeof data.variableName === 'string' && data.variableName.trim()) foundVars.add(data.variableName.trim());
-            
-            // AI Nodes & HTTP Request
             if (typeof data.resultVariable === 'string' && data.resultVariable.trim()) foundVars.add(data.resultVariable.trim());
-            
-            // Location Request
             if (typeof data.variablePrefix === 'string' && data.variablePrefix.trim()) foundVars.add(data.variablePrefix.trim());
 
-            // Nested Interaction variables (Buttons, Cards, Carousel, List)
             const interactionVar = data.interaction?.input?.variableName;
             if (typeof interactionVar === 'string' && interactionVar.trim()) {
                 foundVars.add(interactionVar.trim());
             }
 
-            // Array fields (Variable collections & Set Variable assignments)
             if (Array.isArray(data.variables)) {
                 data.variables.forEach((v: any) => {
                     if (typeof v === 'string' && v.trim()) foundVars.add(v.trim());
@@ -121,7 +115,7 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
 
         const store = useVariablesStore.getState();
         const existingNames = new Set(store.variables.map(v => v.name));
-        
+
         foundVars.forEach(vName => {
             if (!existingNames.has(vName)) {
                 store.addVariable(vName);
@@ -215,7 +209,7 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
     );
 
     return (
-        <div className="h-full w-full bg-muted/10 flex-1 overflow-hidden" ref={reactFlowWrapper}>
+        <div className="h-full w-full bg-[var(--canvas-bg)] flex-1 overflow-hidden" ref={reactFlowWrapper}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -230,7 +224,8 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
                 elementsSelectable={true}
                 fitView
             >
-                <Background color="#cbd5e1" gap={20} variant={BackgroundVariant.Dots} />
+                <Background color="var(--border-dim)" gap={20} variant={BackgroundVariant.Dots} />
+                <Controls />
                 {!isTranslationMode && (
                     <Panel position="top-left" className="ml-4 mt-4">
                         <NodePalette />

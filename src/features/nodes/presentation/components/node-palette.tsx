@@ -72,16 +72,16 @@ export function NodePalette() {
         accent: string;
         nodes: NodeDefinition[];
     }> = [
-        { key: "output", title: "Output Nodes", accent: "text-sky-500", nodes: groupedNodes.output },
-        { key: "input", title: "Input Nodes", accent: "text-emerald-500", nodes: groupedNodes.input },
-        { key: "integration", title: "Integration Nodes", accent: "text-violet-500", nodes: groupedNodes.integration },
-        { key: "logical", title: "Logical Nodes", accent: "text-amber-500", nodes: groupedNodes.logical },
+        { key: "output", title: "Output Nodes", accent: "text-muted-foreground", nodes: groupedNodes.output },
+        { key: "input", title: "Input Nodes", accent: "text-muted-foreground", nodes: groupedNodes.input },
+        { key: "integration", title: "Integration Nodes", accent: "text-muted-foreground", nodes: groupedNodes.integration },
+        { key: "logical", title: "Logical Nodes", accent: "text-muted-foreground", nodes: groupedNodes.logical },
     ];
 
     return (
         <TooltipProvider delayDuration={0}>
-            <div className="flex h-[80vh] w-[300px] flex-col rounded-2xl border border-border bg-card/90 shadow-xl backdrop-blur-md">
-                <div className="border-b border-border/60 px-4 py-3">
+            <div className="flex h-[80vh] w-[300px] flex-col rounded-2xl border border-[var(--border-dim)] bg-[var(--node-bg)] shadow-xl backdrop-blur-md">
+                <div className="border-b border-[var(--border-dim)] px-4 py-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-muted-foreground">Node Library</p>
                     <p className="text-[10px] text-muted-foreground/70">Drag nodes into the canvas</p>
                 </div>
@@ -91,7 +91,7 @@ export function NodePalette() {
                         <div key={key} className="space-y-2">
                             <div className="flex items-center gap-2 px-1">
                                 <span className={cn("text-[10px] font-bold uppercase tracking-widest", accent)}>{title}</span>
-                                <div className="h-px flex-1 bg-border/50" />
+                                <div className="h-px flex-1 bg-[var(--border-dim)]" />
                             </div>
                             {nodes.length ? (
                                 <div className="grid grid-cols-2 gap-2">
@@ -122,13 +122,13 @@ function NodePaletteItem({ node, onDragStart }: NodePaletteItemProps) {
                 <div
                     className={cn(
                         "flex items-center gap-2 w-full h-11 p-2 cursor-grab rounded-xl transition-all active:cursor-grabbing",
-                        "bg-muted/30 text-muted-foreground hover:bg-primary/10 hover:text-primary border border-transparent hover:border-primary/20",
+                        "bg-[var(--canvas-bg)] text-muted-foreground hover:bg-[var(--border-dim)] hover:text-[var(--ey-yellow)] border border-transparent hover:border-[var(--ey-yellow)]/20",
                         "group relative"
                     )}
                     draggable
                     onDragStart={(e) => onDragStart(e, node.config.type)}
                 >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-card border border-border group-hover:border-primary/30 shadow-sm transition-colors">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--node-bg)] border border-[var(--border-dim)] group-hover:border-[var(--ey-yellow)]/30 shadow-sm transition-colors">
                         {node.config.icon}
                     </div>
 
@@ -138,13 +138,13 @@ function NodePaletteItem({ node, onDragStart }: NodePaletteItemProps) {
                     <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                         <div className="grid grid-cols-2 gap-0.5">
                             {[...Array(4)].map((_, i) => (
-                                <div key={i} className="size-0.5 rounded-full bg-primary/40" />
+                                <div key={i} className="size-0.5 rounded-full bg-[var(--ey-yellow)]/40" />
                             ))}
                         </div>
                     </div>
 
                     {/* Subtle active state indicator */}
-                    <div className="absolute left-0 h-4 w-1 rounded-r-full bg-primary scale-y-0 transition-transform group-hover:scale-y-100" />
+                    <div className="absolute left-0 h-4 w-1 rounded-r-full bg-[var(--ey-yellow)] scale-y-0 transition-transform group-hover:scale-y-100" />
                 </div>
             </TooltipTrigger>
             <TooltipContent side="right" className="bg-popover text-popover-foreground border-border shadow-md">

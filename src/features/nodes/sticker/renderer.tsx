@@ -5,6 +5,7 @@ import type { StickerNodeData } from "./schema";
 import { cn } from "@/lib/utils";
 import { MediaUploader, useResolveUrl } from "@/lib/storage";
 import { ENV } from "@/config/env";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 /** Returns true if the value looks like an absolute URL (not a storage path). */
 function isAbsoluteUrl(value: string) {
@@ -61,88 +62,138 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
     }, [previewSrc]);
 
     return (
-        <div
-            className={cn(
-                "group relative min-w-[260px] rounded-2xl border bg-card p-0 transition-all hover:shadow-xl",
-                selected ? "border-primary shadow-lg ring-4 ring-primary/10" : "border-border"
+        <div className="relative">
+            {/* 1) Condensed Block Face */}
+            <div
+                className={cn(
+                    "flex flex-col justify-center relative w-[220px] min-h-[85px] rounded-xl border p-3.5 select-none transition-all cursor-pointer",
+                    "bg-[var(--node-bg)] border-[var(--border-dim)] hover:shadow-md",
+                    selected && "border-2 border-[var(--ey-yellow)] shadow-[0_0_10px_rgba(255,230,0,0.15)] -m-[1px]"
+                )}
+            >
+                <Handle
+                    type="target"
+                    position={Position.Top}
+                    className="h-3 w-3 border-2 border-[var(--border-dim)] bg-background shadow-sm hover:scale-125 transition-transform"
+                />
+
+                <div className="flex flex-col gap-2.5 w-full">
+                    <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300">
+                            <StickerIcon size={16} />
+                        </div>
+                        <span className="text-sm font-semibold text-foreground leading-none pr-1 truncate">Sticker</span>
+                    </div>
+                    
+                    <div className="bg-black/5 dark:bg-black/20 rounded-md p-2 border border-[var(--border-dim)] mt-0.5">
+                        <span className="text-[11px] text-foreground/70 line-clamp-3 leading-snug whitespace-pre-wrap">
+                            {data.url ? "1 attached sticker" : "Upload a sticker..."}
+                        </span>
+                    </div>
+                </div>
+
+                <Handle
+                    type="source"
+                    position={Position.Bottom}
+                    className="h-3 w-3 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
+                />
+            </div>
+
+            {/* 2) Popover Configuration Panel */}
+            {selected && (
+                <div 
+                    className="absolute top-0 left-[230px] w-[340px] bg-[var(--node-bg)] border border-[var(--border-dim)] rounded-xl shadow-2xl z-[100] cursor-auto nodrag nopan flex flex-col overflow-hidden"
+                >
+                    <div className="flex items-center justify-between border-b border-[var(--border-dim)] px-4 py-3 bg-muted/20">
+                        <div className="flex items-center gap-2">
+                            <StickerIcon size={14} className="text-muted-foreground" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Configure Sticker</span>
+                        </div>
+                    </div>
+                    
+                    <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
+                        <Tabs defaultValue="upload" className="w-full">
+                            <TabsList className="grid grid-cols-2 bg-muted/40 p-1 h-9 rounded-lg border border-[var(--border-dim)]">
+                                <TabsTrigger 
+                                    value="upload" 
+                                    className="text-[11px] font-medium rounded-md data-[state=active]:bg-[var(--ey-yellow)] data-[state=active]:text-black transition-colors"
+                                >
+                                    Upload File
+                                </TabsTrigger>
+                                <TabsTrigger 
+                                    value="url" 
+                                    className="text-[11px] font-medium rounded-md data-[state=active]:bg-[var(--ey-yellow)] data-[state=active]:text-black transition-colors"
+                                >
+                                    Direct URL
+                                </TabsTrigger>
+                            </TabsList>
+                            
+                            <TabsContent value="upload" className="pt-4 mt-0 space-y-4 outline-none">
+                                <MediaUploader onUploadSuccess={(path) => updateData({ url: path, mediaId: undefined })} purpose="image" />
+                                {data.mediaId && (
+                                    <div className="w-full mt-2">
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Media ID (Meta)</span>
+                                        </div>
+                                        <div className="bg-muted/10 rounded-md border border-[var(--border-dim)] px-3 py-1.5 text-[10px] font-mono text-muted-foreground break-all">
+                                            {data.mediaId}
+                                        </div>
+                                    </div>
+                                )}
+                            </TabsContent>
+                            
+                            <TabsContent value="url" className="pt-4 mt-0 space-y-3 outline-none">
+                                <div className="space-y-1.5 flex flex-col items-center">
+                                    <div className="flex w-full items-center gap-1.5 mb-1">
+                                        <LinkIcon size={10} className="text-muted-foreground" />
+                                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Sticker URL</label>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                        value={data.url || ""}
+                                        placeholder="https://example.com/sticker.webp"
+                                        onChange={(e) => updateData({ url: e.target.value, mediaId: undefined })}
+                                    />
+                                    {data.mediaId && (
+                                        <div className="w-full mt-2">
+                                            <div className="flex items-center gap-1.5 mb-1">
+                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Media ID (Meta)</span>
+                                            </div>
+                                            <div className="bg-muted/10 rounded-md border border-[var(--border-dim)] px-3 py-1.5 text-[10px] font-mono text-muted-foreground break-all">
+                                                {data.mediaId}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+
+                        {/* Preview */}
+                        <div className="flex justify-center mt-4 pt-4 border-t border-[var(--border-dim)]">
+                            {previewSrc ? (
+                                <div className="relative h-32 w-32 overflow-hidden rounded-xl border border-[var(--border-dim)] bg-muted/10 group/img">
+                                    <img
+                                        src={previewSrc}
+                                        alt="Sticker Preview"
+                                        className="h-full w-full object-contain transition-transform group-hover/img:scale-105"
+                                        onError={(e) => {
+                                            e.currentTarget.src = "https://placehold.co/128x128?text=Invalid+WebP";
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="flex h-32 w-32 items-center justify-center rounded-xl border border-dashed border-[var(--border-dim)] bg-muted/10">
+                                    <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                                        <StickerIcon size={24} className="opacity-20" />
+                                        <span className="text-[10px] italic">No sticker</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
-        >
-            <Handle
-                type="target"
-                position={Position.Top}
-                className="h-4 w-4 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
-            />
-
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border/50 bg-muted/30 px-4 py-2.5 rounded-t-2xl">
-                <div className="flex items-center gap-2">
-                    <div className="rounded-lg bg-yellow-500/10 p-1.5 text-yellow-500">
-                        <StickerIcon size={14} />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">
-                        Sticker Message
-                    </span>
-                </div>
-            </div>
-
-            <div className="p-4 space-y-4">
-                {/* URL / Path Input */}
-                <div className="space-y-3">
-                    <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5">
-                            <LinkIcon size={10} className="text-muted-foreground" />
-                            <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Sticker URL (or Upload)</label>
-                        </div>
-                        <input
-                            type="text"
-                            className="w-full bg-muted/50 rounded-xl border border-border/50 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                            value={data.url || ""}
-                            placeholder="https://example.com/sticker.webp"
-                            onChange={(e) => updateData({ url: e.target.value, mediaId: undefined })}
-                        />
-                    </div>
-                    {data.mediaId && (
-                        <div className="space-y-1.5 opacity-80">
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Media ID (Meta)</span>
-                            </div>
-                            <div className="w-full bg-muted/30 rounded-lg border border-border/30 px-3 py-1.5 text-[10px] font-mono text-muted-foreground break-all">
-                                {data.mediaId}
-                            </div>
-                        </div>
-                    )}
-                    <MediaUploader onUploadSuccess={(path) => updateData({ url: path, mediaId: undefined })} purpose="image" />
-                </div>
-
-                {/* Preview */}
-                <div className="flex justify-center">
-                    {previewSrc ? (
-                        <div className="relative h-32 w-32 overflow-hidden rounded-xl border border-border bg-muted/50 group/img">
-                            <img
-                                src={previewSrc}
-                                alt="Sticker Preview"
-                                className="h-full w-full object-contain transition-transform group-hover/img:scale-105"
-                                onError={(e) => {
-                                    e.currentTarget.src = "https://placehold.co/128x128?text=Invalid+WebP";
-                                }}
-                            />
-                        </div>
-                    ) : (
-                        <div className="flex h-32 w-32 items-center justify-center rounded-xl border border-dashed border-border bg-muted/30">
-                            <div className="flex flex-col items-center gap-1 text-muted-foreground">
-                                <StickerIcon size={24} className="opacity-20" />
-                                <span className="text-[10px] italic">No sticker preview</span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                className="h-4 w-4 border-2 border-background bg-primary shadow-sm hover:scale-125 transition-transform"
-            />
         </div>
     );
 }
