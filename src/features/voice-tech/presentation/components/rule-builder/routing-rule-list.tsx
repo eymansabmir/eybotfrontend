@@ -43,7 +43,14 @@ export function RoutingRuleList({
   onDelete
 }: RoutingRuleListProps) {
   const getTransport = (rule: RoutingRule): "telephony" | "whatsapp" =>
-    rule.action.config?.transport === "whatsapp" ? "whatsapp" : "telephony";
+    rule.action.channel === "whatsapp"
+      ? "whatsapp"
+      : "telephony";
+
+  const getProvider = (rule: RoutingRule): string =>
+    getTransport(rule) === "telephony"
+      ? rule.action.telephonyProvider
+      : rule.action.voiceProvider;
 
   if (rules.length === 0) {
     return (
@@ -90,7 +97,7 @@ export function RoutingRuleList({
             {/* Action Block */}
             <div className="min-w-[180px] shrink-0">
                <div className="flex items-center gap-3 p-2 rounded-xl bg-muted/30 border border-border/40">
-                  <ProviderBadge provider={rule.action.provider} />
+                  <ProviderBadge provider={getProvider(rule) as any} />
                   <div className="min-w-0">
                      <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none">Agent ID</p>
                      <p className="text-[11px] font-mono truncate mt-1">{rule.action.agentId}</p>

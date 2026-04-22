@@ -72,11 +72,12 @@ function readConfigValue(config: Record<string, unknown> | undefined, key: strin
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
 }
 
-function getMissingConfigLabels(rule: RoutingRule, _mode: "single" | "bulk"): string[] {
-  const config = rule.action.config;
-  const transport = config?.transport === "whatsapp" ? "whatsapp" : "telephony";
+function getMissingConfigLabels(rule: RoutingRule, mode: "single" | "bulk"): string[] {
+  const config = rule.action.runtimeConfig;
+  const transport = rule.action.channel === "whatsapp" ? "whatsapp" : "telephony";
+  const provider = rule.action.voiceProvider;
 
-  if (rule.action.provider === "elevenlabs") {
+  if (provider === "elevenlabs") {
     if (transport === "telephony") {
       return readConfigValue(config, "agentPhoneNumberId") ? [] : ["Agent Phone Number ID"];
     }
@@ -88,7 +89,7 @@ function getMissingConfigLabels(rule: RoutingRule, _mode: "single" | "bulk"): st
     return missing;
   }
 
-  if (rule.action.provider === "sarvam") {
+  if (provider === "sarvam") {
     const missing: string[] = [];
     const hasBaseUrl = Boolean(readConfigValue(config, "orchestratorBaseUrl"));
     const hasEnvFallback = false;
@@ -100,10 +101,14 @@ function getMissingConfigLabels(rule: RoutingRule, _mode: "single" | "bulk"): st
     return missing;
   }
 
-  if (rule.action.provider === "vapi") {
+  if (provider === "vapi") {
     const missing: string[] = [];
     if (!readConfigValue(config, "phoneNumberId")) {
       missing.push("Vapi Phone Number ID");
+    }
+
+    if (mode === "bulk" && !readConfigValue(config, "batchIntervalMs")) {
+      missing.push("Vapi Batch Interval (recommended)");
     }
 
     return missing;
@@ -126,15 +131,24 @@ interface ConfigSummaryItem {
 function buildConfigSummary(rule: RoutingRule | null): ConfigSummaryItem[] {
   if (!rule) return [];
 
-  const config = rule.action.config;
-  const transport = config?.transport === "whatsapp" ? "whatsapp" : "telephony";
+  const config = rule.action.runtimeConfig;
+  const transport = rule.action.channel === "whatsapp" ? "whatsapp" : "telephony";
+  const provider = rule.action.voiceProvider;
   const summary: ConfigSummaryItem[] = [
-    { label: "Provider", value: rule.action.provider },
+    { label: "Provider", value: provider },
     { label: "Agent ID", value: rule.action.agentId || "-" },
     { label: "Transport", value: transport === "whatsapp" ? "WhatsApp" : "Telephony" },
   ];
 
-  if (rule.action.provider === "elevenlabs") {
+  if (rule.action.voiceCredentialId) {
+    summary.push({ label: "Voice Credential ID", value: rule.action.voiceCredentialId });
+  }
+
+  if (rule.action.telephonyCredentialId) {
+    summary.push({ label: "Telephony Credential ID", value: rule.action.telephonyCredentialId });
+  }
+
+  if (provider === "elevenlabs") {
     if (transport === "whatsapp") {
       summary.push(
         { label: "WhatsApp Phone Number ID", value: readConfigValue(config, "whatsappPhoneNumberId") ?? "Not set" },
@@ -146,11 +160,11 @@ function buildConfigSummary(rule: RoutingRule | null): ConfigSummaryItem[] {
     }
   }
 
-  if (rule.action.provider === "sarvam") {
+  if (provider === "sarvam") {
     summary.push({ label: "Orchestrator URL", value: readConfigValue(config, "orchestratorBaseUrl") ?? "Env fallback" });
   }
 
-  if (rule.action.provider === "vapi") {
+  if (provider === "vapi") {
     summary.push({ label: "Phone Number ID", value: readConfigValue(config, "phoneNumberId") ?? "Not set" });
   }
 
@@ -169,8 +183,8 @@ function buildSetupChecks(params: {
     return [{ label: "Select a rule", ok: false }];
   }
 
-  const config = rule.action.config;
-  const provider = rule.action.provider;
+  const config = rule.action.runtimeConfig;
+  const provider = rule.action.voiceProvider;
   const checks: SetupCheck[] = [
     {
       label: "Agent ID configured",
@@ -238,7 +252,7 @@ export function RuleCallLaunchpadDialog({
   const [whatsappUserId, setWhatsappUserId] = useState("");
   const [customPayload, setCustomPayload] = useState("");
 
-  const isWhatsappVoice = rule?.action.config?.transport === "whatsapp";
+  const isWhatsappVoice = rule?.action.channel === "whatsapp";
   const setupChecks = useMemo(
     () =>
       buildSetupChecks({
@@ -282,7 +296,7 @@ export function RuleCallLaunchpadDialog({
 
   useEffect(() => {
     if (open) {
-      setMode(initialMode);
+      queueMicrotask(() => setMode(initialMode));
     }
   }, [open, initialMode]);
 
@@ -457,7 +471,7 @@ export function RuleCallLaunchpadDialog({
               <Badge className="gap-1 bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-100">
                 <Sparkles className="size-3" /> Premium Call Launcher
               </Badge>
-              {rule && <ProviderBadge provider={rule.action.provider} />}
+              {rule && <ProviderBadge provider={rule.action.voiceProvider} />}
             </div>
             <DialogTitle className="text-xl font-black tracking-tight">Rule Call Launchpad</DialogTitle>
             <DialogDescription className="text-xs">
@@ -510,7 +524,7 @@ export function RuleCallLaunchpadDialog({
                     <div className="flex w-full items-center justify-between pr-2">
                       <div className="text-left">
                         <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Provider Setup Wizard</p>
-                        <p className="text-[11px] text-muted-foreground mt-1">Preflight checks for {rule?.action.provider ?? "selected provider"} ({isWhatsappVoice ? "WhatsApp" : "Telephony"}).</p>
+                        <p className="text-[11px] text-muted-foreground mt-1">Preflight checks for {rule?.action.voiceProvider ?? "selected provider"} ({isWhatsappVoice ? "WhatsApp" : "Telephony"}).</p>
                       </div>
                       <Badge className={cn("border ml-2", setupReady ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-amber-100 text-amber-800 border-amber-300")}>
                         {setupReady ? "Ready" : "Needs setup"}

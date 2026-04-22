@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { voiceTechApi } from "./voice-tech-api";
 import { toast } from "sonner";
 import type { IngestFileBody, IngestJobStatus } from "../types";
+import type { CreateIntegrationCredentialInput } from "../types";
+import { PROVIDER_TO_CREDENTIAL_TYPE } from "../types";
+import type { VoiceProvider } from "../types";
 
 // ─── Query Keys ──────────────────────────────────────────────────────
 const VT_KEYS = {
@@ -35,6 +38,41 @@ export function useEntityTypes(tenantId: string) {
     queryKey: VT_KEYS.entityTypes(tenantId),
     queryFn: () => voiceTechApi.listEntityTypes(tenantId),
     enabled: !!tenantId,
+  });
+}
+
+export function useVoiceProviderCredentials(orgId: string, provider: VoiceProvider) {
+  const type = PROVIDER_TO_CREDENTIAL_TYPE[provider];
+
+  return useQuery({
+    queryKey: ["voice-tech", "provider-credentials", orgId, provider],
+    queryFn: () => voiceTechApi.listCredentialsByType(orgId, type),
+    enabled: Boolean(orgId && provider),
+    staleTime: 30_000,
+  });
+}
+
+export function useCredentialsByType(orgId: string, type: string) {
+  return useQuery({
+    queryKey: ["voice-tech", "credentials-by-type", orgId, type],
+    queryFn: () => voiceTechApi.listCredentialsByType(orgId, type),
+    enabled: Boolean(orgId && type),
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateIntegrationCredential(orgId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateIntegrationCredentialInput) => voiceTechApi.createIntegrationCredential(input),
+    onSuccess: (credential) => {
+      toast.success(`Credential "${credential.name}" created`);
+      qc.invalidateQueries({ queryKey: ["voice-tech", "credentials-by-type", orgId], exact: false });
+      qc.invalidateQueries({ queryKey: ["voice-tech", "provider-credentials", orgId], exact: false });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to create credential");
+    },
   });
 }
 

@@ -424,6 +424,7 @@ export function RoutingTab({ tenantId, entityType }: RoutingTabProps) {
           setIsCreateDialogOpen(open);
           if (!open) setRuleToEdit(null);
         }}
+         tenantId={tenantId}
         attributes={groupedAttributes as any}
         onSave={handleSaveRule}
         isSaving={upsertRule.isPending}

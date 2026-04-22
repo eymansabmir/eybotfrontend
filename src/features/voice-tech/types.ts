@@ -50,9 +50,13 @@ export function isConditionLeaf(c: RoutingCondition): c is ConditionLeaf {
 // ─── Routing Action — strict shape from rule.types.ts ───────────────
 export interface RoutingRuleAction {
   type: 'VOICE_PROVIDER'; // literal required by backend
-  provider: string;
+  telephonyProvider: string;
+  voiceProvider: string;
+  telephonyCredentialId: string;
+  voiceCredentialId: string;
+  channel: 'telephony' | 'whatsapp';
   agentId: string;         // required
-  config?: Record<string, unknown>;
+  runtimeConfig: Record<string, unknown>;
 }
 
 export interface RoutingRule {
@@ -70,6 +74,31 @@ export interface VoiceProviderExecutionResult {
   accepted: boolean;
   providerReference?: string;
   message?: string;
+}
+
+export type VoiceCredentialType = 'ELEVENLABS' | 'SARVAM' | 'VAPI';
+export type TelephonyCredentialType = 'EXOTEL' | 'SARVAM' | 'VAPI' | 'ELEVENLABS';
+
+export interface IntegrationCredential {
+  id: string;
+  orgId: string;
+  name: string;
+  type: string;
+  metadata: Record<string, unknown> | null;
+  isActive: boolean;
+  lastTestedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateIntegrationCredentialInput {
+  orgId: string;
+  name: string;
+  type: string;
+  secret: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  isActive?: boolean;
 }
 
 export interface RoutingExecutionResult {
@@ -143,6 +172,19 @@ export interface Entity {
 // ─── Providers ──────────────────────────────────────────────────────
 export const VOICE_PROVIDERS = ['elevenlabs', 'sarvam', 'vapi'] as const;
 export type VoiceProvider = (typeof VOICE_PROVIDERS)[number];
+
+export const PROVIDER_TO_CREDENTIAL_TYPE: Record<VoiceProvider, VoiceCredentialType> = {
+  elevenlabs: 'ELEVENLABS',
+  sarvam: 'SARVAM',
+  vapi: 'VAPI',
+};
+
+export const TELEPHONY_PROVIDER_TO_CREDENTIAL_TYPE: Record<string, TelephonyCredentialType> = {
+  exotel: 'EXOTEL',
+  sarvam: 'SARVAM',
+  vapi: 'VAPI',
+  elevenlabs: 'ELEVENLABS',
+};
 
 export const PROVIDER_META: Record<VoiceProvider, { label: string; color: string }> = {
   elevenlabs: { label: 'ElevenLabs', color: '#8B5CF6' },
