@@ -218,7 +218,7 @@ export function RoutingTab({ tenantId, entityType }: RoutingTabProps) {
 
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[300px_1fr] gap-6 items-start">
+    <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-4 items-start">
       {/* Sidebar: Config Selector & Info */}
       <div className="space-y-4">
         <Card className="border-border/60">
@@ -414,6 +414,8 @@ export function RoutingTab({ tenantId, entityType }: RoutingTabProps) {
             onToggleActive={handleToggleActive}
             onEdit={handleEditRule}
             onDelete={handleDeleteRule}
+            tenantId={tenantId}
+            availableEntityTypes={selectedEntityTypes}
           />
         )}
       </div>

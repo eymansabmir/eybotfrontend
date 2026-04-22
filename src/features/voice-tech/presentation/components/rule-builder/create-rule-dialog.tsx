@@ -27,6 +27,8 @@ import type {
 } from "../../../types";
 import { VOICE_PROVIDERS } from "../../../types";
 
+const generateId = () => Math.random().toString(36).substring(2, 11);
+
 const STEPS: StepConfig[] = [
   { title: "Define Conditions", description: "Who should this rule apply to?" },
   { title: "Choose Action", description: "Select the voice provider and agent" },
@@ -58,9 +60,10 @@ export function CreateRoutingRuleDialog({
   const prevIsSaving = useRef(isSaving);
 
   // ── Form State ──────────────────────────────────────────────────
-  const [conditions, setConditions] = useState<{ operator: LogicalOperator; children: RoutingCondition[] }>({
+  const [conditions, setConditions] = useState<{ id?: string; operator: LogicalOperator; children: RoutingCondition[] }>({
+    id: generateId(),
     operator: "AND",
-    children: [{ field: "", operator: "equals", value: "" }]
+    children: [{ id: generateId(), field: "", operator: "equals", value: "" }]
   });
   
   const [provider, setProvider] = useState<VoiceProvider>("elevenlabs");
@@ -86,7 +89,16 @@ export function CreateRoutingRuleDialog({
   // Initialize form when opening or editing changes
   useEffect(() => {
     if (editingRule) {
-      setConditions(editingRule.conditions);
+      // Recursively ensure all conditions have IDs
+      const ensureIds = (c: any): any => {
+        if (!c.id) c.id = generateId();
+        if (c.children) {
+          c.children = c.children.map(ensureIds);
+        }
+        return c;
+      };
+      
+      setConditions(ensureIds(JSON.parse(JSON.stringify(editingRule.conditions))));
       setProvider(editingRule.action.provider);
       setAgentId(editingRule.action.agentId);
       setIsActive(editingRule.isActive ?? true);
@@ -112,8 +124,9 @@ export function CreateRoutingRuleDialog({
       // Reset form for NEW rule
       setStep(0);
       setConditions({
+        id: generateId(),
         operator: "AND",
-        children: [{ field: "", operator: "equals", value: "" }]
+        children: [{ id: generateId(), field: "", operator: "equals", value: "" }]
       });
       setProvider("elevenlabs");
       setAgentId("");
@@ -145,8 +158,9 @@ export function CreateRoutingRuleDialog({
   const resetForm = useCallback(() => {
     setStep(0);
     setConditions({
+      id: generateId(),
       operator: "AND",
-      children: [{ field: "", operator: "equals", value: "" }]
+      children: [{ id: generateId(), field: "", operator: "equals", value: "" }]
     });
     setProvider("elevenlabs");
     setAgentId("");

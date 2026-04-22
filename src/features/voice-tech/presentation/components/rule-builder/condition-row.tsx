@@ -1,4 +1,4 @@
-import { Trash2, Database, Search, Target, Activity, Settings2, ChevronRight, Check } from "lucide-react";
+import { Trash2, Database, Search, Target, Activity, Settings2, ChevronRight, Check, Plus } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -47,6 +47,94 @@ interface ConditionRowProps {
   canRemove: boolean;
 }
 
+function ValueSelector({ 
+  values, 
+  value, 
+  onChange,
+  placeholder = "Select or type value..."
+}: { 
+  values: string[], 
+  value: string, 
+  onChange: (val: string) => void,
+  placeholder?: string
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredValues = useMemo(() => {
+    if (!search) return values;
+    return values.filter(v => v.toLowerCase().includes(search.toLowerCase()));
+  }, [values, search]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          className="w-full justify-between h-9 text-xs bg-background font-mono"
+        >
+          {value || <span className="text-muted-foreground font-normal italic">{placeholder}</span>}
+          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-0" align="start">
+        <Command>
+          <CommandInput 
+            placeholder="Search values or type custom..." 
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty>
+               <div className="p-2 space-y-2">
+                  <p className="text-xs text-muted-foreground">No matching values found</p>
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    className="w-full h-8 text-[10px] font-bold gap-2"
+                    onClick={() => {
+                      if (!search) return;
+                      onChange(search);
+                      setOpen(false);
+                      setSearch("");
+                    }}
+                  >
+                    <Plus className="size-3" /> Use custom: {search}
+                  </Button>
+               </div>
+            </CommandEmpty>
+            <CommandGroup heading="Suggestions">
+              {filteredValues.map((v) => (
+                <CommandItem
+                  key={v}
+                  value={v}
+                  onSelect={() => {
+                    onChange(v);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  className="text-xs cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className="font-bold">{v}</span>
+                    <Check
+                      className={cn(
+                        "ml-auto size-4",
+                        value === v ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function ConditionRow({
   leaf,
   attributes: groupedAttributes,
@@ -75,6 +163,8 @@ export function ConditionRow({
   const [selectedEntity, setSelectedEntity] = useState<string | null>(initialEntity);
   const [entitySearch, setEntitySearch] = useState("");
   const [entityOpen, setEntityOpen] = useState(false);
+  const [attrSearch, setAttrSearch] = useState("");
+  const [attrOpen, setAttrOpen] = useState(false);
   const [accordionValue, setAccordionValue] = useState<string | undefined>(
     !leaf.field ? "item-1" : undefined
   );
@@ -93,28 +183,45 @@ export function ConditionRow({
   }, [entities, entitySearch]);
 
   const currentAttributes = selectedEntity ? attributesMap[selectedEntity] || [] : [];
-  const selectedAttrKey = leaf.field.includes('.') ? leaf.field.split('.').pop() : leaf.field;
+  
+  const filteredAttributes = useMemo(() => {
+    if (!attrSearch) return currentAttributes;
+    return currentAttributes.filter(a => a.key.toLowerCase().includes(attrSearch.toLowerCase()));
+  }, [currentAttributes, attrSearch]);
+
+  const selectedAttrKey = useMemo(() => {
+    if (!selectedEntity || !leaf.field) return "";
+    if (leaf.field.startsWith(`${selectedEntity}.`)) {
+      return leaf.field.slice(selectedEntity.length + 1);
+    }
+    return leaf.field;
+  }, [leaf.field, selectedEntity]);
+
   const selectedAttr = currentAttributes.find(a => a.key === selectedAttrKey);
 
   const handleEntityChange = (entity: string) => {
     setSelectedEntity(entity);
     setEntityOpen(false);
     
-    // Progress to Step 2 (if not already opened, though we use auto-progression logic)
+    // Ensure accordion stays open
     setAccordionValue("item-1"); 
 
     // If entity changed, we reset the field to the first available attribute
     const firstAttr = attributesMap[entity]?.[0];
     if (firstAttr) {
       handleFieldChange(`${entity}.${firstAttr.key}`, firstAttr);
+    } else {
+      // If no attributes, set a placeholder so Step 2 shows up
+      handleFieldChange(`${entity}.`, { key: "", type: "string", operators: ["equals", "not_equals"], values: null });
     }
   };
 
   const handleFieldChange = (fullKey: string, attr: EntityAttribute) => {
     onChange({
+      ...leaf,
       field: fullKey,
       operator: attr.operators[0] ?? "equals",
-      value: attr.type === "boolean" ? "true" : "",
+      value: attr.type === "boolean" ? "true" : (leaf.value || ""),
     });
   };
 
@@ -278,28 +385,87 @@ export function ConditionRow({
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pick Property / Attribute</label>
               </div>
 
-              <Select 
-                value={selectedAttrKey} 
-                onValueChange={(val) => {
-                  const attr = currentAttributes.find(a => a.key === val);
-                  if (attr && selectedEntity) handleFieldChange(`${selectedEntity}.${val}`, attr);
-                }}
-              >
-                <SelectTrigger className="h-9 text-xs bg-background">
-                  <SelectValue placeholder="Select attribute..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {currentAttributes.map((attr) => (
-                    <SelectItem key={attr.key} value={attr.key} className="text-xs">
-                       <div className="flex items-center gap-2">
-                          <Target className="size-3 text-muted-foreground" />
-                          <span className="font-bold">{attr.key}</span>
-                          <span className="text-[9px] uppercase font-mono text-muted-foreground border px-1 rounded bg-muted/40">{attr.type}</span>
-                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={attrOpen} onOpenChange={setAttrOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between h-9 text-xs font-semibold bg-background"
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      {selectedAttrKey ? (
+                        <>
+                          <Target className="size-3.5 text-primary" />
+                          <span className="truncate">{selectedAttrKey}</span>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground font-normal italic">Search or enter custom...</span>
+                      )}
+                    </div>
+                    <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Search attributes or type custom..." 
+                      value={attrSearch}
+                      onValueChange={setAttrSearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>
+                        <div className="p-2 space-y-2">
+                           <p className="text-xs text-muted-foreground">No existing attributes match "{attrSearch}"</p>
+                           <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              className="w-full h-8 text-[10px] font-bold gap-2"
+                              onClick={() => {
+                                if (!attrSearch) return;
+                                handleFieldChange(`${selectedEntity}.${attrSearch}`, {
+                                  key: attrSearch,
+                                  type: "string",
+                                  operators: ["equals", "not_equals", "contains", "in", "not_in"],
+                                  values: null
+                                });
+                                setAttrOpen(false);
+                                setAttrSearch("");
+                              }}
+                           >
+                              <Plus className="size-3" /> Create custom: {attrSearch}
+                           </Button>
+                        </div>
+                      </CommandEmpty>
+                      <CommandGroup heading="Known Attributes">
+                        {filteredAttributes.map((attr) => (
+                          <CommandItem
+                            key={attr.key}
+                            value={attr.key}
+                            onSelect={() => {
+                              handleFieldChange(`${selectedEntity}.${attr.key}`, attr);
+                              setAttrOpen(false);
+                              setAttrSearch("");
+                            }}
+                            className="text-xs cursor-pointer"
+                          >
+                            <Target className="mr-2 size-3.5 opacity-50" />
+                            <div className="flex items-center gap-2 flex-1">
+                              <span className="font-bold">{attr.key}</span>
+                              <span className="text-[9px] uppercase font-mono text-muted-foreground border px-1 rounded bg-muted/40 ml-auto">{attr.type}</span>
+                            </div>
+                            <Check
+                              className={cn(
+                                "ml-2 size-4",
+                                selectedAttrKey === attr.key ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </motion.div>
 
             {/* Step 3: Logic & Values */}
@@ -348,22 +514,13 @@ export function ConditionRow({
                         <SelectItem value="false">False</SelectItem>
                       </SelectContent>
                     </Select>
-                  ) : attrType === "enum" && selectedAttr?.values?.length ? (
-                    <Select
-                      value={String(leaf.value)}
-                      onValueChange={handleValueChange}
-                    >
-                      <SelectTrigger className="h-9 text-xs bg-background">
-                        <SelectValue placeholder="Select value" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {selectedAttr.values.map((v) => (
-                          <SelectItem key={v} value={v} className="text-xs">
-                            {v}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  ) : selectedAttr?.values?.length ? (
+                    <ValueSelector 
+                      values={selectedAttr.values} 
+                      value={String(leaf.value || "")} 
+                      onChange={handleValueChange}
+                      placeholder={["in", "not_in"].includes(leaf.operator) ? "Search or add values..." : "Select or type value..."}
+                    />
                   ) : (
                     <Input
                       type={attrType === "number" ? "number" : attrType === "date" ? "date" : "text"}

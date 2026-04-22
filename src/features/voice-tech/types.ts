@@ -34,6 +34,7 @@ export const OPERATOR_LABELS: Record<string, string> = {
 export type LogicalOperator = 'AND' | 'OR';
 
 export interface ConditionLeaf {
+  id?: string;
   field: string;
   operator: string;
   value: unknown;
@@ -41,7 +42,7 @@ export interface ConditionLeaf {
 
 export type RoutingCondition =
   | ConditionLeaf
-  | { operator: LogicalOperator; children: RoutingCondition[] };
+  | { id?: string; operator: LogicalOperator; children: RoutingCondition[] };
 
 export function isConditionLeaf(c: RoutingCondition): c is ConditionLeaf {
   return 'field' in c;

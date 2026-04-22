@@ -30,6 +30,15 @@ interface EntitiesTabProps {
   onEntityTypeChange: (value: string) => void;
 }
 
+// Human-friendly labels for technical types
+const TYPE_LABELS: Record<string, string> = {
+  enum:    "Options",
+  string:  "Text",
+  number:  "Number",
+  boolean: "Yes/No",
+  date:    "Date",
+};
+
 // Maps attribute type to a short readable label + colour
 const TYPE_COLORS: Record<string, string> = {
   enum:    "bg-violet-100 text-violet-700",
@@ -40,6 +49,8 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 function AttributeRow({ attr }: { attr: EntityAttribute }) {
+  const label = TYPE_LABELS[attr.type] || attr.type;
+
   return (
     <div className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/40 group transition-colors">
       <div className="flex items-center gap-2 min-w-0">
@@ -53,8 +64,8 @@ function AttributeRow({ attr }: { attr: EntityAttribute }) {
           </span>
         )}
       </div>
-      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${TYPE_COLORS[attr.type] ?? "bg-muted text-muted-foreground"}`}>
-        {attr.type}
+      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded tracking-wide shrink-0 ${TYPE_COLORS[attr.type] ?? "bg-muted text-muted-foreground"}`}>
+        {label}
       </span>
     </div>
   );
@@ -109,35 +120,35 @@ export function EntitiesTab({ tenantId, entityType, onEntityTypeChange }: Entiti
           </Sheet>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar snap-x scroll-smooth">
           {typesLoading ? (
-            [1,2,3,4].map(i => <div key={i} className="h-14 rounded-xl bg-muted/50 animate-pulse" />)
+            [1,2,3,4,5].map(i => <div key={i} className="h-20 w-44 flex-shrink-0 rounded-xl bg-muted/50 animate-pulse" />)
           ) : entityTypes.length === 0 ? (
-            <div className="col-span-full py-10 border-2 border-dashed rounded-2xl bg-muted/10 flex flex-col items-center justify-center text-center">
+            <div className="w-full py-10 border-2 border-dashed rounded-2xl bg-muted/10 flex flex-col items-center justify-center text-center">
                <Database className="size-8 text-muted-foreground/30 mb-2" />
                <p className="text-xs text-muted-foreground">No datasets found in this workspace.</p>
                <Button variant="link" size="sm" className="text-xs" onClick={() => setUploadOpen(true)}>Upload your first CSV</Button>
             </div>
           ) : (
             entityTypes.map((type) => (
-              <div key={type} className="group relative">
+              <div key={type} className="group relative flex-shrink-0 snap-start">
                 <button
                   onClick={() => onEntityTypeChange(type)}
-                  className={`flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left w-full h-full relative overflow-hidden
+                  className={`flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left w-44 h-20 relative overflow-hidden
                     ${entityType === type
                       ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
                       : "border-border/60 bg-background hover:border-border hover:bg-muted/30"
                     }`}
                 >
-                  <div className="flex items-center gap-2 mb-1 pr-6">
-                     <Tag className={`size-3 ${entityType === type ? 'text-primary' : 'text-muted-foreground'}`} />
-                     <span className={`text-[11px] font-bold font-mono tracking-tight truncate ${entityType === type ? 'text-primary' : 'text-foreground'}`}>
+                  <div className="flex items-center gap-2 mb-1 pr-6 w-full">
+                     <Tag className={`size-3 flex-shrink-0 ${entityType === type ? 'text-primary' : 'text-muted-foreground'}`} />
+                     <span className={`text-[11px] font-bold font-mono tracking-tight truncate flex-1 ${entityType === type ? 'text-primary' : 'text-foreground'}`}>
                         {type}
                      </span>
                   </div>
                   <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest opacity-60">Ready for Logic</p>
                   {entityType === type && (
-                    <div className="absolute top-1 right-1">
+                    <div className="absolute top-2 right-2">
                        <div className="size-1.5 rounded-full bg-primary animate-pulse" />
                     </div>
                   )}
@@ -149,7 +160,7 @@ export function EntitiesTab({ tenantId, entityType, onEntityTypeChange }: Entiti
                         <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="absolute bottom-1 right-1 size-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            className="absolute bottom-1.5 right-1.5 size-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                             onClick={(e) => { e.stopPropagation(); setDeletingType(type); }}
                         >
                             <Trash2 className="size-3" />

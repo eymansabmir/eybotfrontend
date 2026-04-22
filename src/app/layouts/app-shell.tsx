@@ -139,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SidebarInset>
         <Header />
         <main className="flex-1 bg-background px-6 pb-10 pt-6">
-          <div className="mx-auto w-full max-w-6xl">
+          <div className="mx-auto w-full max-w-[1600px]">
             {children}
           </div>
         </main>
@@ -151,7 +151,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 function Header() {
   return (
     <div className="border-b bg-background/80 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex w-full max-w-6xl items-center gap-4">
+      <div className="mx-auto flex w-full max-w-[1600px] items-center gap-4">
         <SidebarTrigger />
         <Separator orientation="vertical" className="h-6" />
         {/* Removed duplicate EY text as requested to keep only one EY icon in the navbar/sidebar */}

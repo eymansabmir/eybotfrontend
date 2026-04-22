@@ -21,12 +21,16 @@ interface ConditionGroupProps {
   onRemove?: () => void;
 }
 
-function makeLeaf(): ConditionLeaf {
-  return { field: "", operator: "equals", value: "" };
+function generateId() {
+  return Math.random().toString(36).substring(2, 11);
 }
 
-function makeGroup(): { operator: LogicalOperator; children: RoutingCondition[] } {
-  return { operator: "AND", children: [makeLeaf()] };
+function makeLeaf(): ConditionLeaf {
+  return { id: generateId(), field: "", operator: "equals", value: "" };
+}
+
+function makeGroup(): { id: string; operator: LogicalOperator; children: RoutingCondition[] } {
+  return { id: generateId(), operator: "AND", children: [makeLeaf()] };
 }
 
 export function ConditionGroup({
@@ -38,17 +42,8 @@ export function ConditionGroup({
 }: ConditionGroupProps) {
   const [collapsed, setCollapsed] = useState(false);
 
-  // We use a simple ref-based tracking for stable keys within this session
-  // This avoids index-based keys which cause issues with deletion and animations
-  const [childIds] = useState(() => new WeakMap<object, string>());
   const getStableKey = (child: RoutingCondition, index: number) => {
-    if (typeof child !== 'object' || child === null) return index.toString();
-    let id = childIds.get(child);
-    if (!id) {
-      id = Math.random().toString(36).substring(2, 9);
-      childIds.set(child, id);
-    }
-    return id;
+    return child.id || `fallback-${index}`;
   };
 
   const updateChild = (index: number, updated: RoutingCondition) => {
