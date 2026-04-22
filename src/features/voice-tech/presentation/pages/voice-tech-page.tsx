@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { PhoneCall, Database, Settings2 } from "lucide-react";
+import { PhoneCall, Database, Settings2, Activity } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { EntitiesTab } from "../components/tabs/entities-tab";
 import { RoutingTab } from "../components/tabs/routing-tab";
+import { AnalyticsTab } from "../components/tabs/analytics-tab";
 
 export function VoiceTechPage() {
   const [tenantId, setTenantId] = useState("tenant-ey-001");
@@ -64,6 +65,10 @@ export function VoiceTechPage() {
             <Settings2 className="size-3.5" />
             Routing Rules
           </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1.5 text-xs font-semibold px-4 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Activity className="size-3.5" />
+            Analytics
+          </TabsTrigger>
         </TabsList>
 
         <div className="mt-5">
@@ -79,6 +84,13 @@ export function VoiceTechPage() {
             <RoutingTab
               tenantId={tenantId}
               entityType={entityType}
+              onTabChange={setActiveTab}
+            />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="focus-visible:outline-none m-0">
+            <AnalyticsTab
+              tenantId={tenantId}
             />
           </TabsContent>
         </div>

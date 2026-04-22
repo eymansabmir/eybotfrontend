@@ -302,3 +302,11 @@ export function useDeleteRoutingConfig(tenantId: string) {
     },
   });
 }
+export function useOrchestrationStats(tenantId: string) {
+  return useQuery({
+    queryKey: ["voice-tech", "analytics", "orchestration", tenantId],
+    queryFn: () => voiceTechApi.getOrchestrationStats(tenantId),
+    enabled: !!tenantId,
+    refetchInterval: 10_000, // Refresh every 10s for real-time feel
+  });
+}

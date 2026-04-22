@@ -66,9 +66,10 @@ import { Badge } from "@/components/ui/badge";
 interface RoutingTabProps {
   tenantId: string;
   entityType: string | null;
+  onTabChange?: (tab: string) => void;
 }
 
-export function RoutingTab({ tenantId, entityType }: RoutingTabProps) {
+export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProps) {
   const [selectedConfigId, setSelectedConfigId] = useState<string | null>(null);
   const [selectedEntityTypes, setSelectedEntityTypes] = useState<string[]>(
     entityType ? [entityType] : []
@@ -495,6 +496,10 @@ export function RoutingTab({ tenantId, entityType }: RoutingTabProps) {
         configId={selectedConfigId!}
         configName={fullConfig?.name ?? ""}
         sourceEntityTypes={selectedEntityTypes}
+        onViewAnalytics={() => {
+          setIsBulkProcessOpen(false);
+          onTabChange?.("analytics");
+        }}
       />
 
       <AlertDialog open={isDeleteConfigOpen} onOpenChange={setIsDeleteConfigOpen}>

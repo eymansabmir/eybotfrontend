@@ -241,4 +241,13 @@ export const voiceTechApi = {
     );
     return data.result;
   },
+
+  /** Get orchestration analytics stats */
+  getOrchestrationStats: async (tenantId: string): Promise<any> => {
+    const { data } = await apiClient.get<{ success: boolean; stats: any }>(
+      `${ROUTING}/analytics/orchestration`,
+      { params: { tenantId } }
+    );
+    return data.stats;
+  },
 } as const;

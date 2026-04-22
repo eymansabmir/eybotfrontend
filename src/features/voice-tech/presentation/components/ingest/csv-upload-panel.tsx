@@ -8,6 +8,7 @@ import {
   AlertCircle,
   RefreshCw,
   X,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import {
   ComboboxList,
   ComboboxItem,
   ComboboxEmpty,
+  ComboboxTrigger,
 } from "@/components/ui/combobox";
 
 const ALLOWED_EXT = [".csv", ".xls", ".xlsx"];
@@ -129,6 +131,8 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
   const jobStatus = job?.status;
   const statusMeta = jobStatus ? STATUS_CONFIG[jobStatus] : null;
 
+  const [open, setOpen] = useState(false);
+
   return (
     <div className="space-y-3">
       <div className="space-y-2 pb-2">
@@ -136,31 +140,50 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
          
          <Combobox 
             value={localType} 
-            onValueChange={(val) => setLocalType(val as string)}
-            open={(localType?.length || 0) > 0}
+            onValueChange={(val) => {
+               if (val) {
+                  setLocalType(val as string);
+                  setOpen(false);
+               }
+            }}
+            open={open}
+            onOpenChange={setOpen}
          >
-            <ComboboxInput 
-               placeholder="Select or type new category..."
-               className="h-8 text-xs font-mono w-full"
-               value={localType}
-               onChange={(e) => setLocalType(e.target.value)}
-            />
-            <ComboboxContent>
-               <ComboboxList>
+            <div className="relative">
+               <ComboboxInput 
+                  placeholder="Select or type new category..."
+                  className="h-9 text-xs font-mono w-full pr-10"
+                  value={localType}
+                  onChange={(e) => {
+                     setLocalType(e.target.value);
+                     if (e.target.value.length > 0) setOpen(true);
+                     else setOpen(false);
+                  }}
+                  showTrigger={false}
+               />
+               <ComboboxTrigger className="absolute right-0 top-0 h-9 px-3 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                  <Plus className="size-3" />
+               </ComboboxTrigger>
+            </div>
+            <ComboboxContent className="z-[100] w-[var(--base-ui-combobox-trigger-width)] min-w-[200px]">
+               <ComboboxList className="max-h-48">
                   {filteredEntityTypes.map((type) => (
-                     <ComboboxItem key={type} value={type}>
+                     <ComboboxItem key={type} value={type} className="text-xs font-mono py-2">
                         {type}
                      </ComboboxItem>
                   ))}
                   {localType && !hasExactMatch && (
-                     <ComboboxItem value={localType} className="text-primary font-bold border-t border-border/50 mt-1">
+                     <ComboboxItem 
+                        value={localType} 
+                        className="text-primary font-black border-t border-border/50 mt-1 text-xs py-2"
+                     >
+                        <Plus className="size-3 mr-2" />
                         Create "{localType}"
                      </ComboboxItem>
                   )}
                </ComboboxList>
-               {!localType && <div className="p-2 text-[10px] text-muted-foreground text-center">Start typing to search or create...</div>}
                {localType && filteredEntityTypes.length === 0 && !hasExactMatch && (
-                   <ComboboxEmpty>New Category</ComboboxEmpty>
+                   <ComboboxEmpty className="text-xs py-4">New Category: {localType}</ComboboxEmpty>
                )}
             </ComboboxContent>
          </Combobox>

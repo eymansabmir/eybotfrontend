@@ -1,4 +1,4 @@
-import { Trash2, Database, Search, Target, Activity, Settings2, ChevronRight, Check } from "lucide-react";
+import { Trash2, Database, Search, Target, Activity, Settings2, ChevronRight, Check, Plus, ChevronsUpDown } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -27,7 +27,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ChevronsUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import type { ConditionLeaf, EntityAttribute } from "../../../types";

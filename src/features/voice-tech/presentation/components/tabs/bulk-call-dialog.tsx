@@ -5,7 +5,8 @@ import {
   CheckCircle2,  
   AlertTriangle,
   ChevronRight,
-  PhoneCall
+  PhoneCall,
+  Activity
 } from "lucide-react";
 import { 
   Dialog, 
@@ -27,6 +28,7 @@ interface BulkCallDialogProps {
   configId: string;
   configName: string;
   sourceEntityTypes: string[];
+  onViewAnalytics?: () => void;
 }
 
 export function BulkCallDialog({ 
@@ -35,9 +37,12 @@ export function BulkCallDialog({
   tenantId, 
   configId,
   configName,
-  sourceEntityTypes
+  sourceEntityTypes,
+  onViewAnalytics
 }: BulkCallDialogProps) {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [autoRedirect, setAutoRedirect] = useState(true);
+
   const [step, setStep] = useState<"select" | "processing" | "results">("select");
   const [result, setResult] = useState<{
     totalProcessed: number;
@@ -80,6 +85,12 @@ export function BulkCallDialog({
           excluded: data.excluded ?? 0
         });
         setStep("results");
+        if (autoRedirect && onViewAnalytics) {
+          setTimeout(() => {
+            onViewAnalytics();
+          }, 1500);
+        }
+
       },
       onError: () => {
         setStep("select");
@@ -150,6 +161,18 @@ export function BulkCallDialog({
                     Ensure your Voice Providers are correctly configured before proceeding.
                  </p>
               </div>
+
+              <div className="flex items-center gap-2 px-1 pt-2">
+                 <Checkbox 
+                   id="auto-redirect" 
+                   checked={autoRedirect} 
+                   onCheckedChange={(checked) => setAutoRedirect(!!checked)}
+                 />
+                 <label htmlFor="auto-redirect" className="text-[11px] font-bold text-muted-foreground cursor-pointer">
+                    Automatically switch to Analytics when complete
+                 </label>
+              </div>
+
             </div>
           )}
 
@@ -216,7 +239,22 @@ export function BulkCallDialog({
             </>
           )}
           {step === "results" && (
-            <Button onClick={() => onOpenChange(false)} className="w-full font-bold">Close Summary</Button>
+            <div className="flex gap-2 w-full">
+              <Button 
+                variant="outline" 
+                onClick={() => onOpenChange(false)} 
+                className="flex-1 font-bold"
+              >
+                Close Summary
+              </Button>
+              <Button 
+                onClick={onViewAnalytics} 
+                className="flex-1 font-bold gap-2 bg-slate-900"
+              >
+                <Activity className="size-4" />
+                Live Analytics
+              </Button>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>
