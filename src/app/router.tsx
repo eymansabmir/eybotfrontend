@@ -13,6 +13,10 @@ import { BotEditorPage } from "@/features/bots/presentation/pages/bot-editor-pag
 import { BotTestPage } from "@/features/bots/presentation/pages/bot-test-page"
 import { EmailOtpLoginPage } from "@/features/auth/presentation/pages/email-otp-login-page"
 import { VoiceTechPage } from "@/features/voice-tech/presentation/pages/voice-tech-page"
+import { DatasetsPage } from "@/features/voice-tech/presentation/pages/datasets-page"
+import { RoutingsPage } from "@/features/voice-tech/presentation/pages/routings-page"
+import { RoutingAnalyticsPage } from "@/features/voice-tech/presentation/pages/routing-analytics-page"
+import { ExecutePage } from "@/features/voice-tech/presentation/pages/execute-page"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -43,6 +47,30 @@ const voiceTechRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "voice-tech",
   component: VoiceTechPage,
+})
+
+const voiceTechDatasetsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "voice-tech/datasets",
+  component: DatasetsPage,
+})
+
+const voiceTechRoutingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "voice-tech/routings",
+  component: RoutingsPage,
+})
+
+const voiceTechRoutingAnalyticsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "voice-tech/routings/$id/analytics",
+  component: RoutingAnalyticsPage,
+})
+
+const voiceTechExecuteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "voice-tech/execute",
+  component: ExecutePage,
 })
 
 
@@ -93,6 +121,10 @@ const routeTree = rootRoute.addChildren([
   botsRoute,
   campaignRoute,
   voiceTechRoute,
+  voiceTechDatasetsRoute,
+  voiceTechRoutingsRoute,
+  voiceTechRoutingAnalyticsRoute,
+  voiceTechExecuteRoute,
   campaignAnalyticsRoute,
 
   usersRoute,

@@ -140,6 +140,21 @@ export interface RoutingConfig extends RoutingConfigSummary {
   rules: RoutingRule[];
 }
 
+export interface RuleAnalyticsStat {
+  ruleId: string;
+  conditionsSummary: string;
+  provider: string;
+  count: number;
+}
+
+export interface RoutingAnalyticsResponse {
+  routingName: string;
+  totalRecords: number;
+  datasets: string[];
+  rulesCount: number;
+  ruleStats: RuleAnalyticsStat[];
+}
+
 // ─── Ingest Job ─────────────────────────────────────────────────────
 /** Statuses from voice-ingest.consumer.ts — includes 'retrying' */
 export type IngestJobStatus = 'queued' | 'processing' | 'retrying' | 'completed' | 'failed';

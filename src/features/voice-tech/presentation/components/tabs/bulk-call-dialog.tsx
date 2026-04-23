@@ -56,7 +56,7 @@ export function BulkCallDialog({
   
   // Filter list to only show what's selected in the main workspace
   const entityTypes = sourceEntityTypes.length > 0 
-    ? allEntityTypes.filter(t => sourceEntityTypes.includes(t))
+    ? allEntityTypes.filter(t => sourceEntityTypes.includes(t.name))
     : allEntityTypes;
 
   const bulkExecute = useBulkExecuteRouting();
@@ -127,22 +127,22 @@ export function BulkCallDialog({
                 <div className="grid grid-cols-1 gap-2 max-h-[240px] overflow-y-auto pr-1">
                   {entityTypes.map((type) => (
                     <div 
-                      key={type}
-                      onClick={() => toggleType(type)}
+                      key={type.id}
+                      onClick={() => toggleType(type.name)}
                       className={cn(
                         "flex items-center justify-between p-3 rounded-xl border-2 cursor-pointer transition-all",
-                        selectedTypes.includes(type)
+                        selectedTypes.includes(type.name)
                           ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
                           : "border-border/60 bg-background hover:border-border hover:bg-muted/30"
                       )}
                     >
                       <div className="flex items-center gap-2">
-                        <Database className={cn("size-3.5", selectedTypes.includes(type) ? "text-primary" : "text-muted-foreground")} />
-                        <span className="text-sm font-medium font-mono">{type}</span>
+                        <Database className={cn("size-3.5", selectedTypes.includes(type.name) ? "text-primary" : "text-muted-foreground")} />
+                        <span className="text-sm font-medium font-mono">{type.name}</span>
                       </div>
                       <Checkbox 
-                        checked={selectedTypes.includes(type)} 
-                        onCheckedChange={() => toggleType(type)}
+                        checked={selectedTypes.includes(type.name)} 
+                        onCheckedChange={() => toggleType(type.name)}
                       />
                     </div>
                   ))}

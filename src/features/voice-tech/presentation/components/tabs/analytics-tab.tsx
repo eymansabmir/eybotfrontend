@@ -66,11 +66,11 @@ export function AnalyticsTab({ tenantId }: AnalyticsTabProps) {
       {/* ── Header ────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
          <div>
-            <h2 className="text-2xl font-black tracking-tight flex items-center gap-2">
-               Analytics Dashboard
+            <h2 className="text-2xl font-black tracking-tight flex items-center gap-2 text-[#1A1A24]">
+               Executions Dashboard
             </h2>
             <p className="text-xs font-medium text-muted-foreground mt-0.5">
-               Tenant: <span className="font-mono text-foreground font-bold">{tenantId}</span>
+               Tenant: <span className="font-mono text-[#1A1A24] font-bold">{tenantId}</span>
             </p>
          </div>
 
@@ -85,7 +85,7 @@ export function AnalyticsTab({ tenantId }: AnalyticsTabProps) {
             <Button variant="outline" size="icon" className="h-9 w-9 bg-muted/30 border-none">
                <Filter className="size-4" />
             </Button>
-            <div className="size-9 rounded-full bg-slate-900 grid place-items-center text-[10px] font-black text-white">
+            <div className="size-9 rounded-full bg-[#FFE600] grid place-items-center text-[10px] font-black text-[#1A1A24] shadow-sm">
                EY
             </div>
          </div>

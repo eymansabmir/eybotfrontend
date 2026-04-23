@@ -190,13 +190,9 @@ export function useCreateRoutingConfig() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: voiceTechApi.createRoutingConfig,
-    onSuccess: (config) => {
-      if (config?.name) {
-        toast.success(`Config "${config.name}" created`);
-      }
-      if (config?.tenantId) {
-        qc.invalidateQueries({ queryKey: ["voice-tech", "routing", config.tenantId] });
-      }
+    onSuccess: (config, variables) => {
+      toast.success(`Config "${variables.name}" created`);
+      qc.invalidateQueries({ queryKey: ["voice-tech", "routing", variables.tenantId] });
     },
     onError: (err: any) => {
       toast.error(err?.message || "Failed to create config");
@@ -302,11 +298,11 @@ export function useDeleteRoutingConfig(tenantId: string) {
     },
   });
 }
-export function useOrchestrationStats(tenantId: string) {
+export function useOrchestrationStats(tenantId: string, configId: string | null) {
   return useQuery({
-    queryKey: ["voice-tech", "analytics", "orchestration", tenantId],
-    queryFn: () => voiceTechApi.getOrchestrationStats(tenantId),
-    enabled: !!tenantId,
+    queryKey: ["voice-tech", "analytics", "orchestration", tenantId, configId],
+    queryFn: () => voiceTechApi.getOrchestrationStats(tenantId, configId!),
+    enabled: !!tenantId && !!configId,
     refetchInterval: 10_000, // Refresh every 10s for real-time feel
   });
 }

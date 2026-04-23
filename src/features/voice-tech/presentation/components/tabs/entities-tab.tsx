@@ -93,18 +93,23 @@ export function EntitiesTab({ tenantId, entityType, onEntityTypeChange }: Entiti
     <div className="flex flex-col gap-6">
 
       {/* ── Top Section: Dataset Selection ───────────────────────── */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-           <div className="flex items-center gap-2">
-              <Database className="size-4 text-primary" />
-              <h2 className="text-sm font-bold tracking-tight">Active Datasets</h2>
-              <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-muted/50">{entityTypes.length}</Badge>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between border-b border-border/40 pb-4">
+           <div className="flex items-center gap-3">
+              <div className="size-8 rounded-lg bg-[#1A1A24] text-[#FFE600] flex items-center justify-center">
+                <Database className="size-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-black tracking-tight text-[#1A1A24]">Active Datasets</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Manage data sources for orchestration rules</p>
+              </div>
+              <Badge variant="outline" className="text-[10px] h-5 px-2 ml-2 bg-muted/50 rounded-full">{entityTypes.length} Total</Badge>
            </div>
            
            <Sheet open={uploadOpen} onOpenChange={setUploadOpen}>
             <SheetTrigger asChild>
-              <Button size="sm" className="h-8 gap-1.5 text-xs font-bold">
-                <Plus className="size-3.5" />
+              <Button size="sm" className="h-9 gap-2 text-xs font-bold bg-[#FFE600] text-black hover:brightness-95 transition-all shadow-sm">
+                <Plus className="size-4" />
                 Add New Dataset
               </Button>
             </SheetTrigger>
@@ -131,37 +136,37 @@ export function EntitiesTab({ tenantId, entityType, onEntityTypeChange }: Entiti
             </div>
           ) : (
             entityTypes.map((type) => (
-              <div key={type} className="group relative flex-shrink-0 snap-start">
+              <div key={type.id} className="group relative flex-shrink-0 snap-start">
                 <button
-                  onClick={() => onEntityTypeChange(type)}
+                  onClick={() => onEntityTypeChange(type.name)}
                   className={`flex flex-col items-start p-3 rounded-xl border-2 transition-all text-left w-44 h-20 relative overflow-hidden
-                    ${entityType === type
-                      ? "border-primary bg-primary/5 shadow-sm shadow-primary/10"
+                    ${entityType === type.name
+                      ? "border-[#1A1A24] bg-[#1A1A24]/5 shadow-sm"
                       : "border-border/60 bg-background hover:border-border hover:bg-muted/30"
                     }`}
                 >
                   <div className="flex items-center gap-2 mb-1 pr-6 w-full">
-                     <Tag className={`size-3 flex-shrink-0 ${entityType === type ? 'text-primary' : 'text-muted-foreground'}`} />
-                     <span className={`text-[11px] font-bold font-mono tracking-tight truncate flex-1 ${entityType === type ? 'text-primary' : 'text-foreground'}`}>
-                        {type}
+                     <Tag className={`size-3 flex-shrink-0 ${entityType === type.name ? 'text-[#1A1A24]' : 'text-muted-foreground'}`} />
+                     <span className={`text-xs font-bold font-mono tracking-tight truncate flex-1 ${entityType === type.name ? 'text-[#1A1A24]' : 'text-foreground'}`}>
+                       {type.name}
                      </span>
                   </div>
-                  <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest opacity-60">Ready for Logic</p>
-                  {entityType === type && (
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest opacity-80 mt-1">Ready for Logic</p>
+                  {entityType === type.name && (
                     <div className="absolute top-2 right-2">
-                       <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+                       <div className="size-2 rounded-full bg-[#FFE600] animate-pulse shadow-sm shadow-[#FFE600]/50" />
                     </div>
                   )}
                 </button>
 
                 {/* Delete Button - only visible on hover */}
-                <AlertDialog open={deletingType === type} onOpenChange={(open) => !open && setDeletingType(null)}>
+                <AlertDialog open={deletingType === type.name} onOpenChange={(open) => !open && setDeletingType(null)}>
                     <AlertDialogTrigger asChild>
                         <Button 
                             variant="ghost" 
                             size="icon" 
                             className="absolute bottom-1.5 right-1.5 size-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            onClick={(e) => { e.stopPropagation(); setDeletingType(type); }}
+                            onClick={(e) => { e.stopPropagation(); setDeletingType(type.name); }}
                         >
                             <Trash2 className="size-3" />
                         </Button>
@@ -170,14 +175,14 @@ export function EntitiesTab({ tenantId, entityType, onEntityTypeChange }: Entiti
                         <AlertDialogHeader>
                             <AlertDialogTitle>Delete Dataset?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Are you sure you want to delete <span className="font-bold text-foreground">"{type}"</span>? 
+                                Are you sure you want to delete <span className="font-bold text-foreground">"{type.name}"</span>? 
                                 This will permanently remove all associated entities and attributes. This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction 
-                                onClick={() => handleDelete(type)}
+                                onClick={() => handleDelete(type.name)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
                                 {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
@@ -194,14 +199,14 @@ export function EntitiesTab({ tenantId, entityType, onEntityTypeChange }: Entiti
       {/* ── Bottom Section: Attribute Inspector ───────────────────── */}
       <div className="border rounded-2xl bg-background overflow-hidden flex flex-col min-h-[400px]">
         {/* Header */}
-        <div className="px-5 py-4 border-b bg-muted/10 flex items-center justify-between">
+        <div className="px-6 py-5 border-b bg-muted/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                <Tag className="size-4" />
+             <div className="size-10 rounded-lg bg-[#FFE600]/20 flex items-center justify-center text-[#1A1A24]">
+                <Tag className="size-5" />
              </div>
              <div>
-                <h3 className="text-sm font-bold tracking-tight">Attribute Inspector</h3>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
+                <h3 className="text-base font-black tracking-tight text-[#1A1A24]">Attribute Inspector</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
                    {entityType ? (
                      <>Inspecting structure for <span className="text-foreground font-mono font-bold tracking-tighter">"{entityType}"</span></>
                    ) : "Select a dataset above to view its attributes"}

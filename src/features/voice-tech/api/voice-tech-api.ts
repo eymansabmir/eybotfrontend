@@ -11,6 +11,7 @@ import type {
   RoutingRule,
   RoutingExecutionResult,
   ToggleRuleActiveResponse,
+  RoutingAnalyticsResponse,
 } from "../types";
 
 const ENTITIES = "/voice-tech/entities";
@@ -77,8 +78,8 @@ export const voiceTechApi = {
   },
 
   /** List all unique entity types (datasets) for a tenant */
-  listEntityTypes: async (tenantId: string): Promise<string[]> => {
-    const { data } = await apiClient.get<{ success: boolean; types: string[] }>(
+  listEntityTypes: async (tenantId: string): Promise<{id: string, name: string}[]> => {
+    const { data } = await apiClient.get<{ success: boolean; types: {id: string, name: string}[] }>(
       `${ENTITIES}/entity-types`,
       { params: { tenantId } }
     );
@@ -103,7 +104,13 @@ export const voiceTechApi = {
   },
 
   /** Create a new routing config */
-  createRoutingConfig: async (payload: { tenantId: string; name: string }): Promise<RoutingConfigSummary> => {
+  createRoutingConfig: async (payload: { 
+    tenantId: string; 
+    name: string; 
+    description?: string;
+    entityTypeId: string;
+    type?: string;
+  }): Promise<RoutingConfigSummary> => {
     const { data } = await apiClient.post<{ success: boolean; config: RoutingConfigSummary }>(
       ROUTING,
       payload
@@ -243,10 +250,10 @@ export const voiceTechApi = {
   },
 
   /** Get orchestration analytics stats */
-  getOrchestrationStats: async (tenantId: string): Promise<any> => {
-    const { data } = await apiClient.get<{ success: boolean; stats: any }>(
+  getOrchestrationStats: async (tenantId: string, configId: string): Promise<RoutingAnalyticsResponse> => {
+    const { data } = await apiClient.get<{ success: boolean; stats: RoutingAnalyticsResponse }>(
       `${ROUTING}/analytics/orchestration`,
-      { params: { tenantId } }
+      { params: { tenantId, configId } }
     );
     return data.stats;
   },

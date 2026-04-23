@@ -222,11 +222,11 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
     <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-4 items-start">
       {/* Sidebar: Config Selector & Info */}
       <div className="space-y-4">
-        <Card className="border-border/60">
-          <CardHeader className="pb-3 px-4">
-            <CardTitle className="text-xs font-bold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-              <Settings2 className="size-3.5" />
-              Routing Configuration
+        <Card className="border-border/60 overflow-hidden shadow-sm">
+          <CardHeader className="pb-3 px-4 bg-[#1A1A24] text-[#FFE600]">
+            <CardTitle className="text-xs font-bold flex items-center gap-2 uppercase tracking-wider">
+              <Settings2 className="size-4" />
+              Routing Stacks
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-4 space-y-4">
@@ -271,9 +271,9 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-              <p className="text-[10px] font-bold text-primary uppercase mb-1 flex items-center gap-1.5">
-                <Activity className="size-3" /> System Status
+            <div className="p-3 rounded-lg bg-[#1A1A24]/5 border border-[#1A1A24]/10">
+              <p className="text-[10px] font-bold text-[#1A1A24] uppercase mb-1 flex items-center gap-1.5">
+                <Activity className="size-3 text-[#FFE600] stroke-black" /> System Status
               </p>
               <p className="text-[11px] leading-relaxed text-muted-foreground">
                 Using <strong>Smart Fallback</strong>. If no rules match, calls default to the global provider priority list.
@@ -308,26 +308,26 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
                     <div className="max-h-[200px] overflow-y-auto vt-scrollbar space-y-0.5">
                       {entityTypes.map((type) => (
                         <div
-                          key={type}
+                          key={type.id}
                           className={cn(
                             "flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors",
-                            selectedEntityTypes.includes(type) ? "bg-primary/10" : "hover:bg-muted"
+                            selectedEntityTypes.includes(type.name) ? "bg-primary/10" : "hover:bg-muted"
                           )}
                           onClick={() => {
                             setSelectedEntityTypes(prev =>
-                              prev.includes(type)
-                                ? prev.filter(t => t !== type)
-                                : [...prev, type]
+                              prev.includes(type.name)
+                                ? prev.filter(t => t !== type.name)
+                                : [...prev, type.name]
                             );
                           }}
                         >
                           <Checkbox
-                            checked={selectedEntityTypes.includes(type)}
-                            id={`type-${type}`}
+                            checked={selectedEntityTypes.includes(type.name)}
+                            id={`type-${type.id}`}
                             className="size-3.5"
                           />
-                          <Label className="flex-1 cursor-pointer text-xs font-semibold">{type}</Label>
-                          {selectedEntityTypes.includes(type) && <Check className="size-3 text-primary" />}
+                          <Label className="flex-1 cursor-pointer text-xs font-semibold">{type.name}</Label>
+                          {selectedEntityTypes.includes(type.name) && <Check className="size-3 text-primary" />}
                         </div>
                       ))}
                     </div>
@@ -344,12 +344,11 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
             </div>
 
             <Button
-              className="w-full justify-start gap-2 h-9 text-xs"
-              variant="outline"
+              className="w-full justify-start gap-2 h-10 text-xs font-bold bg-[#FFE600] text-black hover:brightness-95 transition-all shadow-sm"
               onClick={() => setIsCreateDialogOpen(true)}
               disabled={!selectedConfigId || upsertRule.isPending || selectedEntityTypes.length === 0}
             >
-              <Plus className="size-3.5 text-primary" />
+              <Plus className="size-4" />
               Add Routing Rule
             </Button>
           </CardContent>
@@ -380,11 +379,11 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
 
             <Button
               size="sm"
-              className="h-8 gap-2 text-xs font-bold"
+              className="h-9 gap-2 text-xs font-bold bg-[#1A1A24] text-white hover:bg-[#1A1A24]/90 shadow-sm transition-all"
               onClick={() => setIsBulkProcessOpen(true)}
               disabled={!selectedConfigId}
             >
-              <Zap className="size-3.5 fill-current" />
+              <Zap className="size-4 text-[#FFE600] fill-current" />
               Bulk Process Orchestrator
             </Button>
           </div>
@@ -393,8 +392,8 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
         {!selectedConfigId ? (
           <div className="h-[400px] grid place-items-center border-2 border-dashed rounded-2xl bg-muted/20">
             <div className="text-center space-y-2">
-              <div className="size-12 rounded-full bg-primary/10 grid place-items-center mx-auto text-primary mb-4">
-                <Target className="size-6" />
+              <div className="size-14 rounded-2xl bg-[#FFE600]/20 grid place-items-center mx-auto text-[#1A1A24] mb-4 shadow-sm">
+                <Target className="size-7" />
               </div>
               <p className="font-bold">Select a configuration to view rules</p>
               <p className="text-xs text-muted-foreground">Pick a routing stack from the dropdown on the left.</p>
