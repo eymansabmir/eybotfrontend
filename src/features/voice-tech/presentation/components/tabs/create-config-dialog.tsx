@@ -23,7 +23,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateRoutingConfig, useEntityTypes } from "../../../api/voice-tech-queries";
+import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 interface CreateConfigDialogProps {
   open: boolean;
@@ -40,7 +43,7 @@ export function CreateConfigDialog({
 }: CreateConfigDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [entityTypeId, setEntityTypeId] = useState("");
+  const [entityTypeId, setEntityTypeId] = useState<string | null>(null);
   const [type, setType] = useState<"AUTOMATIC" | "MANUAL">("AUTOMATIC");
   
   const createConfig = useCreateRoutingConfig();
@@ -54,13 +57,13 @@ export function CreateConfigDialog({
         tenantId,
         name: name.trim(),
         description: description.trim(),
-        entityTypeId,
+        entityTypeId: entityTypeId || undefined,
         type,
       });
       
       setName("");
       setDescription("");
-      setEntityTypeId("");
+      setEntityTypeId(null);
       onOpenChange(false);
       onSuccess?.(config.id);
     } catch (e) {
@@ -106,22 +109,42 @@ export function CreateConfigDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Dataset</Label>
-            <Select value={entityTypeId} onValueChange={setEntityTypeId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select dataset to route" />
-              </SelectTrigger>
-              <SelectContent>
-                {entityTypes.map((et) => (
-                  <SelectItem key={et.id} value={et.id}>
-                    {et.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[10px] text-muted-foreground pl-1">
-              The dataset provides the attributes for the routing rules.
+          <div className="space-y-3">
+            <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center justify-between">
+              Target Dataset
+              <span className="text-[10px] font-normal lowercase">{entityTypeId ? "1 selected" : "none selected"}</span>
+            </Label>
+            
+            <div className="border rounded-xl bg-muted/20 p-2 max-h-[200px] overflow-y-auto vt-scrollbar space-y-1">
+              {entityTypes.length === 0 ? (
+                <div className="py-8 text-center">
+                   <p className="text-xs text-muted-foreground">No datasets available.</p>
+                </div>
+              ) : (
+                entityTypes.map((et) => (
+                  <div 
+                    key={et.id}
+                    className={cn(
+                      "flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors",
+                      entityTypeId === et.id ? "bg-primary/10" : "hover:bg-muted/50"
+                    )}
+                    onClick={() => setEntityTypeId(et.id)}
+                  >
+                    <Checkbox 
+                      checked={entityTypeId === et.id}
+                      onCheckedChange={() => {}} // Handled by div click
+                      className="size-4"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold truncate">{et.name}</p>
+                    </div>
+                    {entityTypeId === et.id && <Check className="size-3 text-primary" />}
+                  </div>
+                ))
+              )}
+            </div>
+            <p className="text-[10px] text-muted-foreground pl-1 italic">
+              Linking multiple datasets allows this routing group to process calls from all selected sources.
             </p>
           </div>
 
@@ -141,7 +164,7 @@ export function CreateConfigDialog({
           {(!name.trim() || !entityTypeId) && (
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground p-2 rounded-lg bg-muted/30">
                <AlertCircle className="size-3" />
-                Provide a name and select a dataset to create the group.
+                Provide a name and select at least one dataset.
             </div>
           )}
         </div>

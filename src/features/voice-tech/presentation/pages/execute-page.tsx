@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQueries } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -25,8 +26,11 @@ import { cn } from "@/lib/utils";
 import {
   useEntityTypes,
   useRoutingConfigs,
+  useRoutingConfig,
   useBulkExecuteRouting,
+  useQueryEntitiesByRule,
 } from "../../api/voice-tech-queries";
+import { voiceTechApi } from "../../api/voice-tech-api";
 
 const TENANT_ID = "tenant-ey-001";
 
@@ -46,7 +50,36 @@ export function ExecutePage() {
 
   const { data: entityTypes = [], isLoading: datasetsLoading } = useEntityTypes(TENANT_ID);
   const { data: configs = [], isLoading: configsLoading } = useRoutingConfigs(TENANT_ID);
+  const { data: fullConfig, isLoading: configDetailLoading } = useRoutingConfig(selectedConfigId, TENANT_ID);
   const bulkExecute = useBulkExecuteRouting();
+
+  // Calculate combined audience
+  const combinedConditions = useMemo(() => {
+    if (!fullConfig?.rules || fullConfig.rules.length === 0) return null;
+    if (fullConfig.rules.length === 1) return fullConfig.rules[0].conditions;
+    
+    return {
+      operator: "OR" as const,
+      children: fullConfig.rules.map(r => r.conditions)
+    };
+  }, [fullConfig]);
+
+  const audienceQueries = useQueries({
+    queries: selectedDatasets.map(type => ({
+      queryKey: ["voice-tech", "query-entities", TENANT_ID, type, combinedConditions],
+      queryFn: () => voiceTechApi.queryEntitiesByRule({
+        tenantId: TENANT_ID,
+        entityType: type,
+        conditions: combinedConditions as any,
+        countOnly: true
+      }),
+      enabled: !!combinedConditions && step === "review",
+      staleTime: 30000,
+    }))
+  });
+
+  const totalMatchedCount = audienceQueries.reduce((sum, query) => sum + (query.data?.count ?? 0), 0);
+  const isAudienceLoading = audienceQueries.some(q => q.isLoading);
 
   const selectedConfig = configs.find((c) => c.id === selectedConfigId);
 
@@ -269,6 +302,22 @@ export function ExecutePage() {
                 <p className="text-xs font-medium text-muted-foreground uppercase">Routing Group</p>
                 <p className="text-sm font-semibold">{selectedConfig?.name ?? "Unknown"}</p>
               </div>
+            </div>
+
+            <div className="p-4 rounded-xl border bg-[#FFE600]/10 border-[#FFE600]/20 flex items-center gap-4">
+              <Activity className="size-5 text-[#1A1A24]" />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase">Matched Audience</p>
+                <div className="flex items-baseline gap-1.5">
+                   {isAudienceLoading ? (
+                     <Skeleton className="h-6 w-16" />
+                   ) : (
+                     <p className="text-xl font-black text-[#1A1A24]">{totalMatchedCount.toLocaleString()}</p>
+                   )}
+                   <p className="text-[10px] text-muted-foreground font-bold uppercase">Target Entities</p>
+                </div>
+              </div>
+              <Badge className="ml-auto bg-[#1A1A24] text-white hover:bg-[#1A1A24]/90 border-none">Live Sync</Badge>
             </div>
           </div>
 

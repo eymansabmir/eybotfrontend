@@ -61,10 +61,10 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
   const filteredEntityTypes = useMemo(() => {
     const query = localType?.toLowerCase() || "";
     if (!query) return entityTypes;
-    return entityTypes.filter(t => t && typeof t === "string" && t.toLowerCase().includes(query));
+    return entityTypes.filter(t => t?.name?.toLowerCase().includes(query));
   }, [entityTypes, localType]);
 
-  const hasExactMatch = entityTypes.some(t => t && typeof t === "string" && t.toLowerCase() === (localType?.toLowerCase() || ""));
+  const hasExactMatch = entityTypes.some(t => t?.name?.toLowerCase() === (localType?.toLowerCase() || ""));
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -168,8 +168,8 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
             <ComboboxContent className="z-[100] w-[var(--base-ui-combobox-trigger-width)] min-w-[200px]">
                <ComboboxList className="max-h-48">
                   {filteredEntityTypes.map((type) => (
-                     <ComboboxItem key={type} value={type} className="text-xs font-mono py-2">
-                        {type}
+                     <ComboboxItem key={type.id} value={type.name} className="text-xs font-mono py-2">
+                        {type.name}
                      </ComboboxItem>
                   ))}
                   {localType && !hasExactMatch && (

@@ -169,14 +169,18 @@ export function useQueryEntitiesByRule(params: {
   entityType: string;
   conditions: RoutingCondition | null;
   enabled: boolean;
+  limit?: number;
+  countOnly?: boolean;
 }) {
   return useQuery({
-    queryKey: ["voice-tech", "entity-matches", params.tenantId, params.entityType, JSON.stringify(params.conditions)],
+    queryKey: ["voice-tech", "entity-matches", params.tenantId, params.entityType, JSON.stringify(params.conditions), params.limit, params.countOnly],
     queryFn: () =>
       voiceTechApi.queryEntitiesByRule({
         tenantId: params.tenantId,
         entityType: params.entityType,
         conditions: params.conditions!,
+        limit: params.limit,
+        countOnly: params.countOnly,
       }),
     enabled: params.enabled && !!params.tenantId && !!params.entityType && !!params.conditions,
     staleTime: 30_000,

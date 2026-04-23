@@ -108,7 +108,7 @@ export const voiceTechApi = {
     tenantId: string; 
     name: string; 
     description?: string;
-    entityTypeId: string;
+    entityTypeId?: string;
     type?: string;
   }): Promise<RoutingConfigSummary> => {
     const { data } = await apiClient.post<{ success: boolean; config: RoutingConfigSummary }>(
@@ -148,9 +148,11 @@ export const voiceTechApi = {
     conditions: unknown;
     tenantId: string;
     entityType: string;
-  }): Promise<Entity[]> => {
-    const { data } = await apiClient.post<{ success: boolean; entities: Entity[] }>(`${ROUTING}/query-entities`, payload);
-    return data.entities;
+    limit?: number;
+    countOnly?: boolean;
+  }): Promise<{ entities?: Entity[]; count: number }> => {
+    const { data } = await apiClient.post<{ success: boolean; entities?: Entity[]; count: number }>(`${ROUTING}/query-entities`, payload);
+    return { entities: data.entities, count: data.count };
   },
 
   /** Upsert a routing rule (create or update) */

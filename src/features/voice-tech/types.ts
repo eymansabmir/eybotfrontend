@@ -130,6 +130,7 @@ export interface ToggleRuleActiveResponse {
 export interface RoutingConfigSummary {
   id: string;
   tenantId: string;
+  entityTypeId: string | null;
   name: string;
   createdAt: string;
   updatedAt: string;

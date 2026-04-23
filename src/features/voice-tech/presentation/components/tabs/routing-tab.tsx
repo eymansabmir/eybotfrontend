@@ -113,6 +113,16 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
     });
     return grouped;
   }, [attributesQueries, selectedEntityTypes]);
+  
+  // Sync selected entity types when a config is loaded
+  useMemo(() => {
+    if (fullConfig && fullConfig.entityTypeId) {
+      const dataset = entityTypes.find(et => et.id === fullConfig.entityTypeId);
+      if (dataset) {
+        setSelectedEntityTypes([dataset.name]);
+      }
+    }
+  }, [fullConfig, entityTypes]);
 
 
   const upsertRule = useUpsertRoutingRule(tenantId);
@@ -158,7 +168,7 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
       toggleRule.mutate({
         ruleId: rule.id,
         tenantId,
-        entityType: entityType ?? "",
+        entityType: entityType || selectedEntityTypes[0] || "",
         isActive: false
       });
     }
@@ -169,7 +179,7 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
     toggleRule.mutate({
       ruleId: pendingActiveRule.id,
       tenantId,
-      entityType: entityType ?? "",
+      entityType: entityType || selectedEntityTypes[0] || "",
       isActive: true,
       triggerCampaign
     }, {
@@ -468,7 +478,7 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
         open={confirmCampaignOpen}
         onOpenChange={setConfirmCampaignOpen}
         ruleName="Selected Rule"
-        matchCount={entitiesCount?.length ?? 0}
+        matchCount={entitiesCount?.count ?? 0}
         isPending={toggleRule.isPending}
         onConfirm={handleConfirmCampaign}
       />

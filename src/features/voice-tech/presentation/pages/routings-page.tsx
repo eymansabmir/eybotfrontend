@@ -121,6 +121,16 @@ export function RoutingsPage() {
     return grouped;
   }, [attributesQueries, selectedEntityTypes]);
 
+  // Sync selected entity types when a config is expanded/loaded
+  useMemo(() => {
+    if (fullConfig && fullConfig.entityTypeId) {
+      const dataset = entityTypes.find(et => et.id === fullConfig.entityTypeId);
+      if (dataset) {
+        setSelectedEntityTypes([dataset.name]);
+      }
+    }
+  }, [fullConfig, entityTypes]);
+
   const { data: entitiesCount } = useQueryEntitiesByRule({
     tenantId: TENANT_ID,
     entityType: selectedEntityTypes[0] ?? "",
@@ -144,10 +154,6 @@ export function RoutingsPage() {
       setExpandedConfigId(null);
     } else {
       setExpandedConfigId(configId);
-      // Auto-select all entity types when expanding
-      if (entityTypes.length > 0 && selectedEntityTypes.length === 0) {
-        setSelectedEntityTypes(entityTypes.map(et => et.name));
-      }
     }
   };
 
@@ -460,7 +466,7 @@ export function RoutingsPage() {
         open={confirmCampaignOpen}
         onOpenChange={setConfirmCampaignOpen}
         ruleName="Selected Rule"
-        matchCount={entitiesCount?.length ?? 0}
+        matchCount={entitiesCount?.count ?? 0}
         isPending={toggleRule.isPending}
         onConfirm={handleConfirmCampaign}
       />
