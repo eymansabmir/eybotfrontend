@@ -143,16 +143,39 @@ export interface RoutingConfig extends RoutingConfigSummary {
 
 export interface RuleAnalyticsStat {
   ruleId: string;
+  priority: number;
   conditionsSummary: string;
   provider: string;
-  count: number;
+  providerId: string;
+  callCount: number;
+  matchCount: number;
+  successRate: number;
+  isActive: boolean;
+}
+
+export interface ProviderBreakdown {
+  providerId: string;
+  providerName: string;
+  callCount: number;
+  successCount: number;
+  errorCount: number;
+  avgDurationMs: number;
 }
 
 export interface RoutingAnalyticsResponse {
   routingName: string;
-  totalRecords: number;
+  configStatus: 'ACTIVE' | 'DRAFT' | 'PAUSED';
+  routingType: 'MANUAL' | 'AUTOMATIC';
+  totalEvents: number;
+  totalCallsProcessed: number;
+  totalRulesMatched: number;
+  totalNoMatch: number;
+  totalErrors: number;
+  avgResponseTimeMs: number;
   datasets: string[];
+  totalDatasetRecords?: number;
   rulesCount: number;
+  providerBreakdown: ProviderBreakdown[];
   ruleStats: RuleAnalyticsStat[];
 }
 
