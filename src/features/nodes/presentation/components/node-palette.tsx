@@ -122,7 +122,7 @@ function NodePaletteItem({ node, onDragStart }: NodePaletteItemProps) {
                 <div
                     className={cn(
                         "flex items-center gap-2 w-full h-11 p-2 cursor-grab rounded-xl transition-all active:cursor-grabbing",
-                        "bg-[var(--canvas-bg)] text-muted-foreground hover:bg-[var(--border-dim)] hover:text-[var(--ey-yellow)] border border-transparent hover:border-[var(--ey-yellow)]/20",
+                        "bg-[var(--canvas-bg)] text-muted-foreground hover:bg-[var(--border-dim)] hover:text-foreground border border-transparent hover:border-[var(--ey-yellow)]/20",
                         "group relative"
                     )}
                     draggable

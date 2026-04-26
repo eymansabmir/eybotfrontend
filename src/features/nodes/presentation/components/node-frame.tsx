@@ -46,8 +46,8 @@ export function NodeFrame({
         <div className="relative">
             <div
                 className={cn(
-                    "flex flex-col justify-center relative w-[220px] min-h-[85px] rounded-xl border p-3.5 select-none transition-all cursor-pointer",
-                    "bg-[var(--node-bg)] border-[var(--border-dim)] hover:shadow-md",
+                    "group flex flex-col justify-center relative w-[220px] rounded-xl p-3.5 select-none transition-all cursor-pointer",
+                    "bg-[var(--node-bg)] border border-[var(--border-dim)] min-h-[85px] hover:shadow-md",
                     selected && "border-2 border-[var(--ey-yellow)] shadow-[0_0_10px_rgba(255,230,0,0.15)] -m-[1px]",
                     compactClassName
                 )}
@@ -65,11 +65,13 @@ export function NodeFrame({
                 )}
 
                 <div className="flex flex-col gap-2.5 w-full">
-                    <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300">
-                            {icon}
+                    <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300">
+                                {icon}
+                            </div>
+                            <span className="text-sm font-semibold text-foreground leading-none pr-1 truncate">{title}</span>
                         </div>
-                        <span className="text-sm font-semibold text-foreground leading-none pr-1 truncate">{title}</span>
                     </div>
 
                     {summary && (
