@@ -37,6 +37,7 @@ export function NodePalette() {
             NodeType.SEND_LIST,
             NodeType.SEND_CARDS,
             NodeType.SEND_CAROUSEL,
+            NodeType.MEDIA_CONDITIONAL,
         ]);
         const integrationTypes = new Set<NodeTypeValue>([
             NodeType.HTTP_REQUEST,
