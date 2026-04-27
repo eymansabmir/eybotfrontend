@@ -227,7 +227,7 @@ export function DatasetsPage() {
             </div>
             {!attrsLoading && attributes.length > 0 && (
               <Badge variant="outline" className="text-xs">
-                {attributes.length} fields
+                {attributes.length} Attributes
               </Badge>
             )}
           </div>
