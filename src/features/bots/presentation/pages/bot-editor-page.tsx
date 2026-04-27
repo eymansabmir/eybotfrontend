@@ -41,10 +41,6 @@ export function BotEditorPage() {
     
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
 
-    const [, setSettingsOpen] = useState(false);
-
-
-
     const { variables, setVariables } = useVariablesStore();
     
     useEffect(() => {
@@ -54,14 +50,6 @@ export function BotEditorPage() {
             setVariables([]);
         }
     }, [bot, isNew, setVariables]);
-
-    useEffect(() => {
-        const handleOpenSettings = () => setSettingsOpen(true);
-        window.addEventListener('open-bot-settings', handleOpenSettings);
-        return () => {
-            window.removeEventListener('open-bot-settings', handleOpenSettings);
-        };
-    }, []);
 
     const getIntegrationValidationError = () => {
         const flowState = flowBuilderRef.current?.getFlowState();
@@ -504,15 +492,16 @@ export function BotEditorPage() {
         if (bot?.name) setTempName(bot.name);
     }, [bot?.name]);
 
-    const handleInlineRename = async () => {
-        if (!tempName.trim() || tempName === bot?.name) {
+    const handleInlineRename = async (nextName = tempName) => {
+        if (!nextName.trim() || nextName === bot?.name) {
             setIsEditingName(false);
             return;
         }
 
         try {
-            await updateBotMutation.mutateAsync({ name: tempName });
+            await updateBotMutation.mutateAsync({ name: nextName });
             toast.success("Bot renamed successfully!");
+            setTempName(nextName);
             setIsEditingName(false);
         } catch (error) {
             toast.error("Failed to rename bot.");
@@ -522,6 +511,31 @@ export function BotEditorPage() {
     };
 
     const isPublished = bot?.status === "published";
+
+    const handlePublish = async () => {
+        const integrationValidationError = getIntegrationValidationError();
+        if (integrationValidationError) {
+            toast.error(integrationValidationError);
+            return;
+        }
+
+        try {
+            await handleSave();
+            publishBotMutation.mutate(id, {
+                onSuccess: () => toast.success("Bot published successfully!"),
+                onError: () => toast.error("Failed to publish bot"),
+            });
+        } catch {
+            // Save already reports errors.
+        }
+    };
+
+    const handleUnpublish = () => {
+        archiveBotMutation.mutate(id, {
+            onSuccess: () => toast.success("Bot archived. You can now edit it."),
+            onError: () => toast.error("Failed to archive bot"),
+        });
+    };
 
     const initialNodes = useMemo(() => {
         const baseNodes = (bot?.nodes as any[]) || [];
@@ -626,9 +640,9 @@ export function BotEditorPage() {
 
     return (
         <div className="flex h-screen w-full flex-col bg-background">
-            <BotEditorNavbar 
+            <BotEditorNavbar
                 id={id}
-                bot={bot}
+                bot={bot as any}
                 isNew={isNew}
                 isPublished={isPublished}
                 activeTab="flow"
@@ -636,37 +650,20 @@ export function BotEditorPage() {
                 tempName={tempName}
                 selectedLang={selectedLang}
                 onLangChange={setSelectedLang}
-                onUpdateTempName={setTempName}
+                onRename={(newName) => {
+                    setTempName(newName);
+                    void handleInlineRename(newName);
+                }}
                 onStartRename={() => setIsEditingName(true)}
                 onCancelRename={() => {
                     setTempName(bot?.name || "");
                     setIsEditingName(false);
                 }}
-                onRename={handleInlineRename}
+                onUpdateTempName={setTempName}
                 onSave={handleSave}
-                onPublish={async () => {
-                    const integrationValidationError = getIntegrationValidationError();
-                    if (integrationValidationError) {
-                        toast.error(integrationValidationError);
-                        return;
-                    }
-                    
-                    try {
-                        await handleSave();
-                        publishBotMutation.mutate(id, {
-                            onSuccess: () => toast.success("Bot published successfully!"),
-                            onError: (err: any) => {
-                                const message = err?.response?.data?.message || err?.message || "Failed to publish bot";
-                                toast.error(message);
-                            },
-                        });
-                    } catch (error) {}
-                }}
-                onUnpublish={() => archiveBotMutation.mutate(id, {
-                    onSuccess: () => toast.success("Bot archived. You can now edit it."),
-                    onError: () => toast.error("Failed to archive bot"),
-                })}
-                isSaving={updateBotMutation.isPending || createBotMutation.isPending || updateTranslationMutation.isPending}
+                onPublish={handlePublish}
+                onUnpublish={handleUnpublish}
+                isSaving={updateBotMutation.isPending || createBotMutation.isPending}
                 isPublishing={publishBotMutation.isPending}
                 isUnpublishing={archiveBotMutation.isPending}
                 isTranslationMode={isTranslationMode}

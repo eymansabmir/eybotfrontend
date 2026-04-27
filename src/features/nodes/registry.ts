@@ -30,6 +30,7 @@ import { deepseekNode } from "./deepseek";
 import { variableManagerNode } from "./variable-manager";
 import { MediaConditionalNode } from "./media-conditional";
 import type { NodeDefinition } from "./types";
+import { withUniversalDelete } from "./with-universal-delete";
 
 export const nodeRegistry: Record<string, NodeDefinition> = {
     [startNode.config.type]: startNode,
@@ -68,7 +69,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
 export const nodeTypes = Object.entries(nodeRegistry).reduce(
     (acc, [type, definition]) => ({
         ...acc,
-        [type]: definition.renderer,
+        [type]: withUniversalDelete(definition.renderer, type),
     }),
     {}
 );

@@ -2,6 +2,7 @@ import React, { useCallback, useRef, forwardRef, useImperativeHandle } from "rea
 import {
     ReactFlow,
     Background,
+    Controls,
     applyEdgeChanges,
     applyNodeChanges,
     addEdge,
@@ -9,6 +10,8 @@ import {
     ReactFlowProvider,
     Panel,
     BackgroundVariant,
+    MarkerType,
+    ConnectionLineType,
 } from "@xyflow/react";
 import type {
     Connection,
@@ -29,27 +32,39 @@ const defaultNodes: Node[] = [
         id: "start_node",
         type: "start",
         position: { x: 400, y: 50 },
-        data: {},
+        data: { label: "Start" },
         deletable: false,
     },
     {
         id: "welcome_text",
         type: "send_text",
-        position: { x: 300, y: 150 },
-        data: { message: "Welcome!", variables: [] },
+        position: { x: 400, y: 200 },
+        data: { message: "Welcome to our WhatsApp Bot! 🚀\n\nHow can we help you today?", variables: [] },
     },
     {
         id: "end_node",
         type: "end",
         position: { x: 400, y: 400 },
-        data: {},
+        data: { label: "End" },
         deletable: false,
     },
 ];
 
 const defaultEdges: Edge[] = [
-    { id: "e-start-welcome", source: "start_node", target: "welcome_text" },
-    { id: "e-welcome-end", source: "welcome_text", target: "end_node" },
+    { 
+        id: "e-start-welcome", 
+        source: "start_node", 
+        target: "welcome_text",
+        type: 'smoothstep',
+        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 }
+    },
+    { 
+        id: "e-welcome-end", 
+        source: "welcome_text", 
+        target: "end_node",
+        type: 'smoothstep',
+        markerEnd: { type: MarkerType.ArrowClosed, width: 12, height: 12 }
+    },
 ];
 
 let idIncrement = 0;
@@ -73,8 +88,8 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
     isTranslationMode = false
 }, ref) => {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
-    const [nodes, setNodes] = React.useState<Node[]>(initialNodes || defaultNodes);
-    const [edges, setEdges] = React.useState<Edge[]>(initialEdges || defaultEdges);
+    const [nodes, setNodes] = React.useState<Node[]>(initialNodes && initialNodes.length > 0 ? initialNodes : defaultNodes);
+    const [edges, setEdges] = React.useState<Edge[]>(initialEdges && initialEdges.length > 0 ? initialEdges : defaultEdges);
     const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
 
     useImperativeHandle(ref, () => ({
@@ -90,23 +105,16 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
             const data = node.data as any;
             if (!data) return;
 
-            // Direct variable fields (Input, NPS, Language, File)
             if (typeof data.variable === 'string' && data.variable.trim()) foundVars.add(data.variable.trim());
             if (typeof data.variableName === 'string' && data.variableName.trim()) foundVars.add(data.variableName.trim());
-            
-            // AI Nodes & HTTP Request
             if (typeof data.resultVariable === 'string' && data.resultVariable.trim()) foundVars.add(data.resultVariable.trim());
-            
-            // Location Request
             if (typeof data.variablePrefix === 'string' && data.variablePrefix.trim()) foundVars.add(data.variablePrefix.trim());
 
-            // Nested Interaction variables (Buttons, Cards, Carousel, List)
             const interactionVar = data.interaction?.input?.variableName;
             if (typeof interactionVar === 'string' && interactionVar.trim()) {
                 foundVars.add(interactionVar.trim());
             }
 
-            // Array fields (Variable collections & Set Variable assignments)
             if (Array.isArray(data.variables)) {
                 data.variables.forEach((v: any) => {
                     if (typeof v === 'string' && v.trim()) foundVars.add(v.trim());
@@ -121,7 +129,7 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
 
         const store = useVariablesStore.getState();
         const existingNames = new Set(store.variables.map(v => v.name));
-        
+
         foundVars.forEach(vName => {
             if (!existingNames.has(vName)) {
                 store.addVariable(vName);
@@ -129,6 +137,8 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
             }
         });
     }, [nodes]);
+
+
 
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => {
@@ -211,11 +221,11 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
 
             setNodes((nds) => nds.concat(newNode));
         },
-        [screenToFlowPosition, isTranslationMode]
+        [screenToFlowPosition, isTranslationMode, getNodes]
     );
 
     return (
-        <div className="h-full w-full bg-muted/10 flex-1 overflow-hidden" ref={reactFlowWrapper}>
+        <div className="h-full w-full bg-[var(--canvas-bg)] flex-1 overflow-hidden" ref={reactFlowWrapper}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -228,9 +238,25 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
                 nodesDraggable={!isTranslationMode}
                 nodesConnectable={!isTranslationMode}
                 elementsSelectable={true}
+                connectionLineType={ConnectionLineType.SmoothStep}
+                connectionLineStyle={{ strokeWidth: 2 }}
+                defaultEdgeOptions={{
+                    type: 'smoothstep',
+                    pathOptions: { borderRadius: 20 },
+                    markerEnd: {
+                        type: MarkerType.ArrowClosed,
+                        width: 12,
+                        height: 12,
+                    },
+                    style: {
+                        strokeWidth: 2,
+                    }
+                } as any}
                 fitView
+                fitViewOptions={{ maxZoom: 0.8, padding: 0.5 }}
             >
-                <Background color="#cbd5e1" gap={20} variant={BackgroundVariant.Dots} />
+                <Background color="var(--border-dim)" gap={20} variant={BackgroundVariant.Dots} />
+                <Controls position="top-right" className="mr-4 mt-4" />
                 {!isTranslationMode && (
                     <Panel position="top-left" className="ml-4 mt-4">
                         <NodePalette />

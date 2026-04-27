@@ -1,15 +1,18 @@
+import { useEffect, useState } from "react"
 import type { ReactNode } from "react"
 import {
   BellIcon,
   BotIcon,
   LayoutDashboardIcon,
   MegaphoneIcon,
+  MoonIcon,
   PhoneCallIcon,
   Settings2Icon,
-
+  SunIcon,
   UsersIcon,
 } from "lucide-react"
 import { Link, useRouterState } from "@tanstack/react-router"
+import { useTheme } from "next-themes"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -27,10 +30,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarRail,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
+import { EYLogo } from "@/components/branding/ey-logo"
 
 const mainNav = [
   { label: "Dashboard", to: "/", icon: LayoutDashboardIcon },
@@ -63,11 +66,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <Sidebar collapsible="icon">
         <SidebarHeader>
-          <div className="flex items-center gap-3 px-2">
-            <div className="grid size-9 place-items-center rounded-xl bg-[#FFE600] text-black shadow-sm">
-              <EyLogo className="size-5" />
+          <div className="flex min-w-0 items-center gap-3 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/80 bg-white/95 shadow-sm ring-1 ring-black/5 backdrop-blur">
+              <EYLogo className="h-5 shrink-0" />
             </div>
-            <div className="leading-tight">
+            <div className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
               <p className="text-sm font-semibold">Ernst & Young</p>
               <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Workspace</p>
             </div>
@@ -119,7 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
-          <div className="flex items-center gap-3 rounded-xl bg-muted/40 p-3">
+          <div className="flex items-center gap-3 rounded-xl bg-muted/40 p-3 group-data-[collapsible=icon]:hidden">
             <Avatar className="size-10">
               <AvatarImage src="https://i.pravatar.cc/100?img=68" alt="Operator" />
               <AvatarFallback>OP</AvatarFallback>
@@ -129,17 +132,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="text-xs text-muted-foreground">online</p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground px-2">
+          <p className="text-xs text-muted-foreground px-2 group-data-[collapsible=icon]:hidden">
             Ctrl/Cmd + B to collapse
           </p>
         </SidebarFooter>
       </Sidebar>
-      <SidebarRail />
 
       <SidebarInset>
         <Header />
-        <main className="flex-1 bg-background px-6 pb-10 pt-6">
-          <div className="mx-auto w-full max-w-[1600px]">
+        <main className="flex-1 min-w-0 overflow-x-hidden bg-background px-4 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-6">
+          <div className="mx-auto min-w-0 w-full max-w-6xl">
             {children}
           </div>
         </main>
@@ -149,19 +151,35 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 function Header() {
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
-    <div className="border-b bg-background/80 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex w-full max-w-[1600px] items-center gap-4">
+    <div className="border-b bg-background/80 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/60 sm:px-6 sm:py-4">
+      <div className="mx-auto flex w-full max-w-6xl items-center gap-4">
         <SidebarTrigger />
         <Separator orientation="vertical" className="h-6" />
         {/* Removed duplicate EY text as requested to keep only one EY icon in the navbar/sidebar */}
-        <div className="ml-auto flex items-center gap-2">
-          <Input className="w-56" placeholder="Quick search" />
+        <div className="ml-auto flex min-w-0 items-center gap-2">
+          <Input className="hidden w-40 lg:w-56 md:block" placeholder="Quick search" />
           <Button size="sm" className="bg-[#FFE600] text-black hover:brightness-95 transition-all shadow-sm">
             New flow
           </Button>
           <Button variant="ghost" size="icon">
             <BellIcon className="size-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full border-slate-200 bg-white/60 backdrop-blur-sm transition-all hover:bg-white dark:border-slate-800 dark:bg-slate-950/50 dark:hover:bg-slate-900"
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            aria-label="Toggle theme"
+          >
+            {mounted && resolvedTheme === "dark" ? <SunIcon className="size-4" /> : <MoonIcon className="size-4" />}
           </Button>
         </div>
       </div>

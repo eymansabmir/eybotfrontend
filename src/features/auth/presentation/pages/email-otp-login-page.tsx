@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { Moon, Sun, ShieldCheck, Mail, LogIn, ArrowRight, CheckCircle2 } from "lucide-react"
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { authClient } from "@/lib/auth-client"
+import { EYLogo } from "@/components/branding/ey-logo"
 
 type Stage = "request" | "verify"
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -16,6 +17,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export function EmailOtpLoginPage() {
   const navigate = useNavigate()
   const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
 
   const [email, setEmail] = useState("")
   const [otp, setOtp] = useState("")
@@ -24,6 +26,10 @@ export function EmailOtpLoginPage() {
   const [error, setError] = useState<string | null>(null)
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   async function handleSendOtp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -108,8 +114,8 @@ export function EmailOtpLoginPage() {
 
       {/* ── Header Branding ─────────────────────────────────────────────────── */}
       <div className="absolute top-8 left-8 z-20 flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-lg font-black text-primary-foreground shadow-lg shadow-primary/20">
-          EY
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white/95 shadow-lg ring-1 ring-black/5 backdrop-blur-sm">
+          <EYLogo className="h-6" />
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">WHATSAPP BOT</span>
@@ -122,9 +128,10 @@ export function EmailOtpLoginPage() {
             variant="outline"
             size="icon"
             className="rounded-full border-slate-200 bg-white/50 backdrop-blur-sm transition-all hover:bg-white dark:border-slate-800 dark:bg-slate-950/50 dark:hover:bg-slate-900"
+          disabled={!mounted}
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
         >
-            {resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          {mounted && resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </Button>
       </div>
 
