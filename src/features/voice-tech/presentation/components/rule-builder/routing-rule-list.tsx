@@ -222,7 +222,7 @@ function InlineMatchCount({
         className="h-7 rounded-full px-2.5 font-mono text-[10px] bg-primary/10 text-primary border-primary/20 flex items-center gap-1.5 animate-in zoom-in-95 duration-300"
       >
         <Users className="size-3" />
-        <span className="font-bold">{entities.length.toLocaleString()}</span>
+        <span className="font-bold">{entities.count.toLocaleString()}</span>
         <span className="opacity-60 font-medium whitespace-nowrap">Matches</span>
       </Badge>
     );

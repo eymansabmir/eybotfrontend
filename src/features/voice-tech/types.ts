@@ -174,6 +174,8 @@ export interface RoutingAnalyticsResponse {
   avgResponseTimeMs: number;
   datasets: string[];
   totalDatasetRecords?: number;
+  liveMatchedCount?: number;
+  liveUnmatchedCount?: number;
   rulesCount: number;
   providerBreakdown: ProviderBreakdown[];
   ruleStats: RuleAnalyticsStat[];

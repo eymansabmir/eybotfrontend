@@ -206,36 +206,47 @@ export function RoutingAnalyticsPage() {
           </header>
 
           {/* ── 2. KPI Summary Cards ────────────────────────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <KpiCard
+              icon={Database}
+              label="Total Records"
+              value={(stats.totalDatasetRecords ?? 0).toLocaleString()}
+              sub="Records in linked dataset"
+              iconClassName="bg-slate-500/10 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400"
+            />
+            <KpiCard
+              icon={GitBranch}
+              label="Matched Audience"
+              value={(stats.liveMatchedCount ?? 0).toLocaleString()}
+              sub={`${formatPercentage(stats.liveMatchedCount ?? 0, stats.totalDatasetRecords ?? 1)} rule coverage`}
+              iconClassName="bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+            />
+            <KpiCard
+              icon={Activity}
+              label="Unmatched"
+              value={(stats.liveUnmatchedCount ?? 0).toLocaleString()}
+              sub="Records ignoring rules"
+              iconClassName="bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400"
+            />
             <KpiCard
               icon={Phone}
               label="Calls Processed"
               value={(stats.totalCallsProcessed ?? 0).toLocaleString()}
-              sub={`${(stats.totalEvents ?? 0).toLocaleString()} total pipeline events`}
+              sub={`${(stats.totalEvents ?? 0).toLocaleString()} pipeline events`}
               iconClassName="bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
             />
             <KpiCard
-              icon={CheckCircle2}
-              label="Rules Matched"
-              value={(stats.totalRulesMatched ?? 0).toLocaleString()}
-              sub={(stats.totalCallsProcessed ?? 0) > 0
-                ? `${formatPercentage(stats.totalRulesMatched ?? 0, (stats.totalRulesMatched ?? 0) + (stats.totalNoMatch ?? 0))} match rate`
-                : "No calls yet"
-              }
-              iconClassName="bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-            />
-            <KpiCard
               icon={AlertTriangle}
-              label="Unmatched / Errors"
-              value={((stats.totalNoMatch ?? 0) + (stats.totalErrors ?? 0)).toLocaleString()}
-              sub={`${stats.totalNoMatch ?? 0} unmatched · ${stats.totalErrors ?? 0} errors`}
-              iconClassName="bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400"
+              label="System Errors"
+              value={(stats.totalErrors ?? 0).toLocaleString()}
+              sub="Pipeline execution errors"
+              iconClassName="bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400"
             />
             <KpiCard
               icon={Clock}
-              label="Avg. Response Time"
+              label="Avg. Latency"
               value={formatMs(stats.avgResponseTimeMs)}
-              sub="From provider result events"
+              sub="Avg. provider response"
               iconClassName="bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400"
             />
           </div>
