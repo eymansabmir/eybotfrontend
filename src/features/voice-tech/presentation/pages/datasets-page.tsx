@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Database,
-  Plus,
   Tag,
   Trash2,
   Upload,
@@ -151,62 +150,64 @@ export function DatasetsPage() {
         </div>
       ) : (
         <div className="border rounded-xl overflow-hidden bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="font-semibold">Dataset Name</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="text-right font-semibold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entityTypes.map((type) => (
-                <TableRow key={type.id} className="group">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                        <Tag className="size-4 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">{type.name}</p>
-                        <p className="text-xs text-muted-foreground">Dataset</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20 text-xs"
-                    >
-                      <CheckCircle2 className="size-3 mr-1" />
-                      Ready
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1.5 text-xs h-8 cursor-pointer"
-                        onClick={() => setInspectingType(inspectingType === type.name ? null : type.name)}
-                      >
-                        <Eye className="size-3.5" />
-                        View Fields
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
-                        onClick={() => setDeletingType(type.name)}
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold px-6">Dataset Name</TableHead>
+                  <TableHead className="font-semibold px-6">Status</TableHead>
+                  <TableHead className="text-right font-semibold px-6">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {entityTypes.map((type) => (
+                  <TableRow key={type.id} className="group">
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                          <Tag className="size-4 text-blue-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-sm truncate">{type.name}</p>
+                          <p className="text-xs text-muted-foreground">Dataset</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Badge
+                        variant="outline"
+                        className="bg-emerald-500/10 text-emerald-700 border-emerald-500/20 text-xs shrink-0"
+                      >
+                        <CheckCircle2 className="size-3 mr-1" />
+                        Ready
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right px-6 py-4">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 text-xs h-8 cursor-pointer shrink-0"
+                          onClick={() => setInspectingType(inspectingType === type.name ? null : type.name)}
+                        >
+                          <Eye className="size-3.5" />
+                          View Fields
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer shrink-0"
+                          onClick={() => setDeletingType(type.name)}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 

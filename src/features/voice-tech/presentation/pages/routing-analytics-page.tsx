@@ -206,7 +206,7 @@ export function RoutingAnalyticsPage() {
           </header>
 
           {/* ── 2. KPI Summary Cards ────────────────────────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
             <KpiCard
               icon={Database}
               label="Total Records"
@@ -347,113 +347,115 @@ export function RoutingAnalyticsPage() {
                   <p className="text-xs text-muted-foreground mt-1">Add routing rules to see the flow visualization.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr_220px] gap-0 lg:gap-0 items-stretch">
-
-                  {/* Column 1: Dataset Source */}
-                  <div className="flex items-center justify-center lg:border-r border-border px-4 py-6">
-                    <div className="flex flex-col items-center gap-2 text-center">
-                      <div className="size-12 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
-                        <Database className="size-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {stats.datasets[0] || "All Data"}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">Data Source</p>
-                        {stats.totalDatasetRecords !== undefined && (
-                          <Badge variant="secondary" className="mt-2 text-[10px]">
-                            {stats.totalDatasetRecords.toLocaleString()} records
-                          </Badge>
-                        )}
+                <div className="overflow-x-auto pb-4 -mx-2 px-2">
+                  <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr_220px] gap-0 lg:gap-0 items-stretch min-w-[800px] lg:min-w-0">
+  
+                    {/* Column 1: Dataset Source */}
+                    <div className="flex items-center justify-center lg:border-r border-border px-4 py-6">
+                      <div className="flex flex-col items-center gap-2 text-center">
+                        <div className="size-12 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
+                          <Database className="size-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">
+                            {stats.datasets[0] || "All Data"}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">Data Source</p>
+                          {stats.totalDatasetRecords !== undefined && (
+                            <Badge variant="secondary" className="mt-2 text-[10px]">
+                              {stats.totalDatasetRecords.toLocaleString()} records
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Column 2: Rule Conditions */}
-                  <div className="flex flex-col gap-2 px-4 py-3 lg:border-r border-border">
-                    {stats.ruleStats.map((rule: RuleAnalyticsStat) => {
-                      const colors = getProviderColor(rule.provider);
-                      return (
-                        <div
-                          key={rule.ruleId}
-                          className={cn(
-                            "flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors",
-                            "bg-card hover:bg-accent/50 cursor-default"
-                          )}
-                        >
-                          {/* Connector dot */}
-                          <div className="flex items-center gap-2 shrink-0">
-                            <div className={cn(
-                              "size-6 rounded-md flex items-center justify-center text-[10px] font-bold",
-                              rule.isActive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"
-                            )}>
-                              {rule.priority}
-                            </div>
-                            <ChevronRight className="size-3 text-muted-foreground hidden lg:block" />
-                          </div>
-
-                          {/* Rule condition */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-foreground truncate">
-                              {rule.conditionsSummary}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {rule.matchCount} matched · {rule.callCount} processed
-                            </p>
-                          </div>
-
-                          {/* Arrow to provider */}
-                          <ChevronRight className="size-3.5 text-muted-foreground shrink-0 hidden lg:block" />
-
-                          {/* Provider chip */}
-                          <Badge variant="outline" className={cn("shrink-0 text-[10px] font-semibold capitalize", colors.text)}>
-                            {rule.provider}
-                          </Badge>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Column 3: Provider Summary */}
-                  <div className="flex flex-col gap-2 px-4 py-3">
-                    {stats.providerBreakdown.length > 0 ? (
-                      stats.providerBreakdown.map((p) => {
-                        const colors = getProviderColor(p.providerName);
-                        const pct = totalProviderCalls > 0
-                          ? Math.round((p.callCount / totalProviderCalls) * 100)
-                          : 0;
+  
+                    {/* Column 2: Rule Conditions */}
+                    <div className="flex flex-col gap-2 px-4 py-3 lg:border-r border-border">
+                      {stats.ruleStats.map((rule: RuleAnalyticsStat) => {
+                        const colors = getProviderColor(rule.provider);
                         return (
                           <div
-                            key={p.providerId}
-                            className="flex items-center gap-3 rounded-lg border px-3 py-2.5 bg-card"
+                            key={rule.ruleId}
+                            className={cn(
+                              "flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors",
+                              "bg-card hover:bg-accent/50 cursor-default"
+                            )}
                           >
-                            <div className={cn("size-8 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase", colors.bg, colors.text)}>
-                              {p.providerName.slice(0, 2)}
+                            {/* Connector dot */}
+                            <div className="flex items-center gap-2 shrink-0">
+                              <div className={cn(
+                                "size-6 rounded-md flex items-center justify-center text-[10px] font-bold",
+                                rule.isActive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"
+                              )}>
+                                {rule.priority}
+                              </div>
+                              <ChevronRight className="size-3 text-muted-foreground hidden lg:block" />
                             </div>
+  
+                            {/* Rule condition */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-foreground capitalize truncate">{p.providerName}</p>
-                              <p className="text-[11px] text-muted-foreground tabular-nums">{p.callCount} calls · {pct}%</p>
+                              <p className="text-xs font-medium text-foreground truncate">
+                                {rule.conditionsSummary}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {rule.matchCount} matched · {rule.callCount} processed
+                              </p>
                             </div>
+  
+                            {/* Arrow to provider */}
+                            <ChevronRight className="size-3.5 text-muted-foreground shrink-0 hidden lg:block" />
+  
+                            {/* Provider chip */}
+                            <Badge variant="outline" className={cn("shrink-0 text-[10px] font-semibold capitalize", colors.text)}>
+                              {rule.provider}
+                            </Badge>
                           </div>
                         );
-                      })
-                    ) : (
-                      // Show a placeholder based on rule provider names
-                      [...new Set(stats.ruleStats.map((r: RuleAnalyticsStat) => r.provider))].map((name) => {
-                        const colors = getProviderColor(name);
-                        return (
-                          <div key={name} className="flex items-center gap-3 rounded-lg border border-dashed px-3 py-2.5 bg-card">
-                            <div className={cn("size-8 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase", colors.bg, colors.text)}>
-                              {name.slice(0, 2)}
+                      })}
+                    </div>
+  
+                    {/* Column 3: Provider Summary */}
+                    <div className="flex flex-col gap-2 px-4 py-3">
+                      {stats.providerBreakdown.length > 0 ? (
+                        stats.providerBreakdown.map((p) => {
+                          const colors = getProviderColor(p.providerName);
+                          const pct = totalProviderCalls > 0
+                            ? Math.round((p.callCount / totalProviderCalls) * 100)
+                            : 0;
+                          return (
+                            <div
+                              key={p.providerId}
+                              className="flex items-center gap-3 rounded-lg border px-3 py-2.5 bg-card"
+                            >
+                              <div className={cn("size-8 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase", colors.bg, colors.text)}>
+                                {p.providerName.slice(0, 2)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-foreground capitalize truncate">{p.providerName}</p>
+                                <p className="text-[11px] text-muted-foreground tabular-nums">{p.callCount} calls · {pct}%</p>
+                              </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-foreground capitalize truncate">{name}</p>
-                              <p className="text-[11px] text-muted-foreground">0 calls · awaiting data</p>
+                          );
+                        })
+                      ) : (
+                        // Show a placeholder based on rule provider names
+                        [...new Set(stats.ruleStats.map((r: RuleAnalyticsStat) => r.provider))].map((name) => {
+                          const colors = getProviderColor(name);
+                          return (
+                            <div key={name} className="flex items-center gap-3 rounded-lg border border-dashed px-3 py-2.5 bg-card">
+                              <div className={cn("size-8 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase", colors.bg, colors.text)}>
+                                {name.slice(0, 2)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-foreground capitalize truncate">{name}</p>
+                                <p className="text-[11px] text-muted-foreground">0 calls · awaiting data</p>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })
-                    )}
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

@@ -1,6 +1,5 @@
 import { 
   Play, 
-  Search, 
   MoreVertical, 
   CheckCircle2, 
   XSquare,
@@ -43,7 +42,6 @@ interface RoutingRuleListProps {
 export function RoutingRuleList({ 
   rules, 
   onExecuteTest, 
-  onQueryEntities,
   onSingleCall,
   onToggleActive,
   onEdit,
@@ -75,7 +73,8 @@ export function RoutingRuleList({
 
   return (
     <div className="border rounded-2xl bg-background overflow-hidden shadow-sm">
-      <div className="divide-y divide-border/60">
+      <div className="overflow-x-auto">
+        <div className="divide-y divide-border/60 min-w-[700px] lg:min-w-0">
         {rules.sort((a, b) => a.priority - b.priority).map((rule) => {
           const transport = getTransport(rule);
           const isWhatsapp = transport === "whatsapp";
@@ -178,7 +177,8 @@ export function RoutingRuleList({
         })}
       </div>
     </div>
-  );
+  </div>
+);
 }
 
 function InlineMatchCount({ 
@@ -213,7 +213,7 @@ function InlineMatchCount({
     enabled: shouldFetch,
   });
 
-  if (isError) return <Activity className="size-3.5 text-rose-500 opacity-50" title="Error fetching matches" />;
+  if (isError) return <Activity className="size-3.5 text-rose-500 opacity-50" />;
 
   if (shouldFetch && entities !== undefined) {
     return (

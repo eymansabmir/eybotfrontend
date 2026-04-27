@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Upload,
@@ -100,7 +101,9 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
   const handleFile = useCallback((file: File | undefined) => {
     if (!file) return;
     if (!isValidFile(file)) {
-      alert("Please upload a .csv, .xls or .xlsx file");
+      toast.error("Invalid file type", {
+        description: "Please upload a .csv, .xls or .xlsx file"
+      });
       return;
     }
     setFileName(file.name);

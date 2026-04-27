@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Activity,
   AlertTriangle,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,9 +29,16 @@ import {
   useRoutingConfigs,
   useRoutingConfig,
   useBulkExecuteRouting,
-  useQueryEntitiesByRule,
 } from "../../api/voice-tech-queries";
 import { voiceTechApi } from "../../api/voice-tech-api";
+import { CsvUploadPanel } from "../components/ingest/csv-upload-panel";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from "@/components/ui/sheet";
 
 const TENANT_ID = "tenant-ey-001";
 
@@ -41,6 +49,7 @@ export function ExecutePage() {
   const [step, setStep] = useState<WizardStep>("datasets");
   const [selectedDatasets, setSelectedDatasets] = useState<string[]>([]);
   const [selectedConfigId, setSelectedConfigId] = useState<string | null>(null);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [result, setResult] = useState<{
     totalProcessed: number;
     initiated: number;
@@ -50,7 +59,7 @@ export function ExecutePage() {
 
   const { data: entityTypes = [], isLoading: datasetsLoading } = useEntityTypes(TENANT_ID);
   const { data: configs = [], isLoading: configsLoading } = useRoutingConfigs(TENANT_ID);
-  const { data: fullConfig, isLoading: configDetailLoading } = useRoutingConfig(selectedConfigId, TENANT_ID);
+  const { data: fullConfig } = useRoutingConfig(selectedConfigId, TENANT_ID);
   const bulkExecute = useBulkExecuteRouting();
 
   // Calculate combined audience
@@ -192,15 +201,42 @@ export function ExecutePage() {
           ) : entityTypes.length === 0 ? (
             <div className="py-12 text-center border-2 border-dashed rounded-xl">
               <p className="text-sm text-muted-foreground mb-3">No datasets available. Upload data first.</p>
-              <Link to="/voice-tech/datasets">
-                <Button variant="outline" className="gap-2">
-                  <Database className="size-4" />
-                  Go to Datasets
-                </Button>
-              </Link>
+              
+              <Sheet open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Database className="size-4" />
+                    Upload Dataset
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[440px] sm:max-w-[440px]">
+                  <SheetHeader className="mb-6">
+                    <SheetTitle>Upload Dataset</SheetTitle>
+                  </SheetHeader>
+                  <CsvUploadPanel tenantId={TENANT_ID} entityType="" />
+                </SheetContent>
+              </Sheet>
             </div>
           ) : (
             <>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-bold">Select datasets</h2>
+                
+                <Sheet open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2 text-primary hover:text-primary hover:bg-primary/10">
+                      <Plus className="size-3.5" />
+                      Upload New
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[440px] sm:max-w-[440px]">
+                    <SheetHeader className="mb-6">
+                      <SheetTitle>Upload Dataset</SheetTitle>
+                    </SheetHeader>
+                    <CsvUploadPanel tenantId={TENANT_ID} entityType="" />
+                  </SheetContent>
+                </Sheet>
+              </div>
               <div className="space-y-2">
                 {entityTypes.map((type) => (
                   <div

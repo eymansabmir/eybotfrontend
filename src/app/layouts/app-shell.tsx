@@ -10,9 +10,11 @@ import {
   Settings2Icon,
   SunIcon,
   UsersIcon,
+  ChevronRight,
 } from "lucide-react"
 import { Link, useRouterState } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
+import { EYLogo } from "@/components/branding/ey-logo"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -30,28 +32,38 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { Separator } from "@/components/ui/separator"
-import { EYLogo } from "@/components/branding/ey-logo"
 
 const mainNav = [
   { label: "Dashboard", to: "/", icon: LayoutDashboardIcon },
   { label: "Bots", to: "/bots", icon: BotIcon },
   { label: "Campaign", to: "/campaign", icon: MegaphoneIcon },
-  { label: "Voice Tech", to: "/voice-tech", icon: PhoneCallIcon },
+  {
+    label: "Voice Tech",
+    to: "/voice-tech",
+    icon: PhoneCallIcon,
+    items: [
+      { label: "Orchestrations", to: "/voice-tech" },
+      { label: "Datasets", to: "/voice-tech/datasets" },
+      { label: "Vendors", to: "/voice-tech/vendors" },
+    ],
+  },
   { label: "Users", to: "/users", icon: UsersIcon },
 ]
 
 const footerNav = [
   { label: "Settings", to: "/settings", icon: Settings2Icon },
 ]
-const EyLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
-    <path d="M4 6h6v2.2H6.4v3.2h3.5v2.2H6.4v3.8H10V19.6H4V6z" />
-    <path d="M20 6h-2.5l-3.2 6.5L11.1 6H8.6l4.8 9.5v4.1h2.4v-4.1L20 6z" />
-  </svg>
-)
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
@@ -82,24 +94,61 @@ export function AppShell({ children }: { children: ReactNode }) {
             <SidebarGroupLabel>Workspace</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {mainNav.map((item) => (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.label}
-                      isActive={
-                        item.to === "/"
-                          ? pathname === "/"
-                          : pathname === item.to || pathname.startsWith(item.to + "/")
-                      }
-                    >
-                      <Link to={item.to}>
-                        <item.icon className="size-4" />
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {mainNav.map((item) => {
+                  const hasSubItems = item.items && item.items.length > 0;
+                  const isActive = item.to === "/"
+                    ? pathname === "/"
+                    : pathname === item.to || pathname.startsWith(item.to + "/");
+
+                  if (hasSubItems) {
+                    return (
+                      <Collapsible
+                        key={item.label}
+                        asChild
+                        defaultOpen={isActive}
+                        className="group/collapsible"
+                      >
+                        <SidebarMenuItem>
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton tooltip={item.label} isActive={isActive}>
+                              <item.icon className="size-4" />
+                              <span>{item.label}</span>
+                              <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              {item.items?.map((subItem) => (
+                                <SidebarMenuSubItem key={subItem.label}>
+                                  <SidebarMenuSubButton asChild isActive={pathname === subItem.to}>
+                                    <Link to={subItem.to}>
+                                      <span>{subItem.label}</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        </SidebarMenuItem>
+                      </Collapsible>
+                    )
+                  }
+
+                  return (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={item.label}
+                        isActive={isActive}
+                      >
+                        <Link to={item.to}>
+                          <item.icon className="size-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

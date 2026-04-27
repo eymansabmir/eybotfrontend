@@ -239,91 +239,93 @@ export function RoutingsPage() {
         </div>
       ) : (
         <div className="border rounded-xl overflow-hidden bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-10" />
-                <TableHead className="font-semibold">Routing Group</TableHead>
-                <TableHead className="font-semibold">Created</TableHead>
-                <TableHead className="text-right font-semibold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {configs.map((config) => {
-                const isExpanded = expandedConfigId === config.id;
-                return (
-                  <TableRow
-                    key={config.id}
-                    className={cn("group cursor-pointer", isExpanded && "bg-muted/30")}
-                    onClick={() => handleToggleExpanded(config.id)}
-                  >
-                    <TableCell className="w-10">
-                      {isExpanded ? (
-                        <ChevronDown className="size-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="size-4 text-muted-foreground" />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                          <GitBranch className="size-4 text-violet-600" />
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-10 px-4" />
+                  <TableHead className="font-semibold px-4">Routing Group</TableHead>
+                  <TableHead className="font-semibold px-4">Created</TableHead>
+                  <TableHead className="text-right font-semibold px-4">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {configs.map((config) => {
+                  const isExpanded = expandedConfigId === config.id;
+                  return (
+                    <TableRow
+                      key={config.id}
+                      className={cn("group cursor-pointer", isExpanded && "bg-muted/30")}
+                      onClick={() => handleToggleExpanded(config.id)}
+                    >
+                      <TableCell className="w-10 px-4 py-4">
+                        {isExpanded ? (
+                          <ChevronDown className="size-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="size-4 text-muted-foreground" />
+                        )}
+                      </TableCell>
+                      <TableCell className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-9 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+                            <GitBranch className="size-4 text-violet-600" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm truncate">{config.name}</p>
+                            <p className="text-xs text-muted-foreground">Routing Group</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-sm">{config.name}</p>
-                          <p className="text-xs text-muted-foreground">Routing Group</p>
+                      </TableCell>
+                      <TableCell className="px-4 py-4">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {config.createdAt && !isNaN(new Date(config.createdAt).getTime())
+                            ? formatDistanceToNow(new Date(config.createdAt), { addSuffix: true })
+                            : "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 cursor-pointer hover:bg-primary/10 hover:text-primary shrink-0"
+                            onClick={() => navigate({ to: `/voice-tech/routings/${config.id}/analytics` })}
+                            aria-label="View analytics"
+                          >
+                            <BarChart2 className="size-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="size-8 cursor-pointer shrink-0">
+                                <MoreVertical className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem
+                                onClick={() => navigate({ to: `/voice-tech/routings/${config.id}/analytics` })}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <BarChart2 className="size-4" />
+                                View Analytics
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => { setDeleteConfigId(config.id); setDeleteConfigName(config.name); }}
+                                className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                              >
+                                <Trash2 className="size-4" />
+                                Delete Group
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-xs text-muted-foreground">
-                        {config.createdAt && !isNaN(new Date(config.createdAt).getTime())
-                          ? formatDistanceToNow(new Date(config.createdAt), { addSuffix: true })
-                          : "—"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 cursor-pointer hover:bg-primary/10 hover:text-primary"
-                          onClick={() => navigate({ to: `/voice-tech/routings/${config.id}/analytics` })}
-                          aria-label="View analytics"
-                        >
-                          <BarChart2 className="size-4" />
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-8 cursor-pointer">
-                              <MoreVertical className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem
-                              onClick={() => navigate({ to: `/voice-tech/routings/${config.id}/analytics` })}
-                              className="gap-2 cursor-pointer"
-                            >
-                              <BarChart2 className="size-4" />
-                              View Analytics
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => { setDeleteConfigId(config.id); setDeleteConfigName(config.name); }}
-                              className="gap-2 text-destructive focus:text-destructive cursor-pointer"
-                            >
-                              <Trash2 className="size-4" />
-                              Delete Group
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 

@@ -18,7 +18,7 @@ import { MessageCircle, Smartphone, AlertTriangle } from "lucide-react";
 import { StepperSidebar, type StepConfig } from "@/features/campaign/presentation/components/wizard/stepper-sidebar";
 import { ConditionBuilder } from "./condition-builder";
 import { ProviderBadge } from "../shared/provider-badge";
-import { useCreateIntegrationCredential, useCredentialsByType, useVoiceProviderCredentials } from "../../../api/voice-tech-queries";
+import { useCredentialsByType, useVoiceProviderCredentials } from "../../../api/voice-tech-queries";
 import type { 
   LogicalOperator, 
   RoutingCondition, 
@@ -110,16 +110,7 @@ export function CreateRoutingRuleDialog({
   const [vapiBatchIntervalMs, setVapiBatchIntervalMs] = useState("250");
   const [priority, setPriority] = useState(String(nextPriority));
   const [isActive, setIsActive] = useState(true);
-  const [voiceCredentialName, setVoiceCredentialName] = useState("");
-  const [voiceCredentialApiKey, setVoiceCredentialApiKey] = useState("");
-  const [telephonyCredentialName, setTelephonyCredentialName] = useState("");
-  const [telephonyCredentialApiKey, setTelephonyCredentialApiKey] = useState("");
-  const [exotelAccountSid, setExotelAccountSid] = useState("");
-  const [exotelAuthToken, setExotelAuthToken] = useState("");
-  const [exotelCallerId, setExotelCallerId] = useState("");
-  const [exotelBaseUrl, setExotelBaseUrl] = useState("");
-  const [exotelStatusCallbackUrl, setExotelStatusCallbackUrl] = useState("");
-  const createCredentialMutation = useCreateIntegrationCredential(tenantId);
+
   const { data: providerCredentials = [] } = useVoiceProviderCredentials(tenantId, provider);
   const telephonyCredentialType = TELEPHONY_PROVIDER_TO_CREDENTIAL_TYPE[telephonyProvider] ?? 'EXOTEL';
   const { data: telephonyCredentials = [] } = useCredentialsByType(tenantId, telephonyCredentialType);
@@ -154,15 +145,7 @@ export function CreateRoutingRuleDialog({
       setVapiTelephonyEndpoint(readString(config, 'telephonyEndpoint'));
       setVapiWhatsappEndpoint(readString(config, 'whatsappEndpoint'));
       setVapiBatchIntervalMs(typeof config['batchIntervalMs'] === 'number' ? String(config['batchIntervalMs']) : "250");
-      setVoiceCredentialName("");
-      setVoiceCredentialApiKey("");
-      setTelephonyCredentialName("");
-      setTelephonyCredentialApiKey("");
-      setExotelAccountSid("");
-      setExotelAuthToken("");
-      setExotelCallerId("");
-      setExotelBaseUrl("");
-      setExotelStatusCallbackUrl("");
+
     } else if (open) {
       // Reset form for NEW rule
       setStep(0);
@@ -191,15 +174,7 @@ export function CreateRoutingRuleDialog({
       setVapiTelephonyEndpoint("");
       setVapiWhatsappEndpoint("");
       setVapiBatchIntervalMs("250");
-      setVoiceCredentialName("");
-      setVoiceCredentialApiKey("");
-      setTelephonyCredentialName("");
-      setTelephonyCredentialApiKey("");
-      setExotelAccountSid("");
-      setExotelAuthToken("");
-      setExotelCallerId("");
-      setExotelBaseUrl("");
-      setExotelStatusCallbackUrl("");
+
       setPriority(String(nextPriority));
       setIsActive(true);
     }
@@ -240,81 +215,12 @@ export function CreateRoutingRuleDialog({
     setVapiTelephonyEndpoint("");
     setVapiWhatsappEndpoint("");
     setVapiBatchIntervalMs("250");
-    setVoiceCredentialName("");
-    setVoiceCredentialApiKey("");
-    setTelephonyCredentialName("");
-    setTelephonyCredentialApiKey("");
-    setExotelAccountSid("");
-    setExotelAuthToken("");
-    setExotelCallerId("");
-    setExotelBaseUrl("");
-    setExotelStatusCallbackUrl("");
+
     setPriority(String(nextPriority));
     setIsActive(true);
   }, [nextPriority]);
 
-  const handleCreateVoiceCredential = useCallback(async () => {
-    if (!voiceCredentialName.trim() || !voiceCredentialApiKey.trim()) return;
 
-    const created = await createCredentialMutation.mutateAsync({
-      orgId: tenantId,
-      name: voiceCredentialName.trim(),
-      type: provider.toUpperCase(),
-      secret: { apiKey: voiceCredentialApiKey.trim() },
-      isActive: true,
-    });
-
-    setVoiceCredentialId(created.id);
-    setVoiceCredentialName("");
-    setVoiceCredentialApiKey("");
-  }, [createCredentialMutation, provider, tenantId, voiceCredentialApiKey, voiceCredentialName]);
-
-  const handleCreateTelephonyCredential = useCallback(async () => {
-    if (!telephonyCredentialName.trim()) return;
-
-    const secret: Record<string, unknown> = {};
-
-    if (telephonyProvider === 'exotel') {
-      if (!exotelAccountSid.trim() || !exotelAuthToken.trim() || !exotelCallerId.trim()) return;
-      secret['accountSid'] = exotelAccountSid.trim();
-      secret['authToken'] = exotelAuthToken.trim();
-      secret['callerId'] = exotelCallerId.trim();
-      if (exotelBaseUrl.trim()) secret['baseUrl'] = exotelBaseUrl.trim();
-      if (exotelStatusCallbackUrl.trim()) secret['statusCallbackUrl'] = exotelStatusCallbackUrl.trim();
-    } else {
-      if (!telephonyCredentialApiKey.trim()) return;
-      secret['apiKey'] = telephonyCredentialApiKey.trim();
-    }
-
-    const created = await createCredentialMutation.mutateAsync({
-      orgId: tenantId,
-      name: telephonyCredentialName.trim(),
-      type: telephonyCredentialType,
-      secret,
-      isActive: true,
-    });
-
-    setTelephonyCredentialId(created.id);
-    setTelephonyCredentialName("");
-    setTelephonyCredentialApiKey("");
-    setExotelAccountSid("");
-    setExotelAuthToken("");
-    setExotelCallerId("");
-    setExotelBaseUrl("");
-    setExotelStatusCallbackUrl("");
-  }, [
-    createCredentialMutation,
-    exotelAccountSid,
-    exotelAuthToken,
-    exotelBaseUrl,
-    exotelCallerId,
-    exotelStatusCallbackUrl,
-    telephonyCredentialApiKey,
-    telephonyCredentialName,
-    telephonyCredentialType,
-    telephonyProvider,
-    tenantId,
-  ]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
@@ -505,8 +411,6 @@ export function CreateRoutingRuleDialog({
                               onValueChange={(v) => {
                                 setProvider(v as VoiceProvider);
                                 setVoiceCredentialId("");
-                                setVoiceCredentialName("");
-                                setVoiceCredentialApiKey("");
                               }}
                             >
                                <SelectTrigger>
@@ -552,29 +456,9 @@ export function CreateRoutingRuleDialog({
                                 ))}
                               </SelectContent>
                             </Select>
-                            <p className="text-[10px] text-muted-foreground">Credentials are loaded from Integrations and used securely at runtime.</p>
-                            <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
-                              <Label className="text-xs">Create Voice Credential</Label>
-                              <Input
-                                value={voiceCredentialName}
-                                onChange={(e) => setVoiceCredentialName(e.target.value)}
-                                placeholder={`e.g. ${provider}-voice-prod`}
-                              />
-                              <Input
-                                value={voiceCredentialApiKey}
-                                onChange={(e) => setVoiceCredentialApiKey(e.target.value)}
-                                type="password"
-                                placeholder="Provider API Key"
-                              />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                disabled={!voiceCredentialName.trim() || !voiceCredentialApiKey.trim() || createCredentialMutation.isPending}
-                                onClick={handleCreateVoiceCredential}
-                              >
-                                {createCredentialMutation.isPending ? "Creating..." : "Create Voice Credential"}
-                              </Button>
-                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                               Credentials must be configured on the <Button variant="link" className="h-auto p-0 text-[10px]" onClick={() => window.open('/voice-tech/vendors', '_blank')}>Vendors Page</Button>.
+                             </p>
                          </div>
 
                          {usesTransportConfig && (
@@ -601,13 +485,6 @@ export function CreateRoutingRuleDialog({
                                    onValueChange={(value) => {
                                      setTelephonyProvider(value);
                                      setTelephonyCredentialId("");
-                                     setTelephonyCredentialName("");
-                                     setTelephonyCredentialApiKey("");
-                                     setExotelAccountSid("");
-                                     setExotelAuthToken("");
-                                     setExotelCallerId("");
-                                     setExotelBaseUrl("");
-                                     setExotelStatusCallbackUrl("");
                                    }}
                                  >
                                    <SelectTrigger>
@@ -634,66 +511,9 @@ export function CreateRoutingRuleDialog({
                                      ))}
                                    </SelectContent>
                                  </Select>
-
-                                 <div className="rounded-lg border bg-background/60 p-3 space-y-2">
-                                   <Label className="text-xs">Create Telephony Credential</Label>
-                                   <Input
-                                     value={telephonyCredentialName}
-                                     onChange={(e) => setTelephonyCredentialName(e.target.value)}
-                                     placeholder={`e.g. ${telephonyProvider}-telephony-prod`}
-                                   />
-                                   {telephonyProvider === 'exotel' ? (
-                                     <>
-                                       <Input
-                                         value={exotelAccountSid}
-                                         onChange={(e) => setExotelAccountSid(e.target.value)}
-                                         placeholder="Exotel Account SID"
-                                       />
-                                       <Input
-                                         type="password"
-                                         value={exotelAuthToken}
-                                         onChange={(e) => setExotelAuthToken(e.target.value)}
-                                         placeholder="Exotel Auth Token"
-                                       />
-                                       <Input
-                                         value={exotelCallerId}
-                                         onChange={(e) => setExotelCallerId(e.target.value)}
-                                         placeholder="Exotel Caller ID / From"
-                                       />
-                                       <Input
-                                         value={exotelBaseUrl}
-                                         onChange={(e) => setExotelBaseUrl(e.target.value)}
-                                         placeholder="Base URL (optional)"
-                                       />
-                                       <Input
-                                         value={exotelStatusCallbackUrl}
-                                         onChange={(e) => setExotelStatusCallbackUrl(e.target.value)}
-                                         placeholder="Status Callback URL (optional)"
-                                       />
-                                     </>
-                                   ) : (
-                                     <Input
-                                       type="password"
-                                       value={telephonyCredentialApiKey}
-                                       onChange={(e) => setTelephonyCredentialApiKey(e.target.value)}
-                                       placeholder="Telephony API Key"
-                                     />
-                                   )}
-                                   <Button
-                                     type="button"
-                                     variant="outline"
-                                     disabled={
-                                       !telephonyCredentialName.trim()
-                                       || createCredentialMutation.isPending
-                                       || (telephonyProvider === 'exotel'
-                                         ? (!exotelAccountSid.trim() || !exotelAuthToken.trim() || !exotelCallerId.trim())
-                                         : !telephonyCredentialApiKey.trim())
-                                     }
-                                     onClick={handleCreateTelephonyCredential}
-                                   >
-                                     {createCredentialMutation.isPending ? "Creating..." : "Create Telephony Credential"}
-                                   </Button>
-                                 </div>
+                                 <p className="text-[10px] text-muted-foreground mt-1">
+                                   Manage telephony credentials on the <Button variant="link" className="h-auto p-0 text-[10px]" onClick={() => window.open('/voice-tech/vendors', '_blank')}>Vendors Page</Button>.
+                                 </p>
                                </div>
                              </div>
 

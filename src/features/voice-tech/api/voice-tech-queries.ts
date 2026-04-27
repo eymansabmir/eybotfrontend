@@ -288,6 +288,28 @@ export function useBulkExecuteRouting() {
   });
 }
 
+export function useCredentials(orgId: string, type?: string) {
+  return useQuery({
+    queryKey: ["credentials", orgId, type],
+    queryFn: () => voiceTechApi.listCredentialsByType(orgId, type || ""),
+    enabled: !!orgId,
+  });
+}
+
+export function useCreateCredential() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateIntegrationCredentialInput) => voiceTechApi.createIntegrationCredential(input),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["credentials", variables.orgId] });
+      toast.success("Credential created successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to create credential");
+    }
+  });
+}
+
 /** Delete a routing configuration (stack) */
 export function useDeleteRoutingConfig(tenantId: string) {
   const queryClient = useQueryClient();
