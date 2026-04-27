@@ -4,6 +4,7 @@ import { BarChartHorizontal } from "lucide-react";
 
 import type { NpsNodeData } from "./schema";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 
 export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsNodeData }) {
     const { setNodes } = useReactFlow();
@@ -31,8 +32,8 @@ export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsN
                 <div className="space-y-3">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Question</label>
-                        <textarea
-                            className="w-full min-h-[100px] bg-background rounded-lg border border-[var(--border-dim)] p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-y"
+                        <AutosizeTextarea
+                            className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
                             value={data.message || ""}
                             placeholder="How likely are you to recommend us?"
                             onChange={(e) => updateData({ message: e.target.value })}

@@ -6,6 +6,7 @@ import type { TextNodeData } from "./schema";
 import { LockedBadge } from "@/components/ui/locked-badge";
 import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 
 export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: TextNodeData & { isTranslationMode?: boolean } }) {
     const { setNodes } = useReactFlow();
@@ -49,8 +50,8 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
                 <>
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Content</label>
-                        <textarea
-                            className="w-full min-h-[120px] bg-background rounded-xl border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-y transition-all placeholder:italic"
+                        <AutosizeTextarea
+                            className="w-full bg-background rounded-xl border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all placeholder:italic"
                             value={data.message}
                             placeholder="Type your message here..."
                             onChange={(e) => updateData({ message: e.target.value })}

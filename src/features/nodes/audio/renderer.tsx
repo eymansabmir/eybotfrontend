@@ -1,11 +1,10 @@
-import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
 import { Music as MusicIcon, Link as LinkIcon } from "lucide-react";
 import type { AudioNodeData } from "./schema";
-import { cn } from "@/lib/utils";
-import { useReactFlow } from "@xyflow/react";
 import { MediaUploader } from "@/lib/storage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useReactFlow } from "@xyflow/react";
+import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 export function AudioNodeRenderer({ id, data, selected }: NodeProps & { data: AudioNodeData }) {
     const { setNodes } = useReactFlow();
@@ -19,109 +18,67 @@ export function AudioNodeRenderer({ id, data, selected }: NodeProps & { data: Au
     };
 
     return (
-        <div className="relative">
-            {/* 1) Condensed Block Face */}
-            <div
-                className={cn(
-                    "flex flex-col justify-center relative w-[220px] min-h-[85px] rounded-xl border p-3.5 select-none transition-all cursor-pointer",
-                    "bg-[var(--node-bg)] border-[var(--border-dim)] hover:shadow-md",
-                    selected && "border-2 border-[var(--ey-yellow)] shadow-[0_0_10px_rgba(255,230,0,0.15)] -m-[1px]"
-                )}
-            >
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                    className="h-3 w-3 border-2 border-[var(--border-dim)] bg-background shadow-sm hover:scale-125 transition-transform"
-                />
+        <NodeFrame
+            selected={selected}
+            icon={<MusicIcon size={16} />}
+            title="Audio"
+            popoverTitle="Configure Audio"
+            summary={data.url ? (data.url.split('/').pop() || "Audio File") : "Upload an audio file..."}
+            showPopover={selected}
+            popoverBody={
+                <div className="space-y-4">
+                    <Tabs defaultValue="upload" className="w-full">
+                        <TabsList className="grid grid-cols-2 bg-muted/40 p-1 h-9 rounded-lg border border-[var(--border-dim)]">
+                            <TabsTrigger 
+                                value="upload" 
+                                className="text-[11px] font-medium rounded-md data-[state=active]:bg-[var(--ey-yellow)] data-[state=active]:text-black transition-colors"
+                            >
+                                Upload File
+                            </TabsTrigger>
+                            <TabsTrigger 
+                                value="url" 
+                                className="text-[11px] font-medium rounded-md data-[state=active]:bg-[var(--ey-yellow)] data-[state=active]:text-black transition-colors"
+                            >
+                                Direct URL
+                            </TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="upload" className="pt-4 mt-0 space-y-4 outline-none">
+                            <MediaUploader onUploadSuccess={(path) => updateData({ url: path })} purpose="audio" />
+                        </TabsContent>
+                        
+                        <TabsContent value="url" className="pt-4 mt-0 space-y-3 outline-none">
+                            <div className="space-y-1.5 flex flex-col items-center">
+                                <div className="flex w-full items-center gap-1.5 mb-1">
+                                    <LinkIcon size={10} className="text-muted-foreground" />
+                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Audio URL</label>
+                                </div>
+                                <input
+                                    type="text"
+                                    className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                    value={data.url || ""}
+                                    placeholder="https://example.com/audio.mp3"
+                                    onChange={(e) => updateData({ url: e.target.value })}
+                                />
+                            </div>
+                        </TabsContent>
+                    </Tabs>
 
-                <div className="flex flex-col gap-2.5 w-full">
-                    <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300">
+                    <div className="flex items-center gap-3 rounded-lg border border-[var(--border-dim)] bg-background p-3 mt-4">
+                        <div className="rounded-md bg-green-500/10 p-2 text-green-500 shrink-0">
                             <MusicIcon size={16} />
                         </div>
-                        <span className="text-sm font-semibold text-foreground leading-none pr-1">Audio</span>
-                    </div>
-                    
-                    <div className="bg-black/5 dark:bg-black/20 rounded-md p-2 border border-[var(--border-dim)] mt-0.5">
-                        <span className="text-[11px] text-foreground/70 line-clamp-3 leading-snug whitespace-pre-wrap">
-                            {data.url ? (data.url.split('/').pop() || "Audio File") : "Upload an audio file..."}
-                        </span>
-                    </div>
-                </div>
-
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                    className="h-3 w-3 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
-                />
-            </div>
-
-            {/* 2) Popover Configuration Panel */}
-            {selected && (
-                <div 
-                    className="absolute top-0 left-[230px] w-[340px] bg-[var(--node-bg)] border border-[var(--border-dim)] rounded-xl shadow-2xl z-[100] cursor-auto nodrag nopan flex flex-col overflow-hidden"
-                >
-                    <div className="flex items-center justify-between border-b border-[var(--border-dim)] px-4 py-3 bg-muted/20">
-                        <div className="flex items-center gap-2">
-                            <MusicIcon size={14} className="text-muted-foreground" />
-                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Configure Audio</span>
-                        </div>
-                    </div>
-                    
-                    <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
-                        <Tabs defaultValue="upload" className="w-full">
-                            <TabsList className="grid grid-cols-2 bg-muted/40 p-1 h-9 rounded-lg border border-[var(--border-dim)]">
-                                <TabsTrigger 
-                                    value="upload" 
-                                    className="text-[11px] font-medium rounded-md data-[state=active]:bg-[var(--ey-yellow)] data-[state=active]:text-black transition-colors"
-                                >
-                                    Upload File
-                                </TabsTrigger>
-                                <TabsTrigger 
-                                    value="url" 
-                                    className="text-[11px] font-medium rounded-md data-[state=active]:bg-[var(--ey-yellow)] data-[state=active]:text-black transition-colors"
-                                >
-                                    Direct URL
-                                </TabsTrigger>
-                            </TabsList>
-                            
-                            <TabsContent value="upload" className="pt-4 mt-0 space-y-4 outline-none">
-                                <MediaUploader onUploadSuccess={(path) => updateData({ url: path })} purpose="audio" />
-                            </TabsContent>
-                            
-                            <TabsContent value="url" className="pt-4 mt-0 space-y-3 outline-none">
-                                <div className="space-y-1.5 flex flex-col items-center">
-                                    <div className="flex w-full items-center gap-1.5 mb-1">
-                                        <LinkIcon size={10} className="text-muted-foreground" />
-                                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Audio URL</label>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                                        value={data.url || ""}
-                                        placeholder="https://example.com/audio.mp3"
-                                        onChange={(e) => updateData({ url: e.target.value })}
-                                    />
-                                </div>
-                            </TabsContent>
-                        </Tabs>
-
-                        <div className="flex items-center gap-3 rounded-lg border border-[var(--border-dim)] bg-background p-3 mt-4">
-                            <div className="rounded-md bg-green-500/10 p-2 text-green-500 shrink-0">
-                                <MusicIcon size={16} />
+                        <div className="flex-1 min-w-0">
+                            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                                <div className="h-full w-1/3 rounded-full bg-green-500/40" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                                    <div className="h-full w-1/3 rounded-full bg-green-500/40" />
-                                </div>
-                                <p className="mt-1.5 text-[9px] text-muted-foreground truncate italic">
-                                    {data.url ? "Ready to play" : "No file attached"}
-                                </p>
-                            </div>
+                            <p className="mt-1.5 text-[9px] text-muted-foreground truncate italic">
+                                {data.url ? "Ready to play" : "No file attached"}
+                            </p>
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            }
+        />
     );
 }

@@ -38,6 +38,8 @@ import {
 import { LockedBadge } from "@/components/ui/locked-badge";
 import { cn } from "@/lib/utils";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
+import { SortableList } from "@/components/ui/sortable-list";
 
 const TYPE_ICONS = {
     text: Type,
@@ -192,8 +194,8 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                     <div className="space-y-3">
                         <div className="space-y-1.5">
                             <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Prompt Message</label>
-                            <textarea
-                                className="w-full min-h-[50px] bg-background rounded-lg border border-[var(--border-dim)] p-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-none"
+                            <AutosizeTextarea
+                                className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
                                 value={data.message}
                                 placeholder="e.g. Please upload your ID card image."
                                 onChange={(e) => updateData({ message: e.target.value })}
@@ -204,8 +206,8 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                                 <AlertCircle size={10} className="text-destructive" />
                                 <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Invalid Type Message</label>
                             </div>
-                            <textarea
-                                className="w-full min-h-[40px] bg-background rounded-lg border border-[var(--border-dim)] p-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-none"
+                            <AutosizeTextarea
+                                className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
                                 value={data.invalidMessage}
                                 placeholder="e.g. Sorry, only JPG or PNG images are allowed."
                                 onChange={(e) => updateData({ invalidMessage: e.target.value })}
@@ -236,8 +238,8 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                                     <AlertCircle size={10} className="text-destructive/70" />
                                     <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Max Retries Message</label>
                                 </div>
-                                <textarea
-                                    className="w-full h-[36px] bg-background rounded-lg border border-[var(--border-dim)] p-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-none transition-all"
+                                <AutosizeTextarea
+                                    className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                     value={data.maxRetriesMessage}
                                     placeholder="e.g. Too many attempts, restart bot."
                                     onChange={(e) => updateData({ maxRetriesMessage: e.target.value })}
@@ -262,11 +264,14 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                             )}
                         </div>
 
-                        <div className="space-y-2">
-                            {data.config.map((entry) => {
-                                const Icon = TYPE_ICONS[entry.type];
+                        <SortableList
+                            items={data.config ?? []}
+                            onReorder={(newConfig: any[]) => updateData({ config: newConfig })}
+                            keyExtractor={(entry: any) => entry.id}
+                            renderItem={(entry: any) => {
+                                const Icon = TYPE_ICONS[entry.type as keyof typeof TYPE_ICONS];
                                 return (
-                                    <div key={entry.id} className="relative flex flex-col gap-2 rounded-lg border border-[var(--border-dim)] bg-muted/10 p-2.5">
+                                    <div className="relative flex flex-col gap-2 rounded-lg border border-[var(--border-dim)] bg-muted/10 p-2.5 flex-1">
                                         <div className="flex items-center gap-2">
                                             <div className="rounded-lg bg-background p-1.5 shadow-sm">
                                                 <Icon size={12} className="text-foreground/70" />
@@ -298,13 +303,13 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                                             <div className="space-y-1.5">
                                                 <label className="text-[8px] font-semibold text-muted-foreground uppercase">Allowed Formats</label>
                                                 <div className="flex flex-wrap gap-1 mb-1.5 min-h-[24px]">
-                                                    {entry.subTypes.map((tag) => (
+                                                    {entry.subTypes.map((tag: string) => (
                                                         <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-[10px] bg-[var(--ey-yellow)]/15 text-foreground border-[var(--ey-yellow)]/30 gap-1 pr-1">
                                                             {tag}
                                                             {!isTranslationMode && (
                                                                 <button
                                                                     onClick={() => {
-                                                                        updateEntry(entry.id, { subTypes: entry.subTypes.filter((t) => t !== tag) });
+                                                                        updateEntry(entry.id, { subTypes: entry.subTypes.filter((t: string) => t !== tag) });
                                                                     }}
                                                                     className="hover:text-destructive p-0.5"
                                                                 >
@@ -335,7 +340,7 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                                                                                 onSelect={() => {
                                                                                     const current = entry.subTypes;
                                                                                     if (current.includes(format)) {
-                                                                                        updateEntry(entry.id, { subTypes: current.filter((f) => f !== format) });
+                                                                                        updateEntry(entry.id, { subTypes: current.filter((f: string) => f !== format) });
                                                                                     } else {
                                                                                         updateEntry(entry.id, { subTypes: [...current, format] });
                                                                                     }
@@ -369,8 +374,8 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                                         />
                                     </div>
                                 );
-                            })}
-                        </div>
+                            }}
+                        />
                     </div>
 
                     <div className="space-y-1.5 pt-2 border-t border-[var(--border-dim)]">

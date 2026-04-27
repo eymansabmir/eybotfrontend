@@ -4,6 +4,8 @@ import { ListChecks, X, Type, Footprints } from "lucide-react";
 import type { ButtonsNodeData } from "./schema";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
+import { SortableList } from "@/components/ui/sortable-list";
 
 type Interaction = NonNullable<ButtonsNodeData["interaction"]>;
 
@@ -151,8 +153,8 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                         <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
                             <Type size={10} /> Body Message
                         </label>
-                        <textarea
-                            className="w-full min-h-[80px] bg-background rounded-lg border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-y transition-all"
+                        <AutosizeTextarea
+                            className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                             value={data.body}
                             placeholder="Type your message..."
                             onChange={(e) => updateData({ body: e.target.value })}
@@ -178,16 +180,19 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                             {(data.buttons || []).length < 3 && (
                                 <button
                                     onClick={addButton}
-                                    className="text-[10px] text-[var(--ey-yellow)] hover:underline font-bold"
+                                    className="text-[10px] text-ey-yellow-text hover:underline font-bold"
                                 >
                                     + Add Button
                                 </button>
                             )}
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            {data.buttons?.map((button) => (
-                                <div key={button.id} className="relative flex items-center gap-2 group/btn">
+                        <SortableList
+                            items={data.buttons || []}
+                            onReorder={(newButtons: any[]) => updateData({ buttons: newButtons })}
+                            keyExtractor={(b: any) => b.id}
+                            renderItem={(button: any) => (
+                                <div className="flex items-center gap-2 flex-1">
                                     <input
                                         type="text"
                                         className="flex-1 bg-background rounded-md border border-[var(--border-dim)] py-1.5 px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all text-center"
@@ -201,8 +206,8 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                                         <X size={14} />
                                     </button>
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                        />
                     </div>
 
                     <div className="rounded-lg bg-muted/20 border border-[var(--border-dim)] p-3 space-y-2">
