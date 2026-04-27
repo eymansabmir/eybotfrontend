@@ -11,7 +11,7 @@ import {
     useUpdateFlowTranslation
 } from "../../data/queries/use-bots";
 import { toast } from "sonner";
-import { useRef, useEffect, useState, useMemo } from "react";
+import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import type { Node, Edge } from "@xyflow/react";
 import { NodeType } from "@/features/nodes/node-types.constants";
 import { useVariablesStore } from "@/features/variables/store";
@@ -42,7 +42,17 @@ export function BotEditorPage() {
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
 
     const { variables, setVariables } = useVariablesStore();
-    
+    const [liveLanguages, setLiveLanguages] = useState<string[]>([]);
+
+    const handleNodesChange = useCallback((nodes: Node[]) => {
+        const langNode = nodes.find(n => n.type === NodeType.LANGUAGE);
+        if (langNode) {
+            const langs = (langNode.data as any).languages || [];
+            setLiveLanguages(langs);
+        } else {
+            setLiveLanguages([]);
+        }
+    }, []);
     useEffect(() => {
         if (bot?.settings?.variables) {
             setVariables(bot.settings.variables as any);
@@ -267,10 +277,21 @@ export function BotEditorPage() {
         const { nodes: localNodes, edges: localEdges } = flowBuilderRef.current.getFlowState();
 
         const languageNodes = localNodes.filter((n) => n.type === NodeType.LANGUAGE);
+        let localizationSettings = bot?.settings?.localization;
+
+        if (languageNodes.length > 0) {
+            const firstLangNode = languageNodes[0];
+            const data = firstLangNode.data as any;
+            localizationSettings = {
+                isEnabled: typeof data.localizationEnabled === "boolean" 
+                    ? data.localizationEnabled 
+                    : (Array.isArray(data.languages) && data.languages.length > 0),
+                languages: Array.isArray(data.languages) ? data.languages : [],
+                defaultLanguage: data.defaultLanguage || (Array.isArray(data.languages) ? data.languages[0] : undefined),
+            };
+        }
 
         if (languageNodes.length > 1) {
-
-
             toast.warning("Multiple language nodes detected. Localization settings will follow the first language node in the flow.");
         }
 
@@ -467,7 +488,11 @@ export function BotEditorPage() {
             triggerType: bot?.triggerType || "inbound",
             triggerConfig: bot?.triggerConfig || { keywords: [] },
             status: bot?.status || "draft",
-            settings: { ...(bot?.settings || { timeoutSeconds: 300, maxSteps: 100 }), variables },
+            settings: { 
+                ...(bot?.settings || { timeoutSeconds: 300, maxSteps: 100 }), 
+                variables,
+                localization: localizationSettings
+            },
         };
 
         try {
@@ -623,6 +648,15 @@ export function BotEditorPage() {
         }) || [];
     }, [bot?.nodes, bot?.settings?.localization, translationData, isTranslationMode]);
 
+    useEffect(() => {
+        const langNode = initialNodes.find(n => n.type === NodeType.LANGUAGE);
+        if (langNode) {
+            setLiveLanguages((langNode.data as any).languages || []);
+        } else {
+            setLiveLanguages([]);
+        }
+    }, [initialNodes]);
+
     const initialEdges = useMemo(() => bot?.edges?.map((e: any) => ({
         id: e.id,
         source: e.sourceNodeId,
@@ -667,6 +701,7 @@ export function BotEditorPage() {
                 isPublishing={publishBotMutation.isPending}
                 isUnpublishing={archiveBotMutation.isPending}
                 isTranslationMode={isTranslationMode}
+                liveLanguages={liveLanguages}
             />
 
             {/* Editor Content */}
@@ -682,6 +717,7 @@ export function BotEditorPage() {
                         initialNodes={initialNodes}
                         initialEdges={initialEdges}
                         isTranslationMode={isTranslationMode}
+                        onNodesChange={handleNodesChange}
                     />
                 )}
             </main>

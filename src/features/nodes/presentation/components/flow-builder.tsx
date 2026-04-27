@@ -74,7 +74,7 @@ interface FlowBuilderProps {
     initialNodes?: Node[];
     initialEdges?: Edge[];
     isTranslationMode?: boolean;
-    onNodesChangeExternal?: (nodes: Node[]) => void;
+    onNodesChange?: (nodes: Node[]) => void;
     onEdgesChangeExternal?: (edges: Edge[]) => void;
 }
 
@@ -85,7 +85,8 @@ export interface FlowBuilderRef {
 const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
     initialNodes,
     initialEdges,
-    isTranslationMode = false
+    isTranslationMode = false,
+    onNodesChange: onNodesChangeProp
 }, ref) => {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const [nodes, setNodes] = React.useState<Node[]>(initialNodes && initialNodes.length > 0 ? initialNodes : defaultNodes);
@@ -142,9 +143,13 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
 
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => {
-            setNodes((nds) => applyNodeChanges(changes, nds));
+            setNodes((nds) => {
+                const nextNodes = applyNodeChanges(changes, nds);
+                onNodesChangeProp?.(nextNodes);
+                return nextNodes;
+            });
         },
-        []
+        [onNodesChangeProp]
     );
 
     const onEdgesChange: OnEdgesChange = useCallback(
@@ -219,9 +224,13 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
                 },
             };
 
-            setNodes((nds) => nds.concat(newNode));
+            setNodes((nds) => {
+                const nextNodes = nds.concat(newNode);
+                onNodesChangeProp?.(nextNodes);
+                return nextNodes;
+            });
         },
-        [screenToFlowPosition, isTranslationMode, getNodes]
+        [screenToFlowPosition, isTranslationMode, getNodes, onNodesChangeProp]
     );
 
     return (
@@ -268,7 +277,7 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
 });
 
 // Wrap in Provider to access hooks
-export const FlowBuilder = forwardRef<FlowBuilderRef, Omit<FlowBuilderProps, 'onNodesChangeExternal' | 'onEdgesChangeExternal'>>((props, ref) => {
+export const FlowBuilder = forwardRef<FlowBuilderRef, FlowBuilderProps>((props, ref) => {
     return (
         <ReactFlowProvider>
             <FlowBuilderContent {...props} ref={ref} />

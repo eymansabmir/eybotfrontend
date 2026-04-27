@@ -60,15 +60,15 @@ export function VariablesCombobox({ value, onChange, placeholder = "Select varia
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className={cn("w-full justify-between overflow-hidden bg-primary/5 border-primary/20 hover:bg-primary/10 text-primary font-medium text-xs", className)}
+                    className={cn("w-full justify-between overflow-hidden bg-primary/10 border-primary/30 hover:bg-primary/20 text-foreground font-semibold text-xs", className)}
                 >
                     <div className="flex items-center gap-1.5 truncate">
                         <span className="text-[10px] font-bold text-primary/40">@</span>
                         <span className="truncate">
-                            {value ? value : <span className="text-muted-foreground/60">{placeholder}</span>}
+                            {value ? <span className="text-foreground">{value}</span> : <span className="text-muted-foreground/60">{placeholder}</span>}
                         </span>
                     </div>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-primary" />
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-muted-foreground" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[220px] p-0" align="start">
