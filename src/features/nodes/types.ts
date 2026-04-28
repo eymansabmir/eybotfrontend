@@ -20,4 +20,6 @@ export interface NodeDefinition<TData extends Record<string, any> = any> {
     defaultData: TData;
     /** Initial branches placed on the node when dropped onto the canvas */
     defaultBranches: Array<{ key: string; label: string }>;
+    /** Optional frontend-only validation logic for the node builder */
+    validate?: (data: TData) => string[] | null;
 }

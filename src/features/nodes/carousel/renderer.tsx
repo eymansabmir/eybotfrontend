@@ -249,9 +249,8 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                         <div className="space-y-4 animate-in fade-in flex flex-col pt-2 border-t border-[var(--border-dim)]">
                             <div className="text-[10px] font-bold text-foreground mb-1 uppercase tracking-wider">Card {activeCardIndex + 1}</div>
                             {/* Header Type & URL */}
-                            <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Card Media URL</label>
+                                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Card Media URL or Variable</label>
                                     <div className="flex bg-muted/30 rounded-md p-0.5 border border-[var(--border-dim)]">
                                         <button
                                             onClick={() => updateCard(activeCardIndex, { headerType: 'image' })}
@@ -277,10 +276,12 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                                     type="text"
                                     className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all font-mono"
                                     value={activeCard.url || ""}
-                                    placeholder="https://..."
+                                    placeholder="https://... or {{var}}"
                                     onChange={(e) => updateCard(activeCardIndex, { url: e.target.value })}
                                 />
-                            </div>
+                                {activeCard.url?.includes("{{") && (
+                                    <p className="text-[8px] text-primary italic">Supports dynamic variables</p>
+                                )}
 
                             {/* Card Body */}
                             <div className="space-y-1.5">
@@ -337,11 +338,14 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                                             type="text"
                                             className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all font-mono"
                                             value={activeCard.ctaUrlButton?.url || ""}
-                                            placeholder="URL"
+                                            placeholder="URL or {{var}}"
                                             onChange={(e) => updateCard(activeCardIndex, {
                                                 ctaUrlButton: { ...activeCard.ctaUrlButton, url: e.target.value }
                                             })}
                                         />
+                                        {activeCard.ctaUrlButton?.url?.includes("{{") && (
+                                            <p className="text-[8px] text-primary italic">Supports dynamic variables</p>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="space-y-2 mt-2">

@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus, ArrowRight, Bot, Clock, User2, MessageSquare, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, ArrowRight, Bot, Clock, User2, MessageSquare, Loader2, MoreVertical, Pencil, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useBots, useDeleteBot, useUpdateBot } from "../../data/queries/use-bots";
+import { useBots, useDeleteBot, useUpdateBot, useImportBot } from "../../data/queries/use-bots";
 import { formatDistanceToNow } from "date-fns";
 import { 
   DropdownMenu, 
@@ -32,11 +32,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 import type { Bot as BotType } from "../../data/schemas/bot.schema";
 
-import { useEffect } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -209,6 +208,34 @@ function BotActionsMenu({ bot }: BotActionsMenuProps) {
 export function BotsPage() {
   const { data: bots, isLoading, error } = useBots();
   const navigate = useNavigate();
+  const importBotMutation = useImportBot();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        const data = JSON.parse(content);
+        
+        const importedBot = await importBotMutation.mutateAsync(data);
+        toast.success("Bot imported successfully!");
+        navigate({ to: "/bot/$id", params: { id: importedBot.id } });
+      } catch (error) {
+        console.error(error);
+        toast.error("Invalid JSON file or import failed.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // Reset for same file re-upload
+  };
 
   if (isLoading) {
     return (
@@ -236,12 +263,25 @@ export function BotsPage() {
             Manage and deploy your conversational AI agents.
           </p>
         </div>
-        <Button className="gap-2" asChild>
-          <Link to="/bot/$id" params={{ id: "new" }}>
-            <Plus className="size-4" />
-            Create New Bot
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".json"
+            onChange={handleFileChange}
+          />
+          <Button variant="outline" className="gap-2" onClick={handleImportClick} disabled={importBotMutation.isPending}>
+            <Download className="size-4 rotate-180" />
+            Import JSON
+          </Button>
+          <Button className="gap-2" asChild>
+            <Link to="/bot/$id" params={{ id: "new" }}>
+              <Plus className="size-4" />
+              Create New Bot
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

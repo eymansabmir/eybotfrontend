@@ -4,6 +4,7 @@ import type { VideoNodeData } from "./schema";
 import { VideoNodeSchema } from "./schema";
 import { VideoNodeRenderer } from "./renderer";
 import { VideoNodeHandler } from "./handler";
+import { isValidUrlOrVariable } from "../utils";
 
 export const videoNode: NodeDefinition<VideoNodeData> = {
     config: VideoNodeConfig,
@@ -12,6 +13,12 @@ export const videoNode: NodeDefinition<VideoNodeData> = {
     handler: VideoNodeHandler,
     defaultData: { url: '', caption: '' },
     defaultBranches: [{ key: 'default', label: 'Default' }],
+    validate: (data) => {
+        if (!isValidUrlOrVariable(data.url)) {
+            return ["Video URL or variable is required"];
+        }
+        return null;
+    },
 };
 
 export * from "./schema";

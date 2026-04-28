@@ -5,6 +5,7 @@ import { useResolveUrl, MediaUploader } from "@/lib/storage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { isDynamicVariable } from "../utils";
 
 /** Returns true if the value looks like an absolute URL (not a storage path). */
 function isAbsoluteUrl(value: string) {
@@ -14,9 +15,10 @@ function isAbsoluteUrl(value: string) {
 export function VideoNodeRenderer({ id, data, selected }: NodeProps & { data: VideoNodeData }) {
     const { setNodes } = useReactFlow();
 
-    const isPath = !!data.url && !isAbsoluteUrl(data.url);
+    const isVariable = isDynamicVariable(data.url);
+    const isPath = !!data.url && !isAbsoluteUrl(data.url) && !isVariable;
     const { data: resolvedUrl } = useResolveUrl(isPath ? data.url : undefined, "public");
-    const previewSrc = data.url ? (isPath ? resolvedUrl : data.url) : undefined;
+    const previewSrc = data.url ? (isPath ? resolvedUrl : (isVariable ? undefined : data.url)) : undefined;
 
     const updateData = (newData: Partial<VideoNodeData>) => {
         setNodes((nds) =>
@@ -26,17 +28,23 @@ export function VideoNodeRenderer({ id, data, selected }: NodeProps & { data: Vi
         );
     };
 
+    const getSummary = () => {
+        if (!data.url) return "Upload a video...";
+        if (isVariable) return `Dynamic: ${data.url}`;
+        return data.caption || "1 attached video";
+    };
+
     return (
         <NodeFrame
             selected={selected}
             icon={<VideoIcon size={16} />}
             title="Video"
             popoverTitle="Configure Video"
-            summary={data.caption || (data.url ? "1 attached video" : "Upload an video...")}
+            summary={getSummary()}
             showPopover={selected}
             popoverBody={
                 <div className="space-y-4">
-                    <Tabs defaultValue="upload" className="w-full">
+                    <Tabs defaultValue={isVariable ? "url" : "upload"} className="w-full">
                         <TabsList className="grid grid-cols-2 bg-muted/40 p-1 h-9 rounded-lg border border-[var(--border-dim)]">
                             <TabsTrigger 
                                 value="upload" 
@@ -48,7 +56,7 @@ export function VideoNodeRenderer({ id, data, selected }: NodeProps & { data: Vi
                                 value="url" 
                                 className="text-[11px] font-medium rounded-md data-[state=active]:bg-[var(--ey-yellow)] data-[state=active]:text-black transition-colors"
                             >
-                                Direct URL
+                                URL / Variable
                             </TabsTrigger>
                         </TabsList>
                         
@@ -60,20 +68,33 @@ export function VideoNodeRenderer({ id, data, selected }: NodeProps & { data: Vi
                             <div className="space-y-1.5 flex flex-col items-center">
                                 <div className="flex w-full items-center gap-1.5 mb-1">
                                     <LinkIcon size={10} className="text-muted-foreground" />
-                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Video URL</label>
+                                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Source URL or Variable</label>
                                 </div>
                                 <input
                                     type="text"
                                     className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                     value={data.url || ""}
-                                    placeholder="https://example.com/video.mp4"
+                                    placeholder="https://example.com/video.mp4 or {{var}}"
                                     onChange={(e) => updateData({ url: e.target.value })}
                                 />
+                                <p className="text-[10px] text-muted-foreground self-start">
+                                    Use <code className="text-primary font-bold">{"{{variable_name}}"}</code> to use a dynamic video.
+                                </p>
                             </div>
                         </TabsContent>
                     </Tabs>
 
-                    {previewSrc ? (
+                    {isVariable ? (
+                         <div className="flex aspect-video w-full flex-col items-center justify-center rounded-lg border border-primary/20 bg-primary/5 p-4 text-center mt-4">
+                            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary mb-2">
+                                <VideoIcon size={20} />
+                            </div>
+                            <span className="text-xs font-bold text-primary">Dynamic Video</span>
+                            <span className="mt-1 text-[10px] text-muted-foreground break-all px-4">
+                                Resolving from: <code className="font-mono text-primary/80">{data.url}</code>
+                            </span>
+                        </div>
+                    ) : previewSrc ? (
                         <div className="relative w-full overflow-hidden rounded-lg border border-[var(--border-dim)] bg-background mt-4 p-1">
                             <video
                                 src={previewSrc}

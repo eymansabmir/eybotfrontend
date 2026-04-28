@@ -167,15 +167,18 @@ export function CardsNodeRenderer({ id, data, selected }: NodeProps & { data: Ca
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-1.5">
                                         <ImageIcon size={10} className="text-muted-foreground" />
-                                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Image URL</label>
+                                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Image URL or Variable</label>
                                     </div>
                                     <input
                                         type="text"
                                         className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                         value={item.imageUrl || ""}
-                                        placeholder="https://..."
+                                        placeholder="https://... or {{var}}"
                                         onChange={(e) => updateCard(item.id, { imageUrl: e.target.value })}
                                     />
+                                    {item.imageUrl?.includes("{{") && (
+                                        <p className="text-[8px] text-primary italic">Supports dynamic variables</p>
+                                    )}
                                 </div>
 
                                 {/* Title */}

@@ -149,6 +149,7 @@
   --node-bg: #FFFFFF;
   --canvas-bg: #F9FAFB;
   --border-dim: #E5E7EB;
+  --canvas-dot: #D1D5DB;
 }
 
 .dark {
@@ -201,6 +202,7 @@
   --node-bg: #242424;
   --canvas-bg: #1A1A1A;
   --border-dim: #333333;
+  --canvas-dot: #4B5563;
 }
 
 
@@ -262,6 +264,7 @@ body {
   --color-node-bg: var(--node-bg);
   --color-canvas-bg: var(--canvas-bg);
   --color-border-dim: var(--border-dim);
+  --color-canvas-dot: var(--canvas-dot);
 }
 
 @layer base {

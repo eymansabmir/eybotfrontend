@@ -12,6 +12,12 @@ export const textNode: NodeDefinition<TextNodeData> = {
     handler: TextNodeHandler,
     defaultData: { message: '', variables: [] },
     defaultBranches: [{ key: 'default', label: 'Default' }],
+    validate: (data) => {
+        if (!data.message || !data.message.trim()) {
+            return ["Message text is required"];
+        }
+        return null;
+    },
 };
 
 export * from "./schema";
