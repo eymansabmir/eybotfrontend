@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 
 import type { HttpRequestCredential } from "../domain/http-request.types";
 import type {
@@ -284,9 +285,9 @@ export function HttpRequestConfigForm({
                     <Trash2 className="size-3" />
                   </Button>
                   <div className="pr-6 space-y-2">
-                    <Input
+                    <VariableSelect
                       value={row.variableName}
-                      onChange={(e) => updateVariableTestRow(row.id, { variableName: e.target.value })}
+                      onValueChange={(val: string) => updateVariableTestRow(row.id, { variableName: val })}
                       placeholder="Variable name"
                       className="h-8 text-xs bg-background"
                     />
@@ -331,9 +332,9 @@ export function HttpRequestConfigForm({
                         list="http-response-path-suggestions"
                         className="h-8 text-xs bg-background"
                       />
-                      <Input
+                      <VariableSelect
                         value={row.variableName}
-                        onChange={(e) => updateResponseMappingRow(row.id, { variableName: e.target.value })}
+                        onValueChange={(val: string) => updateResponseMappingRow(row.id, { variableName: val })}
                         placeholder="e.g. id"
                         className="h-8 text-xs bg-background"
                       />

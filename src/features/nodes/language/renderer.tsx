@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useBot, useUpdateBot } from "@/features/bots/data/queries/use-bots";
 import { apiClient } from "@/lib/api-client";
 import { SUPPORTED_LANGUAGES, COMMON_LANGUAGES } from "@/features/i18n/languages";
-import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 import { Switch } from "@/components/ui/switch";
 import {
     Command,
@@ -261,9 +261,9 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Save Selection To</label>
                         </div>
 
-                        <VariablesCombobox
+                        <VariableSelect
                             value={data.variableName || ""}
-                            onChange={(val) => handleUpdateData({ variableName: val })}
+                            onValueChange={(val: string) => handleUpdateData({ variableName: val })}
                             placeholder="e.g. selected_language"
                             className={!isEnabled ? "opacity-50 pointer-events-none" : ""}
                         />

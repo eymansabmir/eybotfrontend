@@ -4,7 +4,7 @@ import { useReactFlow } from "@xyflow/react";
 
 import type { TextNodeData } from "./schema";
 import { LockedBadge } from "@/components/ui/locked-badge";
-import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 
@@ -80,9 +80,9 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
 
                             {!isTranslationMode && (
                                 <div className="w-[140px]">
-                                    <VariablesCombobox
+                                    <VariableSelect
                                         value=""
-                                        onChange={(val) => addVariable(val)}
+                                        onValueChange={(val: string) => addVariable(val)}
                                         placeholder="Add variable..."
                                     />
                                 </div>

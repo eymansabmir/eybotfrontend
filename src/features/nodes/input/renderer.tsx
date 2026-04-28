@@ -3,7 +3,7 @@ import { Keyboard, Variable, ShieldCheck } from "lucide-react";
 import type { InputNodeData } from "./schema";
 import { useReactFlow } from "@xyflow/react";
 import { LockedBadge } from "@/components/ui/locked-badge";
-import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 
@@ -56,9 +56,9 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                             {isTranslationMode && <LockedBadge />}
                         </div>
                         <div className="relative">
-                            <VariablesCombobox 
+                            <VariableSelect 
                                 value={data.variable || ""} 
-                                onChange={(val) => updateData({ variable: val })} 
+                                onValueChange={(val: string) => updateData({ variable: val })} 
                                 placeholder="e.g. user_age" 
                                 className={isTranslationMode ? "opacity-50 pointer-events-none" : ""}
                             />

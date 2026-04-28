@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { AnthropicCredential, AnthropicModel } from "../domain/anthropic.types";
 import type { AnthropicConfigDraft } from "../state/anthropic-config.state";
 import { AnthropicModelSelector } from "./anthropic-model-selector";
-import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 
 interface AnthropicConfigFormProps {
   draft: AnthropicConfigDraft;
@@ -245,9 +245,9 @@ export function AnthropicConfigForm({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs text-muted-foreground">Result Variable</Label>
-                      <VariablesCombobox 
+                      <VariableSelect 
                         value={draft.resultVariable} 
-                        onChange={(val) => onDraftChange({ resultVariable: val })} 
+                        onValueChange={(val: string) => onDraftChange({ resultVariable: val })} 
                         placeholder="anthropic_response" 
                       />
                     </div>

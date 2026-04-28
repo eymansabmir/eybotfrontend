@@ -12,7 +12,7 @@ export const setVariableNode: NodeDefinition<SetVariableNodeData> = {
     handler: SetVariableNodeHandler,
     defaultData: {
         assignments: [
-            { variable: "", value: "", scope: "session" },
+            { variable: "", type: "value", value: "", scope: "session" },
         ],
     },
     defaultBranches: [

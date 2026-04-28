@@ -25,7 +25,7 @@ import "@xyflow/react/dist/style.css";
 
 import { nodeTypes, getNodeDefinition } from "../../registry";
 import { NodePalette } from "./node-palette";
-import { useVariablesStore } from "@/features/variables/store";
+
 import { useFlowHistory } from "../hooks/use-flow-history";
 
 import { DEFAULT_NODES, DEFAULT_EDGES } from "../../defaults";
@@ -146,45 +146,9 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [undo, redo, duplicateSelectedNodes]);
 
-    // Sync variables to store
-    React.useEffect(() => {
-        const foundVars = new Set<string>();
-        nodes.forEach(node => {
-            const data = node.data as any;
-            if (!data) return;
-
-            if (typeof data.variable === 'string' && data.variable.trim()) foundVars.add(data.variable.trim());
-            if (typeof data.variableName === 'string' && data.variableName.trim()) foundVars.add(data.variableName.trim());
-            if (typeof data.resultVariable === 'string' && data.resultVariable.trim()) foundVars.add(data.resultVariable.trim());
-            if (typeof data.variablePrefix === 'string' && data.variablePrefix.trim()) foundVars.add(data.variablePrefix.trim());
-
-            const interactionVar = data.interaction?.input?.variableName;
-            if (typeof interactionVar === 'string' && interactionVar.trim()) {
-                foundVars.add(interactionVar.trim());
-            }
-
-            if (Array.isArray(data.variables)) {
-                data.variables.forEach((v: any) => {
-                    if (typeof v === 'string' && v.trim()) foundVars.add(v.trim());
-                });
-            }
-            if (Array.isArray(data.assignments)) {
-                data.assignments.forEach((as: any) => {
-                    if (typeof as?.variable === 'string' && as.variable.trim()) foundVars.add(as.variable.trim());
-                });
-            }
-        });
-
-        const store = useVariablesStore.getState();
-        const existingNames = new Set(store.variables.map(v => v.name));
-
-        foundVars.forEach(vName => {
-            if (!existingNames.has(vName)) {
-                store.addVariable(vName);
-                existingNames.add(vName);
-            }
-        });
-    }, [nodes]);
+    // Variables are now managed explicitly via VariableSelect component
+    // or through the Variable Manager node. No more automatic scraping
+    // from node data to prevent "pollution" during typing.
 
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => {

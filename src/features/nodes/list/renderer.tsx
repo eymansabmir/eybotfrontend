@@ -3,7 +3,7 @@ import type { NodeProps } from "@xyflow/react";
 import { List as ListIcon, Trash2, MessageSquare, Type, Footprints } from "lucide-react";
 import type { ListNodeData } from "./schema";
 import { useReactFlow } from "@xyflow/react";
-import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { SortableList } from "@/components/ui/sortable-list";
@@ -268,9 +268,9 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                         </label>
                         <div className="flex gap-2">
                             <div className="flex-1">
-                                <VariablesCombobox 
+                                <VariableSelect 
                                     value={data.interaction?.input?.variableName || ""} 
-                                    onChange={(val) => updateVariableSettings({ variableName: val })} 
+                                    onValueChange={(val: string) => updateVariableSettings({ variableName: val })} 
                                     placeholder="Select variable..." 
                                 />
                             </div>

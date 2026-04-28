@@ -19,7 +19,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import type { MediaConditionalNodeData, MediaConditionalEntry } from "./schema";
 import { useReactFlow } from "@xyflow/react";
-import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -383,9 +383,9 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                             <Variable size={10} className="text-muted-foreground" />
                             <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Save Input To</label>
                         </div>
-                        <VariablesCombobox
+                        <VariableSelect
                             value={data.variable || ""}
-                            onChange={(val) => updateData({ variable: val })}
+                            onValueChange={(val: string) => updateData({ variable: val })}
                             placeholder="e.g. user_media_url"
                         />
                         <div className="flex items-center gap-4 mt-1">

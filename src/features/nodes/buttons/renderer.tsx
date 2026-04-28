@@ -6,6 +6,7 @@ import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { SortableList } from "@/components/ui/sortable-list";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 
 type Interaction = NonNullable<ButtonsNodeData["interaction"]>;
 
@@ -213,15 +214,15 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                     <div className="rounded-lg bg-muted/20 border border-[var(--border-dim)] p-3 space-y-2">
                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Capture Response</label>
                         <div className="flex gap-2">
-                            <input
-                                type="text"
-                                className="flex-1 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                                value={data.interaction?.input?.variableName || ""}
-                                placeholder="Variable Name"
-                                onChange={(e) => updateVariableSettings({ variableName: e.target.value })}
-                            />
+                            <div className="flex-1">
+                                <VariableSelect
+                                    value={data.interaction?.input?.variableName || ""}
+                                    onValueChange={(val) => updateVariableSettings({ variableName: val })}
+                                    placeholder="Save to variable..."
+                                />
+                            </div>
                             <select
-                                className="w-24 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                className="w-24 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] cursor-pointer h-8 transition-all"
                                 value={data.interaction?.input?.variableScope || 'session'}
                                 onChange={(e) => updateVariableSettings({ variableScope: e.target.value as 'session' | 'contact' })}
                             >
