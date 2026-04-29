@@ -18,7 +18,9 @@ import { RoutingsPage } from "@/features/voice-tech/presentation/pages/routings-
 import { RoutingAnalyticsPage } from "@/features/voice-tech/presentation/pages/routing-analytics-page"
 import { ExecutePage } from "@/features/voice-tech/presentation/pages/execute-page"
 import { VendorsPage } from "@/features/voice-tech/presentation/pages/vendors-page"
+import { AgentsPage } from "@/features/voice-tech/presentation/pages/agents-page"
 import { OrchestrationWizardPage } from "@/features/voice-tech/presentation/pages/orchestration-wizard-page"
+import { DatasetFieldsPage } from "@/features/voice-tech/presentation/pages/dataset-fields-page"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -81,10 +83,22 @@ const voiceTechVendorsRoute = createRoute({
   component: VendorsPage,
 })
 
+const voiceTechAgentsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "voice-tech/agents",
+  component: AgentsPage,
+})
+
 const voiceTechCreateRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "voice-tech/create",
   component: OrchestrationWizardPage,
+})
+
+const voiceTechDatasetFieldsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "voice-tech/datasets/$name",
+  component: DatasetFieldsPage,
 })
 
 
@@ -148,7 +162,9 @@ const routeTree = rootRoute.addChildren([
   botTestRoute,
   loginRoute,
   voiceTechVendorsRoute,
+  voiceTechAgentsRoute,
   voiceTechCreateRoute,
+  voiceTechDatasetFieldsRoute,
 ])
 
 const router = createRouter({

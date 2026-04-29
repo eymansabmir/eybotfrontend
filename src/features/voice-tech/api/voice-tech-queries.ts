@@ -18,6 +18,8 @@ const VT_KEYS = {
     ["voice-tech", "job", jobId] as const,
   entityTypes: (tenantId: string) =>
     ["voice-tech", "entity-types", tenantId] as const,
+  agents: (tenantId: string, credentialId?: string) =>
+    ["voice-tech", "agents", tenantId, credentialId ?? "all"] as const,
 };
 
 // ─── Attributes & Categories ─────────────────────────────────────────
@@ -29,7 +31,22 @@ export function useVoiceTechAttributes(tenantId: string, entityType?: string) {
       const data = await voiceTechApi.listAttributes({ tenantId, entityType });
       return data;
     },
-    enabled: !!tenantId,
+    enabled: !!tenantId && !!entityType,
+  });
+}
+
+export function useUpsertAttribute(tenantId: string, entityType: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { key: string; type: string; operators?: string[]; values?: unknown[] }) =>
+      voiceTechApi.upsertAttribute({ ...payload, tenantId, entityType }),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: VT_KEYS.attributes(tenantId, entityType) });
+      toast.success(`Attribute "${variables.key}" saved`);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to save attribute");
+    },
   });
 }
 
@@ -140,13 +157,26 @@ const TERMINAL_STATUSES: IngestJobStatus[] = ["completed", "failed"];
 export function useJobStatusPolling(jobId: string | null) {
   return useQuery({
     queryKey: VT_KEYS.jobStatus(jobId ?? ""),
-    queryFn: () => voiceTechApi.getJobStatus(jobId!),
+    queryFn: () => voiceTechApi.getIngestJobStatus(jobId!),
     enabled: !!jobId,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
       // Keep polling while queued / processing / retrying
       if (status && TERMINAL_STATUSES.includes(status)) return false;
       return 2_000;
+    },
+  });
+}
+
+export function useCampaignStatusPolling(jobId: string | null) {
+  return useQuery({
+    queryKey: ["voice-tech", "campaign-job", jobId ?? ""],
+    queryFn: () => voiceTechApi.getBulkJobStatus(jobId!),
+    enabled: !!jobId,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === "completed" || status === "failed") return false;
+      return 1_500; // Poll slightly faster for interactive wizard
     },
   });
 }
@@ -200,6 +230,22 @@ export function useCreateRoutingConfig() {
     },
     onError: (err: any) => {
       toast.error(err?.message || "Failed to create config");
+    },
+  });
+}
+
+/** Update an existing routing config mutation */
+export function useUpdateRoutingConfig(tenantId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: voiceTechApi.updateRoutingConfig,
+    onSuccess: (config) => {
+      toast.success(`Config "${config.name}" updated`);
+      qc.invalidateQueries({ queryKey: ["voice-tech", "routing", tenantId] });
+      qc.invalidateQueries({ queryKey: VT_KEYS.routingConfig(config.id, tenantId) });
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to update config");
     },
   });
 }
@@ -275,12 +321,11 @@ export function useDeleteEntityType(tenantId: string) {
   });
 }
 
-/** Bulk execute routing */
 export function useBulkExecuteRouting() {
   return useMutation({
     mutationFn: voiceTechApi.bulkExecuteRouting,
     onSuccess: (result) => {
-      toast.success(`Bulk process completed: ${result.initiated} calls initiated`);
+      toast.success(`Bulk process started with Job ID: ${result.jobId}`);
     },
     onError: (err: any) => {
       toast.error(err.message || "Bulk process failed");
@@ -291,7 +336,7 @@ export function useBulkExecuteRouting() {
 export function useCredentials(orgId: string, type?: string) {
   return useQuery({
     queryKey: ["credentials", orgId, type],
-    queryFn: () => voiceTechApi.listCredentialsByType(orgId, type || ""),
+    queryFn: () => voiceTechApi.listCredentialsByType(orgId, type),
     enabled: !!orgId,
   });
 }
@@ -306,6 +351,22 @@ export function useCreateCredential() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || "Failed to create credential");
+    }
+  });
+}
+
+export function useDeleteCredential(orgId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => voiceTechApi.deleteCredential(id, orgId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["credentials", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["voice-tech", "provider-credentials", orgId], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["voice-tech", "credentials-by-type", orgId], exact: false });
+      toast.success("Credential deleted successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete credential");
     }
   });
 }
@@ -330,5 +391,52 @@ export function useOrchestrationStats(tenantId: string, configId: string | null)
     queryFn: () => voiceTechApi.getOrchestrationStats(tenantId, configId!),
     enabled: !!tenantId && !!configId,
     refetchInterval: 10_000, // Refresh every 10s for real-time feel
+  });
+}
+
+// ─── Voice Agents ───────────────────────────────────────────────────
+
+export function useVoiceAgents(tenantId: string, credentialId?: string) {
+  return useQuery({
+    queryKey: VT_KEYS.agents(tenantId, credentialId),
+    queryFn: () => voiceTechApi.listVoiceAgents({ tenantId, credentialId }),
+    enabled: !!tenantId,
+  });
+}
+
+export function useUpsertVoiceAgent(tenantId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: voiceTechApi.upsertVoiceAgent,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["voice-tech", "agents", tenantId] });
+      toast.success("Agent saved successfully");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to save agent");
+    },
+  });
+}
+
+export function useDeleteVoiceAgent(tenantId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => voiceTechApi.deleteVoiceAgent(id, tenantId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["voice-tech", "agents", tenantId] });
+      toast.success("Agent deleted");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete agent");
+    },
+  });
+}
+
+export function useUploadFile() {
+  return useMutation({
+    mutationFn: (file: File) => voiceTechApi.uploadFile(file),
+    onError: (err: any) => {
+      toast.error(err.message || "File upload failed");
+    },
   });
 }

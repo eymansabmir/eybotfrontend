@@ -12,22 +12,22 @@ export interface EntityAttribute {
 /** Operator sets per attribute type — mirrors backend voice-tech.schemas.ts */
 export const OPERATORS_BY_TYPE: Record<AttributeType, string[]> = {
   number: ['<', '>', '<=', '>=', 'equals', 'not_equals'],
-  date:   ['<', '>', '<=', '>=', 'equals', 'not_equals'],
+  date: ['<', '>', '<=', '>=', 'equals', 'not_equals'],
   string: ['equals', 'not_equals', 'contains', 'in', 'not_in'],
-  enum:   ['equals', 'not_equals', 'in', 'not_in'],
-  boolean:['equals', 'not_equals'],
+  enum: ['equals', 'not_equals', 'in', 'not_in'],
+  boolean: ['equals', 'not_equals'],
 };
 
 export const OPERATOR_LABELS: Record<string, string> = {
-  '<':           'less than',
-  '>':           'greater than',
-  '<=':          'at most',
-  '>=':          'at least',
-  equals:        'equals',
-  not_equals:    'not equals',
-  contains:      'contains',
-  in:            'is one of',
-  not_in:        'is not one of',
+  '<': 'less than',
+  '>': 'greater than',
+  '<=': 'at most',
+  '>=': 'at least',
+  equals: 'equals',
+  not_equals: 'not equals',
+  contains: 'contains',
+  in: 'is one of',
+  not_in: 'is not one of',
 };
 
 // ─── Recursive Condition Tree ───────────────────────────────────────
@@ -131,6 +131,7 @@ export interface RoutingConfigSummary {
   id: string;
   tenantId: string;
   entityTypeId: string | null;
+  entityTypeIds: string[];
   name: string;
   createdAt: string;
   updatedAt: string;
@@ -150,6 +151,8 @@ export interface RuleAnalyticsStat {
   callCount: number;
   matchCount: number;
   successRate: number;
+  successCount: number;
+  failedCount: number;
   isActive: boolean;
 }
 
@@ -230,6 +233,30 @@ export const TELEPHONY_PROVIDER_TO_CREDENTIAL_TYPE: Record<string, TelephonyCred
 
 export const PROVIDER_META: Record<VoiceProvider, { label: string; color: string }> = {
   elevenlabs: { label: 'ElevenLabs', color: '#8B5CF6' },
-  sarvam:     { label: 'Sarvam',     color: '#F59E0B' },
-  vapi:       { label: 'Vapi',       color: '#06B6D4' },
+  sarvam: { label: 'Sarvam', color: '#F59E0B' },
+  vapi: { label: 'Vapi', color: '#06B6D4' },
 };
+
+export interface VoiceAgent {
+  id: string;
+  tenantId: string;
+  credentialId: string;
+  providerName: string;
+  config: Record<string, any>;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  credential?: {
+    name: string;
+    type: string;
+  };
+}
+
+export interface UpsertVoiceAgentInput {
+  id?: string;
+  tenantId: string;
+  credentialId: string;
+  providerName: string;
+  config: Record<string, any>;
+  isActive?: boolean;
+}

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Plus,
@@ -72,8 +72,11 @@ const TENANT_ID = "tenant-ey-001";
 
 export function RoutingsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isCreateConfigOpen, setIsCreateConfigOpen] = useState(false);
-  const [expandedConfigId, setExpandedConfigId] = useState<string | null>(null);
+  const [expandedConfigId, setExpandedConfigId] = useState<string | null>(
+    (location.state as any)?.expandedConfigId || null
+  );
   const [deleteConfigId, setDeleteConfigId] = useState<string | null>(null);
   const [deleteConfigName, setDeleteConfigName] = useState("");
 
@@ -204,133 +207,18 @@ export function RoutingsPage() {
             </Button>
           </Link>
           <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Step 2</p>
-            <h1 className="text-2xl font-bold tracking-tight">Routing Groups</h1>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Orchestration Rules</p>
+            <h1 className="text-2xl font-bold tracking-tight">{fullConfig?.name ?? "Loading..."}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Define rules that control how calls are routed to voice providers.
             </p>
           </div>
         </div>
 
-        <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => setIsCreateConfigOpen(true)}>
-          <Plus className="size-4" />
-          Create Routing Group
-        </Button>
       </div>
 
-      {/* ── Routing Groups Table ──────────────────────── */}
-      {configsLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
-        </div>
-      ) : configs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border/60 rounded-2xl bg-muted/10">
-          <div className="size-16 rounded-2xl bg-muted/40 flex items-center justify-center mb-4">
-            <GitBranch className="size-8 text-muted-foreground/40" />
-          </div>
-          <p className="text-base font-semibold text-foreground mb-1">No routing groups yet</p>
-          <p className="text-sm text-muted-foreground mb-4 max-w-sm text-center">
-            Create a routing group to define how your calls should be processed.
-          </p>
-          <Button onClick={() => setIsCreateConfigOpen(true)} className="gap-2">
-            <Plus className="size-4" />
-            Create Your First Routing Group
-          </Button>
-        </div>
-      ) : (
-        <div className="border rounded-xl overflow-hidden bg-card">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-10 px-4" />
-                  <TableHead className="font-semibold px-4">Routing Group</TableHead>
-                  <TableHead className="font-semibold px-4">Created</TableHead>
-                  <TableHead className="text-right font-semibold px-4">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {configs.map((config) => {
-                  const isExpanded = expandedConfigId === config.id;
-                  return (
-                    <TableRow
-                      key={config.id}
-                      className={cn("group cursor-pointer", isExpanded && "bg-muted/30")}
-                      onClick={() => handleToggleExpanded(config.id)}
-                    >
-                      <TableCell className="w-10 px-4 py-4">
-                        {isExpanded ? (
-                          <ChevronDown className="size-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronRight className="size-4 text-muted-foreground" />
-                        )}
-                      </TableCell>
-                      <TableCell className="px-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="size-9 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
-                            <GitBranch className="size-4 text-violet-600" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-sm truncate">{config.name}</p>
-                            <p className="text-xs text-muted-foreground">Routing Group</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="px-4 py-4">
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {config.createdAt && !isNaN(new Date(config.createdAt).getTime())
-                            ? formatDistanceToNow(new Date(config.createdAt), { addSuffix: true })
-                            : "—"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right px-4 py-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 cursor-pointer hover:bg-primary/10 hover:text-primary shrink-0"
-                            onClick={() => navigate({ to: `/voice-tech/routings/${config.id}/analytics` })}
-                            aria-label="View analytics"
-                          >
-                            <BarChart2 className="size-4" />
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="size-8 cursor-pointer shrink-0">
-                                <MoreVertical className="size-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
-                              <DropdownMenuItem
-                                onClick={() => navigate({ to: `/voice-tech/routings/${config.id}/analytics` })}
-                                className="gap-2 cursor-pointer"
-                              >
-                                <BarChart2 className="size-4" />
-                                View Analytics
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => { setDeleteConfigId(config.id); setDeleteConfigName(config.name); }}
-                                className="gap-2 text-destructive focus:text-destructive cursor-pointer"
-                              >
-                                <Trash2 className="size-4" />
-                                Delete Group
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
-
-      {/* ── Expanded Rules Panel ──────────────────────── */}
-      {expandedConfigId && (
+      {/* ── Orchestration Rules Panel ──────────────────────── */}
+      {expandedConfigId ? (
         <div className="border rounded-xl bg-card overflow-hidden animate-in slide-in-from-top-2 duration-300">
           {/* Panel header */}
           <div className="px-5 py-4 border-b bg-muted/20 flex items-center justify-between">
@@ -424,6 +312,20 @@ export function RoutingsPage() {
               />
             )}
           </div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border/60 rounded-2xl bg-muted/10">
+          <div className="size-16 rounded-2xl bg-muted/40 flex items-center justify-center mb-4">
+            <GitBranch className="size-8 text-muted-foreground/40" />
+          </div>
+          <p className="text-base font-semibold text-foreground mb-1">No orchestration selected</p>
+          <p className="text-sm text-muted-foreground mb-4 max-w-sm text-center">
+            Please select an orchestration from the dashboard to edit its rules.
+          </p>
+          <Button onClick={() => navigate({ to: "/voice-tech" })} className="gap-2">
+            <ArrowLeft className="size-4" />
+            Back to Dashboard
+          </Button>
         </div>
       )}
 

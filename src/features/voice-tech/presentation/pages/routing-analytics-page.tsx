@@ -7,8 +7,6 @@ import {
   Phone,
   CheckCircle2,
   XCircle,
-  Clock,
-  AlertTriangle,
   ChevronRight,
   RefreshCw,
   Activity,
@@ -157,7 +155,7 @@ export function RoutingAnalyticsPage() {
           </p>
         </div>
         <Button variant="outline" size="sm" asChild>
-          <Link to="/voice-tech/routings">Back to Routing</Link>
+          <Link to="/voice-tech">Back to Dashboard</Link>
         </Button>
       </div>
     );
@@ -172,7 +170,7 @@ export function RoutingAnalyticsPage() {
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" className="rounded-lg shrink-0" asChild>
-                <Link to="/voice-tech/routings">
+                <Link to="/voice-tech">
                   <ArrowLeft className="size-4" />
                 </Link>
               </Button>
@@ -206,7 +204,7 @@ export function RoutingAnalyticsPage() {
           </header>
 
           {/* ── 2. KPI Summary Cards ────────────────────────── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             <KpiCard
               icon={Database}
               label="Total Records"
@@ -236,18 +234,11 @@ export function RoutingAnalyticsPage() {
               iconClassName="bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
             />
             <KpiCard
-              icon={AlertTriangle}
-              label="System Errors"
+              icon={XCircle}
+              label="Total Failed"
               value={(stats.totalErrors ?? 0).toLocaleString()}
-              sub="Pipeline execution errors"
+              sub="Call execution failures"
               iconClassName="bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400"
-            />
-            <KpiCard
-              icon={Clock}
-              label="Avg. Latency"
-              value={formatMs(stats.avgResponseTimeMs)}
-              sub="Avg. provider response"
-              iconClassName="bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400"
             />
           </div>
 
@@ -399,7 +390,7 @@ export function RoutingAnalyticsPage() {
                                 {rule.conditionsSummary}
                               </p>
                               <p className="text-[11px] text-muted-foreground">
-                                {rule.matchCount} matched · {rule.callCount} processed
+                                {rule.matchCount} matched · <span className="text-emerald-600 dark:text-emerald-400 font-medium">{rule.successCount} successful</span> · <span className="text-rose-500 font-medium">{rule.failedCount} failed</span>
                               </p>
                             </div>
   

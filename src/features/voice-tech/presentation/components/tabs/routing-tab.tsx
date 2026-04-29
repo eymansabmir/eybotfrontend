@@ -153,7 +153,7 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
 
   const handleEditRule = (rule: RoutingRule) => {
     setRuleToEdit(rule);
-    setIsCreateDialogOpen(true);
+    setTimeout(() => setIsCreateDialogOpen(true), 0);
   };
 
   const handleDeleteRule = (ruleId: string) => {

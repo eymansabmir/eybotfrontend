@@ -92,10 +92,18 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
   // Invalidate when completed
   useEffect(() => {
     if (job?.status === "completed") {
-      qc.invalidateQueries({ queryKey: ["voice-tech", "attributes", tenantId] });
-      qc.invalidateQueries({ queryKey: ["voice-tech", "entity-types", tenantId] });
+      toast.success(`Dataset "${localType}" is ready!`, {
+        description: "The background list has been updated."
+      });
+      // Force immediate refetch of relevant data
+      qc.refetchQueries({ queryKey: ["voice-tech", "entity-types", tenantId] });
+      qc.refetchQueries({ queryKey: ["voice-tech", "attributes", tenantId] });
+    } else if (job?.status === "failed") {
+      toast.error("Dataset ingestion failed", {
+        description: job.errors?.[0] || "Check the panel for details"
+      });
     }
-  }, [job?.status, tenantId, qc]);
+  }, [job?.status, tenantId, qc, localType, job?.errors]);
 
   // ── File selection ──────────────────────────────────────────────
   const handleFile = useCallback((file: File | undefined) => {
@@ -108,7 +116,16 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
     }
     setFileName(file.name);
     setSelectedFile(file);
-  }, []);
+    
+    // Auto-populate name if empty
+    if (!localType.trim()) {
+      const sanitized = file.name
+        .replace(/\.[^/.]+$/, "") // remove extension
+        .replace(/[^a-z0-9\s]/gi, ' ') // replace special chars with spaces
+        .trim();
+      setLocalType(sanitized);
+    }
+  }, [localType]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -211,12 +228,13 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
               : "border-border bg-muted/20 hover:border-primary/40 hover:bg-primary/5"
           )}
         >
-          <div className="rounded-xl bg-primary/10 p-3 text-primary">
-            <Upload className="size-5" />
+          <div className="rounded-2xl bg-primary/10 p-4 text-primary shadow-inner border border-primary/10 group-hover:scale-110 transition-transform duration-300">
+            <FileSpreadsheet className="size-6" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium">Drag & drop or click to browse</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">CSV, XLS, XLSX</p>
+            <p className="text-sm font-semibold text-foreground">Drag & drop your file here</p>
+            <p className="mt-1 text-xs text-muted-foreground">or <span className="text-primary font-bold underline underline-offset-4">browse files</span></p>
+            <p className="mt-3 text-[10px] text-muted-foreground/60 font-medium">Supports CSV, XLS, XLSX</p>
           </div>
           <input
             ref={inputRef}
@@ -252,16 +270,24 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
             size="sm"
             className="w-full"
             onClick={handleIngest}
-            disabled={ingestMutation.isPending}
+            disabled={ingestMutation.isPending || !localType.trim()}
           >
             {uploadState.status === "uploading" ? (
               <><Loader2 className="size-3.5 mr-1.5 animate-spin" /> Uploading ({uploadState.progress}%)…</>
             ) : ingestMutation.isPending ? (
               <><Loader2 className="size-3.5 mr-1.5 animate-spin" /> Starting ingest…</>
+            ) : !localType.trim() ? (
+              "Name Required"
             ) : (
               "Ingest File"
             )}
           </Button>
+
+          {!localType.trim() && (
+             <p className="text-[10px] text-red-500 text-center font-semibold animate-pulse">
+                Please select or type a dataset name above to continue.
+             </p>
+          )}
           
           {uploadState.status === "uploading" && (
             <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
@@ -275,55 +301,86 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
       )}
 
       {/* Job status panel */}
-      {jobId && statusMeta && (
+      {jobId && (
         <div
           className={cn(
-            "rounded-xl border p-4 space-y-3",
-            jobStatus === "completed" && "border-green-500/20 bg-green-500/5",
-            jobStatus === "failed"    && "border-red-500/20 bg-red-500/5",
-            !["completed","failed"].includes(jobStatus!) && "border-border bg-muted/20"
+            "rounded-xl border p-5 space-y-4 transition-all duration-500",
+            jobStatus === "completed" && "border-green-500/30 bg-green-500/5 shadow-sm",
+            jobStatus === "failed"    && "border-red-500/30 bg-red-500/5 shadow-sm",
+            !["completed","failed"].includes(jobStatus!) && "border-border bg-muted/20 animate-pulse"
           )}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileSpreadsheet className="size-4 text-muted-foreground" />
-              <span className="text-sm font-medium truncate max-w-[180px]">{fileName}</span>
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "size-8 rounded-lg flex items-center justify-center",
+                jobStatus === "completed" ? "bg-green-100 text-green-600" : "bg-muted text-muted-foreground"
+              )}>
+                <FileSpreadsheet className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold truncate max-w-[180px]">{fileName}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-tight">Dataset: {localType}</p>
+              </div>
             </div>
-            <span className={cn("flex items-center gap-1.5 text-xs font-semibold", statusMeta.color)}>
-              {statusMeta.icon}
-              {statusMeta.label}
-            </span>
+            {statusMeta ? (
+              <span className={cn("flex items-center gap-1.5 text-xs font-bold", statusMeta.color)}>
+                {statusMeta.icon}
+                {statusMeta.label}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" />
+                Connecting...
+              </span>
+            )}
           </div>
 
-          {/* Progress bar — only if total is available */}
-          {job?.total != null && (
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{job.processed ?? 0} / {job.total} records</span>
-                <span>{Math.round(((job.processed ?? 0) / job.total) * 100)}%</span>
+          {/* Progress bar — only show while processing */}
+          {!["completed", "failed"].includes(jobStatus!) && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span>{job?.processed ?? 0} / {job?.total ?? "..."} records</span>
+                <span>{job?.total ? Math.round(((job.processed ?? 0) / job.total) * 100) : 0}%</span>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted/50 border border-border/5">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-500"
-                  style={{ width: `${Math.round(((job.processed ?? 0) / job.total) * 100)}%` }}
+                  className="h-full rounded-full transition-all duration-1000 bg-primary"
+                  style={{ width: `${job?.total ? Math.round(((job.processed ?? 0) / job.total) * 100) : 5}%` }}
                 />
               </div>
             </div>
           )}
 
+          {/* Success Message */}
+          {jobStatus === "completed" && (
+            <div className="flex items-center gap-2 py-1 px-3 rounded-lg bg-green-500/10 border border-green-500/10">
+              <CheckCircle2 className="size-3.5 text-green-600" />
+              <p className="text-xs text-green-700 font-medium">Dataset is now live and ready to use!</p>
+            </div>
+          )}
+
           {/* Errors */}
           {job?.errors && job.errors.length > 0 && (
-            <div className="rounded-lg bg-red-500/10 px-3 py-2">
-              <p className="text-xs text-red-600 font-medium mb-1">Errors ({job.errors.length})</p>
-              <ul className="text-xs text-red-500 space-y-0.5 max-h-20 overflow-y-auto">
-                {job.errors.map((e, i) => <li key={i}>• {e}</li>)}
+            <div className="rounded-lg bg-red-500/10 px-3 py-3 border border-red-500/10">
+              <p className="text-xs text-red-600 font-bold mb-1.5 flex items-center gap-1.5">
+                <AlertCircle className="size-3.5" />
+                Ingestion Errors ({job.errors.length})
+              </p>
+              <ul className="text-xs text-red-500/80 space-y-1 max-h-24 overflow-y-auto pr-1">
+                {job.errors.map((e, i) => <li key={i} className="pl-3 relative before:content-['•'] before:absolute before:left-0 text-[11px] leading-relaxed">{e}</li>)}
               </ul>
             </div>
           )}
 
           {["completed", "failed"].includes(jobStatus!) && (
-            <Button variant="outline" size="sm" onClick={reset} className="w-full">
-              Upload another file
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={reset} 
+              className="w-full h-10 rounded-xl font-semibold border-border/60 hover:bg-muted"
+            >
+              Upload Another Dataset
             </Button>
           )}
         </div>

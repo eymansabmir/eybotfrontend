@@ -16,6 +16,7 @@ import type {
 
 const ENTITIES = "/voice-tech/entities";
 const ROUTING  = "/voice-tech/routing";
+const PROVIDERS = "/voice-tech/providers";
 
 export const voiceTechApi = {
   // ─── Entity Ingestion ─────────────────────────────────────────────
@@ -57,14 +58,6 @@ export const voiceTechApi = {
     return data;
   },
 
-  /** Poll job status */
-  getJobStatus: async (jobId: string): Promise<IngestJob> => {
-    const { data } = await apiClient.get<{ success: boolean; status: IngestJob["status"] } & IngestJob>(
-      `${ENTITIES}/ingest/jobs/${jobId}`
-    );
-    return data;
-  },
-
   /** List inferred attributes — requires tenantId and optional entityType */
   listAttributes: async (params: {
     tenantId: string;
@@ -75,6 +68,18 @@ export const voiceTechApi = {
       { params }
     );
     return data.attributes;
+  },
+
+  /** Upsert a custom attribute for a dataset */
+  upsertAttribute: async (payload: {
+    tenantId: string;
+    entityType: string;
+    key: string;
+    type: string;
+    operators?: string[];
+    values?: unknown[];
+  }): Promise<void> => {
+    await apiClient.post(`${ENTITIES}/attributes`, payload);
   },
 
   /** List all unique entity types (datasets) for a tenant */
@@ -109,10 +114,26 @@ export const voiceTechApi = {
     name: string; 
     description?: string;
     entityTypeId?: string;
+    entityTypeIds?: string[];
     type?: string;
   }): Promise<RoutingConfigSummary> => {
     const { data } = await apiClient.post<{ success: boolean; config: RoutingConfigSummary }>(
       ROUTING,
+      payload
+    );
+    return data.config;
+  },
+
+  /** Update an existing routing config */
+  updateRoutingConfig: async (payload: {
+    id: string;
+    name?: string;
+    entityTypeIds?: string[];
+    description?: string;
+    status?: string;
+  }): Promise<RoutingConfigSummary> => {
+    const { data } = await apiClient.patch<{ success: boolean; config: RoutingConfigSummary }>(
+      `${ROUTING}/${payload.id}`,
       payload
     );
     return data.config;
@@ -211,14 +232,17 @@ export const voiceTechApi = {
     });
   },
 
-  listCredentialsByType: async (orgId: string, type: string): Promise<IntegrationCredential[]> => {
+  listCredentialsByType: async (orgId: string, type?: string): Promise<IntegrationCredential[]> => {
+    const params: Record<string, any> = {
+      orgId,
+      includeInactive: false,
+      includeRevoked: false,
+    };
+    if (type) {
+      params.type = type;
+    }
     const { data } = await apiClient.get<IntegrationCredential[]>("/integrations/credentials", {
-      params: {
-        orgId,
-        type,
-        includeInactive: false,
-        includeRevoked: false,
-      },
+      params,
     });
     return data;
   },
@@ -235,20 +259,48 @@ export const voiceTechApi = {
     return data;
   },
 
+  deleteCredential: async (id: string, orgId: string): Promise<void> => {
+    await apiClient.delete(`/integrations/credentials/${id}`, {
+      data: { orgId }
+    });
+  },
+
   /** Execute bulk routing for multiple entity types */
   bulkExecuteRouting: async (payload: {
     tenantId: string;
     routingConfigId: string;
     entityTypes: string[];
-  }): Promise<{ totalProcessed: number; initiated: number; failed: number; skipped: number }> => {
+  }): Promise<{ jobId: string; status: string }> => {
     const { data } = await apiClient.post<{ 
       success: boolean; 
-      result: { totalProcessed: number; initiated: number; failed: number; skipped: number } 
+      jobId: string;
+      status: string;
     }>(
       `${ROUTING}/bulk-execute`,
       payload
     );
-    return data.result;
+    return { jobId: data.jobId, status: data.status };
+  },
+
+  getBulkExecuteStatus: async (tenantId: string, configId: string): Promise<RoutingAnalyticsResponse> => {
+    const { data } = await apiClient.get<{ success: boolean; stats: RoutingAnalyticsResponse }>(
+      `${ROUTING}/analytics/orchestration`,
+      { params: { tenantId, configId } }
+    );
+    return data.stats;
+  },
+
+  getIngestJobStatus: async (jobId: string): Promise<IngestJob> => {
+    const { data } = await apiClient.get<{ success: boolean; status: IngestJob["status"] } & IngestJob>(
+      `${ENTITIES}/ingest/jobs/${jobId}`
+    );
+    return data;
+  },
+
+  /** Get bulk execution job status */
+  getBulkJobStatus: async (jobId: string): Promise<any> => {
+    const { data } = await apiClient.get<{ success: boolean }>(`/voice-tech/routing/bulk-execute/jobs/${jobId}`);
+    return data;
   },
 
   /** Get orchestration analytics stats */
@@ -258,5 +310,37 @@ export const voiceTechApi = {
       { params: { tenantId, configId } }
     );
     return data.stats;
+  },
+  
+  // ─── Agents (Providers) ───────────────────────────────────────────
+  listVoiceAgents: async (params: { tenantId: string; credentialId?: string }): Promise<any[]> => {
+    const { data } = await apiClient.get<{ success: boolean; agents: any[] }>(PROVIDERS, { params });
+    return data.agents;
+  },
+
+  upsertVoiceAgent: async (payload: any): Promise<any> => {
+    const { data } = await apiClient.post<{ success: boolean; agent: any }>(PROVIDERS, payload);
+    return data.agent;
+  },
+
+  deleteVoiceAgent: async (id: string, tenantId: string): Promise<void> => {
+    await apiClient.delete(`${PROVIDERS}/${id}`, { params: { tenantId } });
+  },
+
+  uploadFile: async (file: File): Promise<{ filePath: string; url: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', 'uploads'); // Ensure folder is specified
+
+    const { data } = await apiClient.post<{ success: boolean; data: { filePath: string; url: string } }>(
+      '/storage/upload', 
+      formData, 
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return data.data;
   },
 } as const;

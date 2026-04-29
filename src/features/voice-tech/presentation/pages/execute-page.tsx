@@ -1,55 +1,46 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate, useLocation } from "@tanstack/react-router";
 import {
   ArrowLeft,
-  ArrowRight,
   Zap,
   Database,
   GitBranch,
   CheckCircle2,
   Activity,
   AlertTriangle,
-  Plus,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
-  useEntityTypes,
   useRoutingConfigs,
   useRoutingConfig,
   useBulkExecuteRouting,
+  useCampaignStatusPolling,
 } from "../../api/voice-tech-queries";
 import { voiceTechApi } from "../../api/voice-tech-api";
-import { CsvUploadPanel } from "../components/ingest/csv-upload-panel";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
-} from "@/components/ui/sheet";
 
 const TENANT_ID = "tenant-ey-001";
 
-type WizardStep = "datasets" | "routing" | "review" | "processing" | "results";
+type WizardStep = "review" | "processing" | "results";
 
 export function ExecutePage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<WizardStep>("datasets");
-  const [selectedDatasets, setSelectedDatasets] = useState<string[]>([]);
-  const [selectedConfigId, setSelectedConfigId] = useState<string | null>(null);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const location = useLocation();
+  const autoDataset = (location.state as any)?.autoDataset;
+  const initialConfigId = (location.state as any)?.selectedConfigId;
+  
+  const [step, setStep] = useState<WizardStep>("review");
+  const [selectedDatasets] = useState<string[]>(
+    autoDataset ? [autoDataset] : []
+  );
+  const [selectedConfigId] = useState<string | null>(
+    initialConfigId || null
+  );
+  
   const [result, setResult] = useState<{
     totalProcessed: number;
     initiated: number;
@@ -57,8 +48,7 @@ export function ExecutePage() {
     skipped: number;
   } | null>(null);
 
-  const { data: entityTypes = [], isLoading: datasetsLoading } = useEntityTypes(TENANT_ID);
-  const { data: configs = [], isLoading: configsLoading } = useRoutingConfigs(TENANT_ID);
+  const { data: configs = [] } = useRoutingConfigs(TENANT_ID);
   const { data: fullConfig } = useRoutingConfig(selectedConfigId, TENANT_ID);
   const bulkExecute = useBulkExecuteRouting();
 
@@ -92,11 +82,23 @@ export function ExecutePage() {
 
   const selectedConfig = configs.find((c) => c.id === selectedConfigId);
 
-  const toggleDataset = (type: string) => {
-    setSelectedDatasets((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  };
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const { data: jobStatus } = useCampaignStatusPolling(currentJobId);
+
+  // Monitor job status
+  useEffect(() => {
+    if (!currentJobId || !jobStatus) return;
+    if (jobStatus.status === "completed" || jobStatus.status === "failed") {
+      setResult({
+        totalProcessed: jobStatus.totalProcessed ?? 0,
+        initiated: jobStatus.initiated ?? 0,
+        failed: jobStatus.failed ?? 0,
+        skipped: jobStatus.skipped ?? 0,
+      });
+      setStep("results");
+      setCurrentJobId(null);
+    }
+  }, [jobStatus, currentJobId]);
 
   const handleExecute = () => {
     if (!selectedConfigId || selectedDatasets.length === 0) return;
@@ -105,231 +107,44 @@ export function ExecutePage() {
       { tenantId: TENANT_ID, routingConfigId: selectedConfigId, entityTypes: selectedDatasets },
       {
         onSuccess: (data) => {
-          setResult({
-            totalProcessed: data.totalProcessed,
-            initiated: data.initiated,
-            failed: data.failed,
-            skipped: data.skipped,
-          });
-          setStep("results");
+          setCurrentJobId(data.jobId);
         },
         onError: () => setStep("review"),
       }
     );
   };
 
-  const reset = () => {
-    setStep("datasets");
-    setSelectedDatasets([]);
-    setSelectedConfigId(null);
-    setResult(null);
-  };
-
-  const WIZARD_STEPS = [
-    { key: "datasets", label: "Select Datasets", number: 1 },
-    { key: "routing", label: "Select Routing", number: 2 },
-    { key: "review", label: "Review & Execute", number: 3 },
-  ] as const;
-
-  const currentStepIndex = WIZARD_STEPS.findIndex((s) => s.key === step);
+  // If no data was passed, redirect back
+  useEffect(() => {
+    if (!autoDataset || !initialConfigId) {
+      navigate({ to: "/voice-tech" });
+    }
+  }, [autoDataset, initialConfigId, navigate]);
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
+    <div className="space-y-8 max-w-3xl mx-auto py-6">
       {/* ── Header ────────────────────────────────────── */}
-      <div className="flex items-center gap-4">
-        <Link to="/voice-tech">
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <ArrowLeft className="size-4" />
-          </Button>
-        </Link>
+      <div className="flex items-center gap-3 mb-8">
+        <Button variant="ghost" size="icon" onClick={() => navigate({ to: "/voice-tech" })} className="rounded-full">
+          <ArrowLeft className="size-5" />
+        </Button>
         <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Step 3</p>
-          <h1 className="text-2xl font-bold tracking-tight">Execute Calls</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Select your data, choose routing rules, and launch execution.
-          </p>
+          <h1 className="text-2xl font-black tracking-tight">Execute Calls</h1>
+          <p className="text-sm text-muted-foreground">Review and launch your voice orchestration.</p>
         </div>
       </div>
 
-      {/* ── Progress Stepper ──────────────────────────── */}
-      {step !== "processing" && step !== "results" && (
-        <div className="flex items-center gap-2">
-          {WIZARD_STEPS.map((ws, i) => {
-            const isActive = ws.key === step;
-            const isDone = currentStepIndex > i;
-            return (
-              <div key={ws.key} className="flex items-center gap-2 flex-1">
-                <div
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg border flex-1 transition-all",
-                    isActive && "border-primary bg-primary/5",
-                    isDone && "border-emerald-500/30 bg-emerald-500/5",
-                    !isActive && !isDone && "border-border/60 bg-muted/10"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "size-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
-                      isActive && "bg-primary text-primary-foreground",
-                      isDone && "bg-emerald-500 text-white",
-                      !isActive && !isDone && "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {isDone ? <CheckCircle2 className="size-3.5" /> : ws.number}
-                  </div>
-                  <span className={cn("text-sm font-medium", isActive ? "text-foreground" : "text-muted-foreground")}>
-                    {ws.label}
-                  </span>
-                </div>
-                {i < WIZARD_STEPS.length - 1 && (
-                  <ArrowRight className="size-4 text-muted-foreground/40 shrink-0" />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── Step 1: Select Datasets ───────────────────── */}
-      {step === "datasets" && (
-        <div className="space-y-4">
-          <h2 className="text-base font-bold">Which datasets should be processed?</h2>
-          {datasetsLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
-            </div>
-          ) : entityTypes.length === 0 ? (
-            <div className="py-12 text-center border-2 border-dashed rounded-xl">
-              <p className="text-sm text-muted-foreground mb-3">No datasets available. Upload data first.</p>
-              
-              <Sheet open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <Database className="size-4" />
-                    Upload Dataset
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[440px] sm:max-w-[440px]">
-                  <SheetHeader className="mb-6">
-                    <SheetTitle>Upload Dataset</SheetTitle>
-                  </SheetHeader>
-                  <CsvUploadPanel tenantId={TENANT_ID} entityType="" />
-                </SheetContent>
-              </Sheet>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold">Select datasets</h2>
-                
-                <Sheet open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="sm" className="gap-2 text-primary hover:text-primary hover:bg-primary/10">
-                      <Plus className="size-3.5" />
-                      Upload New
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-[440px] sm:max-w-[440px]">
-                    <SheetHeader className="mb-6">
-                      <SheetTitle>Upload Dataset</SheetTitle>
-                    </SheetHeader>
-                    <CsvUploadPanel tenantId={TENANT_ID} entityType="" />
-                  </SheetContent>
-                </Sheet>
-              </div>
-              <div className="space-y-2">
-                {entityTypes.map((type) => (
-                  <div
-                    key={type.id}
-                    onClick={() => toggleDataset(type.name)}
-                    className={cn(
-                      "flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all",
-                      selectedDatasets.includes(type.name)
-                        ? "border-primary bg-primary/5 shadow-sm"
-                        : "border-border/60 hover:border-border hover:bg-muted/20"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Database className={cn("size-4", selectedDatasets.includes(type.name) ? "text-primary" : "text-muted-foreground")} />
-                      <span className="text-sm font-semibold">{type.name}</span>
-                    </div>
-                    <Checkbox checked={selectedDatasets.includes(type.name)} />
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-end pt-2">
-                <Button
-                  onClick={() => setStep("routing")}
-                  disabled={selectedDatasets.length === 0}
-                  className="gap-2"
-                >
-                  Continue
-                  <ArrowRight className="size-4" />
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ── Step 2: Select Routing ────────────────────── */}
-      {step === "routing" && (
-        <div className="space-y-4">
-          <h2 className="text-base font-bold">Which routing group should process the calls?</h2>
-          {configsLoading ? (
-            <Skeleton className="h-10 rounded-lg" />
-          ) : configs.length === 0 ? (
-            <div className="py-12 text-center border-2 border-dashed rounded-xl">
-              <p className="text-sm text-muted-foreground mb-3">No routing groups available. Create one first.</p>
-              <Link to="/voice-tech/routings">
-                <Button variant="outline" className="gap-2">
-                  <GitBranch className="size-4" />
-                  Go to Routing
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <>
-              <Select value={selectedConfigId ?? ""} onValueChange={setSelectedConfigId}>
-                <SelectTrigger className="w-full h-12">
-                  <SelectValue placeholder="Choose a routing group..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {configs.map((c) => (
-                    <SelectItem key={c.id} value={c.id} className="py-3">
-                      <div className="flex items-center gap-2">
-                        <GitBranch className="size-4 text-violet-500" />
-                        {c.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex justify-between pt-2">
-                <Button variant="outline" onClick={() => setStep("datasets")}>Back</Button>
-                <Button onClick={() => setStep("review")} disabled={!selectedConfigId} className="gap-2">
-                  Continue
-                  <ArrowRight className="size-4" />
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ── Step 3: Review & Execute ──────────────────── */}
+      {/* ── Review Step ──────────────────────────────── */}
       {step === "review" && (
         <div className="space-y-6">
-          <h2 className="text-base font-bold">Review and confirm execution</h2>
-
           <div className="space-y-3">
             <div className="p-4 rounded-xl border bg-muted/20 flex items-center gap-4">
               <Database className="size-5 text-blue-500" />
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase">Datasets</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase">Dataset</p>
                 <p className="text-sm font-semibold">{selectedDatasets.join(", ")}</p>
               </div>
-              <Badge variant="outline" className="ml-auto">{selectedDatasets.length} selected</Badge>
+              <Badge variant="outline" className="ml-auto">Active</Badge>
             </div>
 
             <div className="p-4 rounded-xl border bg-muted/20 flex items-center gap-4">
@@ -365,9 +180,8 @@ export function ExecutePage() {
             </p>
           </div>
 
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep("routing")}>Back</Button>
-            <Button onClick={handleExecute} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+          <div className="flex justify-end">
+            <Button onClick={handleExecute} size="lg" className="gap-2 px-8 bg-[#FFE600] text-[#1A1A24] hover:bg-[#FFE600]/90 border-none font-bold">
               <Zap className="size-4" />
               Execute Now
             </Button>
@@ -385,7 +199,7 @@ export function ExecutePage() {
           <div>
             <p className="text-xl font-bold">Executing Calls</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Processing {selectedDatasets.length} dataset(s) through "{selectedConfig?.name}"...
+              Processing through "{selectedConfig?.name}"...
             </p>
           </div>
         </div>
@@ -412,18 +226,13 @@ export function ExecutePage() {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" onClick={reset} className="flex-1">
-              New Execution
+            <Button 
+              onClick={() => navigate({ to: `/voice-tech/routings/${selectedConfigId}/analytics` as any })} 
+              className="w-full gap-2 h-12 text-base bg-[#FFE600] text-[#1A1A24] hover:bg-[#FFE600]/90 border-none font-bold"
+            >
+              <BarChart3 className="size-5" />
+              View Full Analytics
             </Button>
-            {selectedConfigId && (
-              <Button
-                className="flex-1 gap-2"
-                onClick={() => navigate({ to: `/voice-tech/routings/${selectedConfigId}/analytics` })}
-              >
-                <Activity className="size-4" />
-                View Analytics
-              </Button>
-            )}
           </div>
         </div>
       )}

@@ -29,11 +29,19 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import type { ConditionLeaf, EntityAttribute } from "../../../types";
-import { OPERATOR_LABELS } from "../../../types";
+import type { ConditionLeaf, EntityAttribute, AttributeType } from "../../../types";
+import { OPERATOR_LABELS, OPERATORS_BY_TYPE } from "../../../types";
 import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+const HUMAN_FRIENDLY_TYPES: Record<string, string> = {
+  string: "Text",
+  number: "Number",
+  boolean: "Yes/No",
+  enum: "Options",
+  date: "Date",
+};
 
 interface ConditionRowProps {
   leaf: ConditionLeaf;
@@ -209,10 +217,15 @@ export function ConditionRow({
   };
 
   const handleFieldChange = (fullKey: string, attr: EntityAttribute) => {
+    const type = attr.type as AttributeType;
+    const defaultOp = (attr.operators && attr.operators.length > 0)
+      ? attr.operators[0]
+      : (OPERATORS_BY_TYPE[type]?.[0] ?? "equals");
+
     onChange({
       ...leaf,
       field: fullKey,
-      operator: attr.operators[0] ?? "equals",
+      operator: defaultOp,
       value: attr.type === "boolean" ? "true" : (leaf.value || ""),
     });
   };
@@ -225,8 +238,10 @@ export function ConditionRow({
     onChange({ ...leaf, value: val });
   };
 
-  const operators = selectedAttr?.operators ?? ["equals", "not_equals"];
-  const attrType = selectedAttr?.type ?? "string";
+  const attrType = (selectedAttr?.type ?? "string") as AttributeType;
+  const operators = (selectedAttr?.operators && selectedAttr.operators.length > 0)
+    ? selectedAttr.operators
+    : (OPERATORS_BY_TYPE[attrType] ?? ["equals", "not_equals"]);
 
   // Build a summary string for the collapsed view
   const summary = useMemo(() => {
@@ -443,7 +458,9 @@ export function ConditionRow({
                             <Target className="mr-2 size-3.5 opacity-50" />
                             <div className="flex items-center gap-2 flex-1">
                               <span className="font-bold">{attr.key}</span>
-                              <span className="text-[9px] uppercase font-mono text-muted-foreground border px-1 rounded bg-muted/40 ml-auto">{attr.type}</span>
+                              <span className="text-[10px] font-medium text-muted-foreground border px-1.5 py-0.5 rounded-md bg-muted/40 ml-auto whitespace-nowrap">
+                                {HUMAN_FRIENDLY_TYPES[attr.type] || attr.type}
+                              </span>
                             </div>
                             <Check
                               className={cn(

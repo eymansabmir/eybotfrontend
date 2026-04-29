@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Database,
@@ -14,13 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CsvUploadPanel } from "../components/ingest/csv-upload-panel";
+import { DatasetUploadSheet } from "../components/ingest/dataset-upload-sheet";
 import {
   useDeleteEntityType,
   useEntityTypes,
@@ -67,21 +60,16 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export function DatasetsPage() {
+  const navigate = useNavigate();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [deletingType, setDeletingType] = useState<string | null>(null);
-  const [inspectingType, setInspectingType] = useState<string | null>(null);
 
   const { data: entityTypes = [], isLoading: typesLoading } = useEntityTypes(TENANT_ID);
-  const { data: attributes = [], isLoading: attrsLoading } = useVoiceTechAttributes(
-    TENANT_ID,
-    inspectingType ?? undefined
-  );
   const deleteMutation = useDeleteEntityType(TENANT_ID);
 
   const handleDelete = (name: string) => {
     deleteMutation.mutate(name, {
       onSuccess: () => {
-        if (inspectingType === name) setInspectingType(null);
         setDeletingType(null);
       },
     });
@@ -108,23 +96,19 @@ export function DatasetsPage() {
           </div>
         </div>
 
-        <Sheet open={uploadOpen} onOpenChange={setUploadOpen}>
-          <SheetTrigger asChild>
-            <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-              <Upload className="size-4" />
-              Upload Dataset
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[440px] sm:max-w-[440px]">
-            <SheetHeader className="mb-6">
-              <SheetTitle className="flex items-center gap-2">
-                <FileSpreadsheet className="size-5" />
-                Upload Dataset
-              </SheetTitle>
-            </SheetHeader>
-            <CsvUploadPanel tenantId={TENANT_ID} entityType="" />
-          </SheetContent>
-        </Sheet>
+        <Button 
+          onClick={() => setUploadOpen(true)}
+          className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl px-5 h-11"
+        >
+          <Upload className="size-4" />
+          Upload Dataset
+        </Button>
+
+        <DatasetUploadSheet 
+          open={uploadOpen} 
+          onOpenChange={setUploadOpen} 
+          tenantId={TENANT_ID} 
+        />
       </div>
 
       {/* ── Datasets Table ────────────────────────────── */}
@@ -188,7 +172,7 @@ export function DatasetsPage() {
                           variant="ghost"
                           size="sm"
                           className="gap-1.5 text-xs h-8 cursor-pointer shrink-0"
-                          onClick={() => setInspectingType(inspectingType === type.name ? null : type.name)}
+                          onClick={() => navigate({ to: `/voice-tech/datasets/${type.name}` as any })}
                         >
                           <Eye className="size-3.5" />
                           View Fields
@@ -211,60 +195,7 @@ export function DatasetsPage() {
         </div>
       )}
 
-      {/* ── Data Fields Inspector (Drawer-style) ───────── */}
-      {inspectingType && (
-        <div className="border rounded-xl bg-card overflow-hidden animate-in slide-in-from-top-2 duration-300">
-          <div className="px-5 py-4 border-b bg-muted/20 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Tag className="size-4 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold">Data Fields</h3>
-                <p className="text-xs text-muted-foreground">
-                  Inspecting <span className="font-mono font-semibold text-foreground">"{inspectingType}"</span>
-                </p>
-              </div>
-            </div>
-            {!attrsLoading && attributes.length > 0 && (
-              <Badge variant="outline" className="text-xs">
-                {attributes.length} Attributes
-              </Badge>
-            )}
-          </div>
-          <div className="p-4">
-            {attrsLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-10 rounded-lg" />
-                ))}
-              </div>
-            ) : attributes.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">
-                No fields detected. Try re-uploading the dataset.
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-                {attributes.map((attr: EntityAttribute) => (
-                  <div
-                    key={attr.key}
-                    className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-muted/40 transition-colors"
-                  >
-                    <span className="font-mono text-sm text-foreground">{attr.key}</span>
-                    <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded ${
-                        TYPE_COLORS[attr.type] ?? "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {TYPE_LABELS[attr.type] || attr.type}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+
 
       {/* ── Delete Confirmation ────────────────────────── */}
       <AlertDialog

@@ -10,7 +10,9 @@ import {
   Settings,
   Activity,
   ChevronRight,
+  Zap,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   Table,
@@ -65,7 +67,7 @@ export function OrchestrationTable({ configs, entityTypes, isLoading }: Orchestr
 
   return (
     <>
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm min-h-[400px]">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -77,79 +79,92 @@ export function OrchestrationTable({ configs, entityTypes, isLoading }: Orchestr
             </TableRow>
           </TableHeader>
           <TableBody>
-            {configs.map((c) => (
-              <TableRow
-                key={c.id}
-                className="cursor-pointer group hover:bg-muted/30 transition-colors"
-                onClick={() => navigate({ to: `/voice-tech/routings/${c.id}/analytics` as any })}
-              >
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      <GitBranch className="size-4" />
+            <AnimatePresence mode="popLayout" initial={false}>
+              {configs.map((c) => (
+                <TableRow
+                  key={c.id}
+                  className="cursor-pointer group hover:bg-muted/30 transition-colors border-b last:border-0"
+                  onClick={() => navigate({ to: `/voice-tech/routings/${c.id}/analytics` as any })}
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <GitBranch className="size-4" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm text-foreground">{c.name}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-1">Orchestration Plan</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm text-foreground">{c.name}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-1">Orchestration Plan</p>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Database className="size-3.5 text-muted-foreground" />
+                      <span className="text-sm font-medium">
+                        {(() => {
+                          const ids = (c.entityTypeIds && Array.isArray(c.entityTypeIds) && c.entityTypeIds.length > 0) 
+                            ? c.entityTypeIds 
+                            : (c.entityTypeId ? [c.entityTypeId] : []);
+                          if (ids.length === 0) return "No Dataset";
+                          
+                          const names = ids.map(id => entityTypes.find(t => t.id === id)?.name || "Unknown");
+                          if (names.length <= 2) return names.join(", ");
+                          return `${names.slice(0, 2).join(", ")} + ${names.length - 2}`;
+                        })()}
+                      </span>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Database className="size-3.5 text-muted-foreground" />
-                    <span className="text-sm font-medium">{getDatasetName(c.entityTypeId)}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="font-mono text-[10px] px-1.5 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                      Active
-                    </Badge>
-                  </div>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {format(new Date(c.createdAt), "MMM d, yyyy")}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => navigate({ to: `/voice-tech/routings/${c.id}/analytics` as any })}
-                    >
-                      <BarChart3 className="size-4 text-muted-foreground hover:text-primary" />
-                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="font-mono text-[10px] px-1.5 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                        Active
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {format(new Date(c.createdAt), "MMM d, yyyy")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => navigate({ to: `/voice-tech/routings/${c.id}/analytics` as any })}
+                      >
+                        <BarChart3 className="size-4 text-muted-foreground hover:text-primary" />
+                      </Button>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <MoreHorizontal className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => navigate({ to: `/voice-tech/routings/${c.id}/analytics` as any })}>
-                          <Activity className="size-4 mr-2" />
-                          View Analytics
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate({ to: `/voice-tech` })}>
-                          <Settings className="size-4 mr-2" />
-                          Edit Rules
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setDeleteTarget(c.id)}
-                        >
-                          <Trash2 className="size-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8">
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => navigate({ to: `/voice-tech/create` as any, search: { edit: c.id, step: 1 } as any })}>
+                            <Settings className="size-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate({ to: `/voice-tech/execute` as any, state: { selectedConfigId: c.id, autoDataset: getDatasetName(c.entityTypeId) } as any })}>
+                            <Zap className="size-4 mr-2" />
+                            Execute
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setDeleteTarget(c.id)}
+                          >
+                            <Trash2 className="size-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </AnimatePresence>
           </TableBody>
         </Table>
       </div>

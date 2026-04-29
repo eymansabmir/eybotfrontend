@@ -135,14 +135,6 @@ export function RoutingRuleList({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => onExecuteTest(rule)} className="gap-2 py-2">
-                      <Play className="size-4 text-emerald-500" />
-                      <span className="font-medium">Run Test Simulation</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onSingleCall(rule)} className="gap-2 py-2">
-                      {isWhatsapp ? <MessageCircle className="size-4 text-emerald-500" /> : <Phone className="size-4 text-indigo-500" />}
-                      <span className="font-medium">{isWhatsapp ? "Call WhatsApp User" : "Call Particular User"}</span>
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onEdit(rule)} className="gap-2 py-2">
                        <Settings2 className="size-4 text-primary" />
                        <span className="font-medium">Edit Rule Details</span>

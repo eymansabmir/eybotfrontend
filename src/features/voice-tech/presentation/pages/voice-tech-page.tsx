@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Plus,
@@ -12,15 +13,46 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useEntityTypes, useRoutingConfigs } from "../../api/voice-tech-queries";
+import { useEntityTypes, useRoutingConfigs, useCredentials } from "../../api/voice-tech-queries";
 import { OrchestrationTable } from "../components/orchestration-table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check } from "lucide-react";
 
 const TENANT_ID = "tenant-ey-001";
 
 export function VoiceTechPage() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDatasetIds, setSelectedDatasetIds] = useState<string[]>([]);
+
   const { data: configs = [], isLoading: configsLoading } = useRoutingConfigs(TENANT_ID);
   const { data: entityTypes = [] } = useEntityTypes(TENANT_ID);
+  const { data: credentials = [] } = useCredentials(TENANT_ID);
+
+  const totalRules = useMemo(() => 
+    configs.reduce((acc, config) => acc + (config.rules?.length || 0), 0), 
+    [configs]
+  );
+
+  const vendorNames = useMemo(() => {
+    const names = Array.from(new Set(credentials.map(c => c.providerName || c.type)));
+    if (names.length === 0) return "No vendors linked";
+    if (names.length <= 2) return names.join(", ");
+    return `${names.slice(0, 2).join(", ")}...`;
+  }, [credentials]);
+
+  const filteredConfigs = useMemo(() => {
+    return configs.filter(config => {
+      const matchesSearch = config.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesDataset = selectedDatasetIds.length === 0 || 
+                            (config.entityTypeId && selectedDatasetIds.includes(config.entityTypeId)) ||
+                            config.entityTypeIds?.some(id => selectedDatasetIds.includes(id));
+      
+      return matchesSearch && matchesDataset;
+    });
+  }, [configs, searchQuery, selectedDatasetIds]);
 
   return (
     <div className="space-y-8 pb-10">
@@ -61,21 +93,21 @@ export function VoiceTechPage() {
         <StatsCard 
           title="Active Datasets" 
           value={entityTypes.length} 
-          trend="Across 4 regions" 
+          trend={`Across ${entityTypes.length} regions`} 
           icon={Database}
           color="violet"
         />
         <StatsCard 
           title="Global Rules" 
-          value={configs.reduce((acc, _) => acc + 0, 0)} // Needs backend support for count in summary
+          value={totalRules} 
           trend="84% Success Rate" 
           icon={Activity}
           color="emerald"
         />
         <StatsCard 
           title="Vendors Linked" 
-          value="3" 
-          trend="ElevenLabs, Sarvam..." 
+          value={credentials.length} 
+          trend={vendorNames} 
           icon={Users}
           color="orange"
         />
@@ -88,22 +120,59 @@ export function VoiceTechPage() {
           <Input 
             placeholder="Search orchestrations..." 
             className="pl-10 h-11 bg-card border-border/60 focus:ring-primary/20 rounded-xl"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2 h-11 rounded-xl border-border/60 bg-card hover:bg-muted/50">
-            <Filter className="size-4" />
-            Filters
-          </Button>
-          <Button variant="outline" className="gap-2 h-11 rounded-xl border-border/60 bg-card hover:bg-muted/50">
-            Download CSV
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2 h-11 rounded-xl border-border/60 bg-card hover:bg-muted/50">
+                <Filter className="size-4" />
+                {selectedDatasetIds.length > 0 ? `Datasets (${selectedDatasetIds.length})` : "Filters"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-2" align="end">
+              <div className="p-2 border-b mb-1">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Filter by Dataset</p>
+              </div>
+              <div className="space-y-1 max-h-[240px] overflow-y-auto pt-1">
+                {entityTypes.map(type => (
+                  <div 
+                    key={type.id}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setSelectedDatasetIds(prev => 
+                        prev.includes(type.id) ? prev.filter(id => id !== type.id) : [...prev, type.id]
+                      );
+                    }}
+                  >
+                    <Checkbox checked={selectedDatasetIds.includes(type.id)} className="size-4" />
+                    <span className="text-xs font-medium truncate flex-1">{type.name}</span>
+                    {selectedDatasetIds.includes(type.id) && <Check className="size-3.5 text-primary" />}
+                  </div>
+                ))}
+                {entityTypes.length === 0 && (
+                  <p className="text-[10px] text-muted-foreground text-center py-4 italic">No datasets available</p>
+                )}
+              </div>
+              {selectedDatasetIds.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  className="w-full h-8 text-[10px] font-bold mt-2 text-primary hover:text-primary hover:bg-primary/5"
+                  onClick={() => setSelectedDatasetIds([])}
+                >
+                  Clear Selection
+                </Button>
+              )}
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
       {/* ── Orchestration Table ───────────────────────────── */}
       <OrchestrationTable 
-        configs={configs} 
+        configs={filteredConfigs} 
         entityTypes={entityTypes} 
         isLoading={configsLoading} 
       />
