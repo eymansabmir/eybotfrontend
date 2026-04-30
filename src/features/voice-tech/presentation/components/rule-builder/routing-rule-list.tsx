@@ -3,7 +3,6 @@ import {
   MoreVertical, 
   CheckCircle2, 
   XSquare,
-  ArrowRight,
   Trash2,
   Phone,
   MessageCircle,
@@ -58,64 +57,63 @@ export function RoutingRuleList({
 
   if (rules.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed rounded-2xl bg-muted/20">
-        <div className="size-12 rounded-full bg-muted grid place-items-center mb-4">
-           <Play className="size-6 text-muted-foreground/40" />
+      <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-slate-200 rounded-xl bg-white">
+        <div className="size-12 rounded-xl bg-slate-100 grid place-items-center mb-4">
+           <Play className="size-5 text-slate-400" />
         </div>
-        <p className="font-bold">No routing rules yet</p>
-        <p className="text-xs text-muted-foreground mt-1">Rules define where your calls go. Create your first rule to start routing.</p>
+        <p className="font-bold text-slate-900 text-[15px]">No routing rules yet</p>
+        <p className="text-sm font-medium text-slate-500 mt-1 text-center max-w-xs">Rules define where your calls go. Create your first rule to start routing.</p>
       </div>
     );
   }
 
   return (
-    <div className="border rounded-2xl bg-background overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
-        <div className="divide-y divide-border/60 min-w-[700px] lg:min-w-0">
+    <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+      {/* Table Header */}
+      <div className="grid grid-cols-[50px_1fr_180px_90px_50px] items-center gap-0 bg-[#fcfcfc] border-b border-slate-100 px-4">
+        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500/80 text-center">Prio</div>
+        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500/80 px-3">Conditions</div>
+        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500/80">Action</div>
+        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500/80 text-center">Matches</div>
+        <div className="py-4" />
+      </div>
+      <div className="divide-y divide-slate-100">
         {rules.sort((a, b) => a.priority - b.priority).map((rule) => {
           const transport = getTransport(rule);
           const isWhatsapp = transport === "whatsapp";
           return (
-          <div key={rule.id} className="group hover:bg-muted/30 transition-all flex items-center gap-4 p-3">
-            
-            {/* Priority Hub */}
-            <div className="flex flex-col items-center justify-center gap-0.5 min-w-[50px]">
-               <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter">Prio</span>
-               <span className="text-base font-bold font-mono tracking-tighter leading-none">{rule.priority}</span>
-               <div className={`size-1.5 rounded-full mt-1 ${rule.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-muted'}`} />
+          <div key={rule.id} className="grid grid-cols-[50px_1fr_180px_90px_50px] items-center gap-0 group hover:bg-slate-50/50 transition-colors px-4 py-3">
+
+            {/* Priority */}
+            <div className="flex flex-col items-center justify-center gap-0.5">
+               <span className="text-sm font-black font-mono text-slate-900">{rule.priority}</span>
+               <div className={`size-1.5 rounded-full ${rule.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
             </div>
 
             {/* Conditions Block */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 px-3">
                <div className="flex flex-wrap gap-1 items-center">
                   <ConditionSummaryNode node={rule.conditions} />
                </div>
             </div>
 
-            {/* Arrow Divider */}
-            <div className="flex flex-col items-center shrink-0">
-               <div className="size-7 rounded-full bg-muted/40 border flex items-center justify-center text-muted-foreground">
-                  <ArrowRight className="size-3.5" />
-               </div>
-            </div>
-
             {/* Action Block */}
-            <div className="min-w-[160px] shrink-0">
-               <div className="flex items-center gap-2 p-1.5 rounded-lg bg-muted/30 border border-border/40">
+            <div className="min-w-0">
+               <div className="flex items-center gap-2 p-2 rounded-md bg-slate-50 border border-slate-100">
                   <ProviderBadge provider={getProvider(rule) as any} />
                   <div className="min-w-0">
-                     <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none">Agent ID</p>
-                     <p className="text-[10px] font-mono truncate mt-0.5">{rule.action.agentId}</p>
-                  <p className="text-[9px] mt-0.5 inline-flex items-center gap-1 rounded-full bg-background/70 border px-1.5 py-0.5">
+                     <p className="text-[10px] font-bold text-slate-400 uppercase leading-none">Agent ID</p>
+                     <p className="text-[11px] font-mono truncate mt-0.5 text-slate-700">{rule.action.agentId}</p>
+                  <p className="text-[9px] mt-0.5 inline-flex items-center gap-1 rounded-full bg-white border px-1.5 py-0.5">
                     {isWhatsapp ? <MessageCircle className="size-2.5 text-emerald-600" /> : <Phone className="size-2.5 text-indigo-600" />}
-                    <span className="font-semibold">{isWhatsapp ? "WhatsApp" : "Telephony"}</span>
+                    <span className="font-bold text-slate-500">{isWhatsapp ? "WhatsApp" : "Telephony"}</span>
                   </p>
                   </div>
                </div>
             </div>
 
-            {/* Impact Analysis (Inline) */}
-            <div className="min-w-[90px] flex justify-end">
+            {/* Matches — kept for display via InlineMatchCount */}
+            <div className="flex items-center justify-center">
                <InlineMatchCount 
                  rule={rule} 
                  tenantId={tenantId} 
@@ -123,17 +121,17 @@ export function RoutingRuleList({
                />
             </div>
 
-            {/* Rule Meta & Actions */}
-            <div className="flex items-center gap-2 pl-4 border-l">
+            {/* Actions */}
+            <div className="flex items-center justify-end">
                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8 hover:bg-primary/10 hover:text-primary transition-colors">
-                      <MoreVertical className="size-4" />
+                    <Button variant="ghost" size="icon" className="size-8 hover:bg-slate-100 transition-colors">
+                      <MoreVertical className="size-4 text-slate-400" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-48 border-slate-200 shadow-lg">
                     <DropdownMenuItem onClick={() => onEdit(rule)} className="gap-2 py-2">
-                       <Settings2 className="size-4 text-primary" />
+                       <Settings2 className="size-4 text-slate-500" />
                        <span className="font-medium">Edit Rule Details</span>
                     </DropdownMenuItem>
                     {rule.isActive ? (
@@ -166,9 +164,10 @@ export function RoutingRuleList({
         })}
       </div>
     </div>
-  </div>
-);
+  );
 }
+
+
 
 function InlineMatchCount({ 
   rule, 

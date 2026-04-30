@@ -5,14 +5,12 @@ import {
   BarChart3,
   MoreHorizontal,
   Trash2,
-  GitBranch,
-  Database,
   Settings,
   Activity,
   ChevronRight,
-  Zap,
 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   Table,
@@ -48,11 +46,10 @@ import { useDeleteRoutingConfig } from "../../api/voice-tech-queries";
 
 interface OrchestrationTableProps {
   configs: RoutingConfigSummary[] | undefined;
-  entityTypes: { id: string; name: string }[];
   isLoading: boolean;
 }
 
-export function OrchestrationTable({ configs, entityTypes, isLoading }: OrchestrationTableProps) {
+export function OrchestrationTable({ configs, isLoading }: OrchestrationTableProps) {
   const navigate = useNavigate();
   const deleteMutation = useDeleteRoutingConfig("tenant-ey-001");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -60,95 +57,77 @@ export function OrchestrationTable({ configs, entityTypes, isLoading }: Orchestr
   if (isLoading) return <TableSkeleton />;
   if (!configs || configs.length === 0) return <EmptyState />;
 
-  const getDatasetName = (id: string | null) => {
-    if (!id) return "No Dataset";
-    return entityTypes.find((t) => t.id === id)?.name || "Unknown Dataset";
-  };
+
 
   return (
     <>
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm min-h-[400px]">
+      <div className="bg-white">
+
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableHead className="w-[30%]">Orchestration Name</TableHead>
-              <TableHead className="w-[20%]">Dataset</TableHead>
-              <TableHead className="w-[15%]">Rules / Status</TableHead>
-              <TableHead className="w-[15%]">Created</TableHead>
-              <TableHead className="w-[10%] text-right">Actions</TableHead>
+            <TableRow className="bg-[#fcfcfc] border-y border-slate-100 hover:bg-[#fcfcfc]">
+              <TableHead className="w-[40px] px-6">
+                <Checkbox className="rounded-sm size-4 border-slate-300" />
+              </TableHead>
+              <TableHead className="w-[35%] text-[11px] font-bold uppercase tracking-widest text-slate-500/80 py-5">Orchestration Name</TableHead>
+              <TableHead className="w-[12%] text-[11px] font-bold uppercase tracking-widest text-slate-500/80 py-5 text-center">Status</TableHead>
+              <TableHead className="w-[12%] text-[11px] font-bold uppercase tracking-widest text-slate-500/80 py-5 text-center">Success Rate</TableHead>
+              <TableHead className="w-[12%] text-[11px] font-bold uppercase tracking-widest text-slate-500/80 py-5 text-center">Throughput</TableHead>
+              <TableHead className="w-[18%] text-[11px] font-bold uppercase tracking-widest text-slate-500/80 py-5">Last Deployment</TableHead>
+              <TableHead className="w-[5%] text-right py-5 px-6">Actions</TableHead>
             </TableRow>
+
           </TableHeader>
           <TableBody>
             <AnimatePresence mode="popLayout" initial={false}>
               {configs.map((c) => (
                 <TableRow
                   key={c.id}
-                  className="cursor-pointer group hover:bg-muted/30 transition-colors border-b last:border-0"
+                  className="cursor-pointer group hover:bg-slate-50/50 transition-colors border-b last:border-0"
                   onClick={() => navigate({ to: `/voice-tech/routings/${c.id}/analytics` as any })}
                 >
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                        <GitBranch className="size-4" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm text-foreground">{c.name}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-1">Orchestration Plan</p>
-                      </div>
-                    </div>
+                  <TableCell className="px-6" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox className="rounded-sm size-4 border-slate-200" />
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Database className="size-3.5 text-muted-foreground" />
-                      <span className="text-sm font-medium">
-                        {(() => {
-                          const ids = (c.entityTypeIds && Array.isArray(c.entityTypeIds) && c.entityTypeIds.length > 0) 
-                            ? c.entityTypeIds 
-                            : (c.entityTypeId ? [c.entityTypeId] : []);
-                          if (ids.length === 0) return "No Dataset";
-                          
-                          const names = ids.map(id => entityTypes.find(t => t.id === id)?.name || "Unknown");
-                          if (names.length <= 2) return names.join(", ");
-                          return `${names.slice(0, 2).join(", ")} + ${names.length - 2}`;
-                        })()}
-                      </span>
+                    <div className="py-2">
+                      <p className="font-bold text-[15px] text-slate-900">{c.name}</p>
+                      <p className="text-[11px] font-medium text-slate-400/80 uppercase mt-0.5 tracking-tight">
+                        ID: ORC-{c.id.slice(0, 4).toUpperCase()}-{c.name.slice(0, 1).toUpperCase()}
+                      </p>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="font-mono text-[10px] px-1.5 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                        Active
-                      </Badge>
-                    </div>
+                  <TableCell className="text-center">
+                    <Badge variant="secondary" className="font-bold text-[10px] uppercase tracking-wider px-2.5 py-0.5 bg-emerald-50 text-emerald-600 border-emerald-100/50 border rounded-sm">
+                      Active
+                    </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {format(new Date(c.createdAt), "MMM d, yyyy")}
+                  <TableCell className="text-center">
+                    <span className="text-sm font-semibold text-slate-700">99.8%</span>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => navigate({ to: `/voice-tech/routings/${c.id}/analytics` as any })}
-                      >
-                        <BarChart3 className="size-4 text-muted-foreground hover:text-primary" />
-                      </Button>
+                  <TableCell className="text-center">
+                    <span className="text-sm font-medium text-slate-500">2,482 calls/hr</span>
+                  </TableCell>
+                  <TableCell className="text-[13px] text-slate-500 font-medium">
+                    {format(new Date(c.createdAt), "MMM d, HH:mm")}
+                  </TableCell>
 
+                  <TableCell className="text-right px-4">
+                    <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8">
-                            <MoreHorizontal className="size-4" />
+                          <Button variant="ghost" size="icon" className="size-8 rounded-md hover:bg-slate-100">
+                            <MoreHorizontal className="size-4 text-slate-400" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuContent align="end" className="w-48 rounded-lg shadow-xl border-slate-200">
+                          <DropdownMenuItem onClick={() => navigate({ to: `/voice-tech/routings/${c.id}/analytics` as any })}>
+                            <BarChart3 className="size-4 mr-2" />
+                            Analytics
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate({ to: `/voice-tech/create` as any, search: { edit: c.id, step: 1 } as any })}>
                             <Settings className="size-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate({ to: `/voice-tech/execute` as any, state: { selectedConfigId: c.id, autoDataset: getDatasetName(c.entityTypeId) } as any })}>
-                            <Zap className="size-4 mr-2" />
-                            Execute
+                            Settings
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -168,6 +147,21 @@ export function OrchestrationTable({ configs, entityTypes, isLoading }: Orchestr
           </TableBody>
         </Table>
       </div>
+
+      {/* ── Pagination ─────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-6 py-5 bg-white border-t border-slate-100">
+        <p className="text-[13px] text-slate-500 font-medium">
+          Showing 1 to {configs.length} of {configs.length} orchestrations
+        </p>
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="sm" className="h-9 text-[13px] font-semibold px-4 rounded-md border-slate-200 text-slate-600 hover:bg-slate-50">Previous</Button>
+          <Button size="sm" className="h-9 w-9 text-[13px] font-bold p-0 rounded-md bg-slate-900 text-white shadow-md">1</Button>
+          <Button variant="outline" size="sm" className="h-9 w-9 text-[13px] font-semibold p-0 rounded-md border-slate-200 text-slate-600 hover:bg-slate-50">2</Button>
+          <Button variant="outline" size="sm" className="h-9 w-9 text-[13px] font-semibold p-0 rounded-md border-slate-200 text-slate-600 hover:bg-slate-50">3</Button>
+          <Button variant="outline" size="sm" className="h-9 text-[13px] font-semibold px-4 rounded-md border-slate-200 text-slate-600 hover:bg-slate-50">Next</Button>
+        </div>
+      </div>
+
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>

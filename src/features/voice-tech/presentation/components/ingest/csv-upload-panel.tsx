@@ -153,9 +153,9 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-2 pb-2">
-         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Storage Category / Dataset Name</p>
+    <div className="space-y-5">
+      <div className="space-y-2">
+         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Storage Category / Dataset Name</p>
          
          <Combobox 
             value={localType} 
@@ -171,7 +171,7 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
             <div className="relative">
                <ComboboxInput 
                   placeholder="Select or type new category..."
-                  className="h-9 text-xs font-mono w-full pr-10"
+                  className="h-11 text-sm font-medium w-full pr-10 border-slate-200 rounded-md bg-white placeholder:text-slate-300"
                   value={localType}
                   onChange={(e) => {
                      setLocalType(e.target.value);
@@ -207,7 +207,7 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
             </ComboboxContent>
          </Combobox>
 
-         <p className="text-[10px] text-muted-foreground italic">Naming this uniquely prevents mixing data from different CSVs.</p>
+         <p className="text-[11px] text-slate-400 font-medium">Naming this uniquely prevents mixing data from different CSVs.</p>
       </div>
 
       {/* Drop Zone */}
@@ -221,19 +221,19 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
           onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
           onDragLeave={() => setIsDragOver(false)}
           className={cn(
-            "flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed p-8 transition-all",
+            "flex cursor-pointer flex-col items-center gap-4 rounded-md border-2 border-dashed p-10 transition-all",
             isDragOver
-              ? "border-primary bg-primary/5"
-              : "border-border bg-muted/20 hover:border-primary/40 hover:bg-primary/5"
+              ? "border-slate-400 bg-slate-50"
+              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
           )}
         >
-          <div className="rounded-2xl bg-primary/10 p-4 text-primary shadow-inner border border-primary/10 group-hover:scale-110 transition-transform duration-300">
-            <FileSpreadsheet className="size-6" />
+          <div className="size-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500">
+            <FileSpreadsheet className="size-6" strokeWidth={1.5} />
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-foreground">Drag & drop your file here</p>
-            <p className="mt-1 text-xs text-muted-foreground">or <span className="text-primary font-bold underline underline-offset-4">browse files</span></p>
-            <p className="mt-3 text-[10px] text-muted-foreground/60 font-medium">Supports CSV, XLS, XLSX</p>
+            <p className="text-sm font-bold text-slate-900">Drag &amp; drop your file here</p>
+            <p className="mt-1 text-sm text-slate-500">or <span className="font-bold text-slate-900 underline underline-offset-4">browse files</span></p>
+            <p className="mt-3 text-[11px] text-slate-400 font-medium">Supports CSV, XLS, XLSX</p>
           </div>
           <input
             ref={inputRef}
@@ -267,7 +267,7 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
           </div>
           <Button
             size="sm"
-            className="w-full"
+            className="w-full h-11 rounded-md bg-slate-900 text-white hover:bg-slate-800 border-none font-bold text-sm uppercase tracking-wider"
             onClick={handleIngest}
             disabled={ingestMutation.isPending || !localType.trim()}
           >
@@ -374,13 +374,13 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
 
           {["completed", "failed"].includes(jobStatus!) && (
             <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={reset} 
-              className="w-full h-10 rounded-xl font-semibold border-border/60 hover:bg-muted"
-            >
-              Upload Another Dataset
-            </Button>
+            variant="outline" 
+            size="sm" 
+            onClick={reset} 
+            className="w-full h-11 rounded-md font-bold border-slate-200 hover:bg-slate-50 text-slate-600"
+          >
+            Upload Another Dataset
+          </Button>
           )}
         </div>
       )}

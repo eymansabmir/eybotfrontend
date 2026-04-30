@@ -1,12 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
-  ArrowLeft,
   ChevronRight,
   Database,
   GitBranch,
   Zap,
-  Check,
   Loader2,
   Plus,
   Activity,
@@ -231,77 +229,82 @@ export function OrchestrationWizardPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
+
       {/* ── Progress Header ───────────────────────────────── */}
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-4">
-          <Link to="/voice-tech">
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <ArrowLeft className="size-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {createdConfigId ? "Edit Orchestration" : "Create New Orchestration"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {createdConfigId 
-                ? `Modifying "${orchestrationName}" routing configuration.` 
-                : "Set up a unified voice call strategy in minutes."
-              }
-            </p>
-          </div>
+        <div className="flex flex-col gap-1">
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+            ORCHESTRATOR <span className="mx-2 text-slate-300">›</span> NEW ORCHESTRATION
+          </p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+            Create New Orchestration
+          </h1>
+          <p className="text-sm font-medium text-slate-500 max-w-2xl">
+            Configure institutional-grade data pipelines with precision rule mapping.
+          </p>
         </div>
 
-        {/* Progress bar */}
-        <div className="relative flex justify-between items-center px-4">
-          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-border -translate-y-1/2 -z-10 mx-10" />
+
+        {/* Enterprise Stepper */}
+        <div className="grid grid-cols-3 gap-3">
           {STEPS.map((step) => {
-            const Icon = step.icon;
             const isActive = currentStep === step.id;
             const isCompleted = currentStep > step.id;
-
             return (
-              <div key={step.id} className="flex flex-col items-center gap-2 bg-background px-2">
+              <div key={step.id} className={cn(
+                "flex items-center gap-3 px-5 py-4 rounded-xl border transition-all duration-200",
+                isActive
+                  ? "bg-white border-slate-900 shadow-sm"
+                  : isCompleted
+                  ? "bg-white border-slate-200"
+                  : "bg-white/60 border-slate-100 opacity-50"
+              )}>
                 <div className={cn(
-                  "size-10 rounded-full flex items-center justify-center border-2 transition-all duration-300",
-                  isActive ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20 scale-110" : 
-                  isCompleted ? "bg-emerald-500 border-emerald-500 text-white" : 
-                  "bg-card border-border text-muted-foreground"
+                  "size-9 rounded-lg flex items-center justify-center font-black text-sm shrink-0",
+                  isActive ? "bg-slate-900 text-white" : isCompleted ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400"
                 )}>
-                  {isCompleted ? <Check className="size-5" /> : <Icon className="size-5" />}
+                  {step.id}
                 </div>
-                <div className="text-center">
-                  <p className={cn("text-xs font-bold", isActive ? "text-primary" : isCompleted ? "text-emerald-600" : "text-muted-foreground")}>
+                <div className="min-w-0">
+                  <p className={cn("text-[13px] font-bold tracking-wide truncate", isActive ? "text-slate-900" : "text-slate-500")}>
                     {step.name}
+                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
+                    {isActive ? "Active" : isCompleted ? "Completed" : "Pending"}
                   </p>
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+
+
+
 
       {/* ── Step Content ──────────────────────────────────── */}
-      <Card className="border-border/60 shadow-xl overflow-hidden rounded-2xl bg-card/50 backdrop-blur-sm">
-        <CardContent className="p-8">
+      <Card className="border-slate-200 shadow-sm overflow-hidden rounded-xl bg-white">
+        <CardContent className="p-10">
+
           {currentStep === 1 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="space-y-4">
-                <div className="space-y-2 relative">
-                  <label className="text-sm font-semibold text-foreground ml-1">Orchestration Name</label>
+              <div className="space-y-8">
+                <div className="space-y-3 relative">
+                  <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+                    Orchestration Name
+                  </label>
                   <div className="relative">
                     <Input 
-                      placeholder="e.g., Q4 Customer Feedback" 
+                      placeholder="e.g., Q4_AUDIT_CONSOLIDATION_V2" 
                       value={orchestrationName}
                       onChange={(e) => {
                         setOrchestrationName(e.target.value);
                         setCreatedConfigId(null); 
                       }}
                       className={cn(
-                        "h-12 rounded-xl bg-card border-border/60 focus:ring-primary/20 text-lg font-medium",
-                        createdConfigId && "border-emerald-500/50 bg-emerald-50/10"
+                        "h-14 rounded-md bg-white border-slate-200 focus-visible:ring-1 focus-visible:ring-primary text-lg font-bold placeholder:text-slate-300",
+                        createdConfigId && "border-emerald-500/50"
                       )}
                     />
+
                     {createdConfigId && (
                       <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 size-5 text-emerald-500" />
                     )}
@@ -342,54 +345,84 @@ export function OrchestrationWizardPage() {
                   )}
                 </div>
 
-                <DatasetSelector 
-                  datasets={datasets}
-                  selectedDatasetIds={selectedDatasetIds}
-                  onSelect={setSelectedDatasetIds}
-                  tenantId={TENANT_ID}
-                />
+                <div className="space-y-3">
+                  <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+                    Select Dataset Source
+                  </label>
+                  <DatasetSelector 
+                    datasets={datasets}
+                    selectedDatasetIds={selectedDatasetIds}
+                    onSelect={setSelectedDatasetIds}
+                    tenantId={TENANT_ID}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-5 rounded-md border border-slate-100 bg-slate-50/50 flex gap-4">
+                    <div className="size-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="size-5 text-slate-900" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">Schema Validation</p>
+                      <p className="text-[11px] font-medium text-slate-500 mt-0.5">Ensures source data matches orchestration requirements.</p>
+                    </div>
+                  </div>
+                  <div className="p-5 rounded-md border border-slate-100 bg-slate-50/50 flex gap-4">
+                    <div className="size-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shrink-0">
+                      <Activity className="size-5 text-slate-900" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">Lineage Tracking</p>
+                      <p className="text-[11px] font-medium text-slate-500 mt-0.5">Automatic audit trails enabled for this project.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="pt-6 border-t flex items-center justify-between">
-                <p className="text-xs text-muted-foreground italic">
-                  * Name and at least one dataset are required to proceed to rule configuration.
-                </p>
+
+              <div className="pt-8 border-t border-slate-100 flex items-center gap-4">
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate({ to: "/voice-tech" })}
+                  className="h-12 px-10 rounded-md border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </Button>
+                <div className="flex-1" />
                 <Button 
                   onClick={handleNext} 
                   disabled={!orchestrationName || selectedDatasetIds.length === 0 || createConfig.isPending}
-                  className="gap-2 h-11 px-8 rounded-xl shadow-lg shadow-primary/10"
+                  className="gap-2 h-12 px-10 rounded-md bg-[#FFE600] text-[#1A1A24] hover:bg-[#FFE600]/90 border-none font-black text-sm uppercase tracking-wider group"
                 >
                   {createConfig.isPending || updateConfig.isPending ? (
                     <Loader2 className="size-4 animate-spin" />
-                  ) : createdConfigId ? (
-                    <>
-                       Go to Rules
-                      <ChevronRight className="size-4" />
-                    </>
                   ) : (
                     <>
                       Continue to Rules
-                      <ChevronRight className="size-4" />
+                      <ChevronRight className="size-4 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
                 </Button>
               </div>
+
             </div>
           )}
 
           {currentStep === 2 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold">Configure Routing Rules</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Define logic for "{orchestrationName}" using {selectedDatasetIds.length} datasets: {datasetNames.join(", ")}
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+                    Step 2 — Define Rules
+                  </p>
+                  <h3 className="text-xl font-extrabold text-slate-900">Configure Routing Rules</h3>
+                  <p className="text-sm font-medium text-slate-500">
+                    Define logic for <span className="font-bold text-slate-700">"{orchestrationName}"</span> using {selectedDatasetIds.length} dataset{selectedDatasetIds.length !== 1 ? 's' : ''}: {datasetNames.join(", ")}
                   </p>
                 </div>
                 <Button 
                   onClick={() => setIsCreateRuleOpen(true)} 
-                  className="gap-2 h-10 rounded-xl"
-                  size="sm"
+                  className="gap-2 h-11 px-6 rounded-md bg-slate-900 text-white hover:bg-slate-800 font-bold text-sm shrink-0"
                 >
                   <Plus className="size-4" />
                   Add Rule
@@ -422,11 +455,12 @@ export function OrchestrationWizardPage() {
                 )}
               </div>
 
-              <div className="pt-6 border-t flex items-center justify-between">
-                <Button variant="ghost" onClick={handleBack} className="h-11 rounded-xl">Back</Button>
-                <Button onClick={handleNext} className="gap-2 h-11 px-8 rounded-xl shadow-lg shadow-primary/10">
-                  Execute
-                  <ChevronRight className="size-4" />
+              <div className="pt-8 border-t border-slate-100 flex items-center gap-4">
+                <Button variant="outline" onClick={handleBack} className="h-12 px-8 rounded-md border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50">Back</Button>
+                <div className="flex-1" />
+                <Button onClick={handleNext} className="gap-2 h-12 px-10 rounded-md bg-[#FFE600] text-[#1A1A24] hover:bg-[#FFE600]/90 border-none font-black text-sm uppercase tracking-wider group">
+                  Review & Execute
+                  <ChevronRight className="size-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
             </div>
@@ -434,6 +468,14 @@ export function OrchestrationWizardPage() {
 
           {currentStep === 3 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+              {/* Step 3 Header */}
+              {!isProcessing && !executionResult && (
+                <div className="space-y-1">
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Step 3 — Review & Launch</p>
+                  <h3 className="text-xl font-extrabold text-slate-900">Finalize &amp; Execute</h3>
+                  <p className="text-sm font-medium text-slate-500">Review your configuration and initiate calls for all matched entities.</p>
+                </div>
+              )}
               {isProcessing ? (
                 <div className="py-20 flex flex-col items-center justify-center text-center gap-6">
                   <div className="relative">
@@ -460,10 +502,11 @@ export function OrchestrationWizardPage() {
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <ResultCard label="Total Scanned" value={executionResult.totalProcessed} color="text-foreground" bg="bg-muted/20" />
-                    <ResultCard label="Calls Initiated" value={executionResult.initiated} color="text-emerald-700" bg="bg-emerald-500/10 border-emerald-500/20" />
-                    <ResultCard label="Skipped" value={executionResult.skipped} color="text-amber-700" bg="bg-amber-500/10 border-amber-500/20" />
-                    <ResultCard label="Failed" value={executionResult.failed} color="text-rose-700" bg="bg-rose-500/10 border-rose-500/20" />
+                    <ResultCard label="Total Scanned" value={executionResult?.totalProcessed ?? 0} color="text-foreground" bg="bg-muted/20" />
+                    <ResultCard label="Calls Initiated" value={executionResult?.initiated ?? 0} color="text-emerald-700" bg="bg-emerald-500/10 border-emerald-500/20" />
+                    <ResultCard label="Skipped" value={executionResult?.skipped ?? 0} color="text-amber-700" bg="bg-amber-500/10 border-amber-500/20" />
+                    <ResultCard label="Failed" value={executionResult?.failed ?? 0} color="text-rose-700" bg="bg-rose-500/10 border-rose-500/20" />
+
                   </div>
 
                   <div className="flex gap-3">
@@ -523,14 +566,16 @@ export function OrchestrationWizardPage() {
                     </p>
                   </div>
 
-                  <div className="pt-6 border-t flex items-center justify-between">
-                    <Button variant="ghost" onClick={handleBack} className="h-11 rounded-xl">Back</Button>
+                  <div className="pt-8 border-t border-slate-100 flex items-center gap-4">
+                    <Button variant="outline" onClick={handleBack} className="h-12 px-8 rounded-md border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50">Back</Button>
+                    <div className="flex-1" />
                     <Button 
                       onClick={handleExecute} 
-                      className="gap-2 h-11 px-8 rounded-xl bg-[#FFE600] text-[#1A1A24] hover:bg-[#FFE600]/90 border-none font-bold"
+                      className="gap-2 h-12 px-10 rounded-md bg-[#FFE600] text-[#1A1A24] hover:bg-[#FFE600]/90 border-none font-black text-sm uppercase tracking-wider group"
                     >
                       <Zap className="size-4" />
                       Execute Now
+                      <ChevronRight className="size-4 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </div>
                 </div>

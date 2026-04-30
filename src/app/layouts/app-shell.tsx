@@ -110,10 +110,17 @@ export function AppShell({ children }: { children: ReactNode }) {
                       >
                         <SidebarMenuItem>
                           <CollapsibleTrigger asChild>
-                            <SidebarMenuButton tooltip={item.label} isActive={isActive}>
-                              <item.icon className="size-4" />
+                            <SidebarMenuButton 
+                              tooltip={item.label} 
+                              isActive={isActive}
+                              className={cn(
+                                "transition-all duration-200 h-10 rounded-none",
+                                isActive && "bg-slate-50 text-foreground border-l-[3px] border-yellow-400 font-bold"
+                              )}
+                            >
+                              <item.icon className={cn("size-4", isActive ? "text-primary" : "text-muted-foreground")} />
                               <span>{item.label}</span>
-                              <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                              <ChevronRight className="ml-auto size-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                             </SidebarMenuButton>
                           </CollapsibleTrigger>
                           <CollapsibleContent>
@@ -140,9 +147,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                         asChild
                         tooltip={item.label}
                         isActive={isActive}
+                        className={cn(
+                          "transition-all duration-200 h-10 rounded-none",
+                          isActive && "bg-slate-50 text-foreground border-l-[3px] border-yellow-400 font-bold"
+                        )}
                       >
                         <Link to={item.to}>
-                          <item.icon className="size-4" />
+                          <item.icon className={cn("size-4", isActive ? "text-primary" : "text-muted-foreground")} />
                           <span>{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
@@ -213,9 +224,9 @@ function Header() {
         <SidebarTrigger />
         <Separator orientation="vertical" className="h-6" />
         {/* Removed duplicate EY text as requested to keep only one EY icon in the navbar/sidebar */}
-        <div className="ml-auto flex min-w-0 items-center gap-2">
-          <Input className="hidden w-40 lg:w-56 md:block" placeholder="Quick search" />
-          <Button size="sm" className="bg-[#FFE600] text-black hover:brightness-95 transition-all shadow-sm">
+        <div className="ml-auto flex min-w-0 items-center gap-3">
+          <Input className="hidden w-40 lg:w-56 md:block h-9 bg-slate-50/50 border-slate-200 text-xs rounded-lg" placeholder="Quick search..." />
+          <Button size="sm" className="bg-black text-white hover:bg-black/90 transition-all shadow-sm h-9 px-5 rounded-lg text-xs font-bold">
             New flow
           </Button>
           <Button variant="ghost" size="icon">
@@ -235,3 +246,4 @@ function Header() {
     </div>
   )
 }
+import { cn } from "@/lib/utils";
