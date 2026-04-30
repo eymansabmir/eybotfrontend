@@ -135,6 +135,8 @@ export interface RoutingConfigSummary {
   name: string;
   createdAt: string;
   updatedAt: string;
+  successRate?: number;
+  throughput?: number;
 }
 
 /** GET /routing/:id — full config with active rules */

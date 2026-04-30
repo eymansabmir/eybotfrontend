@@ -155,7 +155,7 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
   return (
     <div className="space-y-5">
       <div className="space-y-2">
-         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Storage Category / Dataset Name</p>
+         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">Storage Category / Dataset Name</p>
          
          <Combobox 
             value={localType} 
@@ -171,7 +171,7 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
             <div className="relative">
                <ComboboxInput 
                   placeholder="Select or type new category..."
-                  className="h-11 text-sm font-medium w-full pr-10 border-slate-200 rounded-md bg-white placeholder:text-slate-300"
+                  className="h-11 text-sm font-medium w-full pr-10 border-border rounded-md bg-background placeholder:text-muted-foreground/30"
                   value={localType}
                   onChange={(e) => {
                      setLocalType(e.target.value);
@@ -207,7 +207,7 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
             </ComboboxContent>
          </Combobox>
 
-         <p className="text-[11px] text-slate-400 font-medium">Naming this uniquely prevents mixing data from different CSVs.</p>
+         <p className="text-[11px] text-muted-foreground/60 font-medium">Naming this uniquely prevents mixing data from different CSVs.</p>
       </div>
 
       {/* Drop Zone */}
@@ -223,17 +223,17 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
           className={cn(
             "flex cursor-pointer flex-col items-center gap-4 rounded-md border-2 border-dashed p-10 transition-all",
             isDragOver
-              ? "border-slate-400 bg-slate-50"
-              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+              ? "border-primary/50 bg-primary/5"
+              : "border-border bg-card hover:border-muted-foreground/30 hover:bg-muted/50"
           )}
         >
-          <div className="size-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500">
+          <div className="size-12 rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
             <FileSpreadsheet className="size-6" strokeWidth={1.5} />
           </div>
           <div className="text-center">
-            <p className="text-sm font-bold text-slate-900">Drag &amp; drop your file here</p>
-            <p className="mt-1 text-sm text-slate-500">or <span className="font-bold text-slate-900 underline underline-offset-4">browse files</span></p>
-            <p className="mt-3 text-[11px] text-slate-400 font-medium">Supports CSV, XLS, XLSX</p>
+            <p className="text-sm font-bold text-foreground">Drag &amp; drop your file here</p>
+            <p className="mt-1 text-sm text-muted-foreground">or <span className="font-bold text-foreground underline underline-offset-4">browse files</span></p>
+            <p className="mt-3 text-[11px] text-muted-foreground/60 font-medium">Supports CSV, XLS, XLSX</p>
           </div>
           <input
             ref={inputRef}
@@ -267,7 +267,7 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
           </div>
           <Button
             size="sm"
-            className="w-full h-11 rounded-md bg-slate-900 text-white hover:bg-slate-800 border-none font-bold text-sm uppercase tracking-wider"
+            className="w-full h-11 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 border-none font-bold text-sm uppercase tracking-wider"
             onClick={handleIngest}
             disabled={ingestMutation.isPending || !localType.trim()}
           >
@@ -377,7 +377,7 @@ export function CsvUploadPanel({ tenantId, entityType: initialType }: CsvUploadP
             variant="outline" 
             size="sm" 
             onClick={reset} 
-            className="w-full h-11 rounded-md font-bold border-slate-200 hover:bg-slate-50 text-slate-600"
+            className="w-full h-11 rounded-md font-bold border-border hover:bg-muted text-muted-foreground"
           >
             Upload Another Dataset
           </Button>

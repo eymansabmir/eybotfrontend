@@ -2,11 +2,8 @@ import { useMemo } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import {
   ArrowLeft,
-  Database,
   GitBranch,
-  Phone,
   CheckCircle2,
-  XCircle,
   ChevronRight,
   RefreshCw,
   Activity,
@@ -34,10 +31,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Tooltip,
-  TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
 } from "@/components/ui/tooltip";
 
 import { useOrchestrationStats } from "../../api/voice-tech-queries";
@@ -97,36 +91,6 @@ function AnalyticsSkeleton() {
   );
 }
 
-// ─── KPI Card ───────────────────────────────────────────────────
-function KpiCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  iconClassName,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-  sub?: string;
-  iconClassName?: string;
-}) {
-  return (
-    <Card className="py-4 gap-3">
-      <CardContent className="flex items-center gap-4">
-        <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", iconClassName)}>
-          <Icon className="size-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
-          <p className="text-2xl font-bold text-foreground tabular-nums leading-tight">{value}</p>
-          {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 // ═════════════════════════════════════════════════════════════════
 // ─── Main Page ──────────────────────────────────────────────────
 // ═════════════════════════════════════════════════════════════════
@@ -144,17 +108,17 @@ export function RoutingAnalyticsPage() {
 
   if (!stats) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[500px] gap-4 text-center px-6">
-        <div className="size-14 rounded-2xl bg-muted flex items-center justify-center">
-          <BarChart3 className="size-6 text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center min-h-[500px] gap-4 text-center px-6 bg-background">
+        <div className="size-14 rounded-2xl bg-card border border-border shadow-sm flex items-center justify-center">
+          <BarChart3 className="size-6 text-muted-foreground/40" />
         </div>
         <div>
-          <p className="text-lg font-semibold text-foreground">No analytics data yet</p>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-lg font-bold text-foreground">No analytics data found</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm">
             Analytics will appear here once calls are processed through this routing configuration.
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" asChild className="rounded-lg mt-2">
           <Link to="/voice-tech">Back to Dashboard</Link>
         </Button>
       </div>
@@ -163,386 +127,316 @@ export function RoutingAnalyticsPage() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8 font-sans">
-        <div className="max-w-[1400px] mx-auto space-y-6">
+      <div className="min-h-screen bg-background -mx-8 -mt-8 px-8 pt-8 font-sans">
+        <div className="max-w-[1400px] mx-auto space-y-8 pb-12">
 
           {/* ── 1. Header ───────────────────────────────────── */}
-          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="rounded-lg shrink-0" asChild>
+          <header className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" className="rounded-full bg-card border border-border shadow-sm hover:bg-muted shrink-0" asChild>
                 <Link to="/voice-tech">
                   <ArrowLeft className="size-4" />
                 </Link>
               </Button>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl lg:text-2xl font-bold text-foreground tracking-tight">
+              <div className="space-y-1">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h1 className="text-2xl font-bold text-foreground tracking-tight">
                     {stats.routingName}
                   </h1>
-                  <Badge variant="outline" className={cn("text-[10px] font-semibold uppercase", STATUS_STYLES[stats.configStatus])}>
+                  <div className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border", STATUS_STYLES[stats.configStatus])}>
                     {stats.configStatus}
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px] font-medium text-muted-foreground">
+                  </div>
+                  <div className="px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border text-[10px] font-bold uppercase tracking-wider">
                     {stats.routingType}
-                  </Badge>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {stats.rulesCount} routing {stats.rulesCount === 1 ? "rule" : "rules"} &middot; {stats.datasets.length > 0 ? stats.datasets.join(", ") : "No dataset linked"}
+                <p className="text-sm text-muted-foreground">
+                  {stats.rulesCount} rules configured &middot; {stats.datasets.length > 0 ? stats.datasets.join(", ") : "No dataset linked"}
                 </p>
               </div>
             </div>
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 self-start sm:self-auto"
+              className="gap-2 h-10 px-4 bg-card border-border rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-muted"
               onClick={() => refetch()}
               disabled={isFetching}
             >
               <RefreshCw className={cn("size-3.5", isFetching && "animate-spin")} />
-              Refresh
+              Refresh Analytics
             </Button>
           </header>
 
           {/* ── 2. KPI Summary Cards ────────────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            <KpiCard
-              icon={Database}
-              label="Total Records"
-              value={(stats.totalDatasetRecords ?? 0).toLocaleString()}
-              sub="Records in linked dataset"
-              iconClassName="bg-slate-500/10 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400"
+            <StatsCard 
+              title="Total Records" 
+              value={(stats.totalDatasetRecords ?? 0).toLocaleString()} 
+              trend="Dataset Size" 
+              barColor="bg-primary"
+              isTrendPositive={true}
+              progress={100}
             />
-            <KpiCard
-              icon={GitBranch}
-              label="Matched Audience"
-              value={(stats.liveMatchedCount ?? 0).toLocaleString()}
-              sub={`${formatPercentage(stats.liveMatchedCount ?? 0, stats.totalDatasetRecords ?? 1)} rule coverage`}
-              iconClassName="bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+            <StatsCard 
+              title="Matched Audience" 
+              value={(stats.liveMatchedCount ?? 0).toLocaleString()} 
+              trend={`${formatPercentage(stats.liveMatchedCount ?? 0, stats.totalDatasetRecords ?? 1)} coverage`} 
+              barColor="bg-emerald-500"
+              isTrendPositive={true}
+              progress={Math.round(((stats.liveMatchedCount ?? 0) / (stats.totalDatasetRecords ?? 1)) * 100)}
             />
-            <KpiCard
-              icon={Activity}
-              label="Unmatched"
-              value={(stats.liveUnmatchedCount ?? 0).toLocaleString()}
-              sub="Records ignoring rules"
-              iconClassName="bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400"
+            <StatsCard 
+              title="Unmatched" 
+              value={(stats.liveUnmatchedCount ?? 0).toLocaleString()} 
+              trend="Outside Rules" 
+              barColor="bg-amber-400"
+              isTrendPositive={false}
+              progress={Math.round(((stats.liveUnmatchedCount ?? 0) / (stats.totalDatasetRecords ?? 1)) * 100)}
             />
-            <KpiCard
-              icon={Phone}
-              label="Calls Processed"
-              value={(stats.totalCallsProcessed ?? 0).toLocaleString()}
-              sub={`${(stats.totalEvents ?? 0).toLocaleString()} pipeline events`}
-              iconClassName="bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
+            <StatsCard 
+              title="Calls Processed" 
+              value={(stats.totalCallsProcessed ?? 0).toLocaleString()} 
+              trend="Executed" 
+              barColor="bg-primary"
+              isTrendPositive={true}
+              progress={80}
             />
-            <KpiCard
-              icon={XCircle}
-              label="Total Failed"
-              value={(stats.totalErrors ?? 0).toLocaleString()}
-              sub="Call execution failures"
-              iconClassName="bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400"
+            <StatsCard 
+              title="Success Rate" 
+              value={stats.totalCallsProcessed > 0 ? `${Math.round(((stats.totalCallsProcessed - stats.totalErrors) / stats.totalCallsProcessed) * 100)}%` : "0%"} 
+              trend="Stable" 
+              barColor="bg-emerald-500"
+              isTrendPositive={true}
+              progress={stats.totalCallsProcessed > 0 ? Math.round(((stats.totalCallsProcessed - stats.totalErrors) / stats.totalCallsProcessed) * 100) : 0}
             />
           </div>
 
           {/* ── 3. Provider Distribution ────────────────────── */}
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Activity className="size-4 text-muted-foreground" />
-                Voice Provider Distribution
-              </CardTitle>
-              <CardDescription>
-                How calls are distributed across your voice providers
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {stats.providerBreakdown.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <div className="size-10 rounded-xl bg-muted flex items-center justify-center mb-3">
-                    <Zap className="size-4 text-muted-foreground" />
-                  </div>
-                  <p className="text-sm font-medium text-foreground">No provider data yet</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Provider metrics appear once calls are executed through this routing.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {stats.providerBreakdown.map((provider) => {
-                    const pct = totalProviderCalls > 0
-                      ? Math.round((provider.callCount / totalProviderCalls) * 100)
-                      : 0;
-                    const colors = getProviderColor(provider.providerName);
-                    return (
-                      <div key={provider.providerId} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className={cn("size-8 rounded-lg flex items-center justify-center text-xs font-bold uppercase", colors.bg, colors.text)}>
-                              {provider.providerName.slice(0, 2)}
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-foreground capitalize">{provider.providerName}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {provider.callCount} {provider.callCount === 1 ? "call" : "calls"}
-                                {provider.avgDurationMs > 0 && ` · avg ${formatMs(provider.avgDurationMs)}`}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 text-xs">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 cursor-default">
-                                  <CheckCircle2 className="size-3" /> {provider.successCount}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Successful calls</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="flex items-center gap-1 text-red-600 dark:text-red-400 cursor-default">
-                                  <XCircle className="size-3" /> {provider.errorCount}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Failed calls</TooltipContent>
-                            </Tooltip>
-                            <Badge variant="secondary" className="tabular-nums font-semibold text-[11px] min-w-[40px] justify-center">
-                              {pct}%
-                            </Badge>
-                          </div>
-                        </div>
-                        <Progress
-                          value={pct}
-                          className="h-2 bg-muted"
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* ── 4. Routing Flow Visualization ───────────────── */}
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <GitBranch className="size-4 text-muted-foreground" />
-                Routing Flow
-              </CardTitle>
-              <CardDescription>
-                How your data flows from the source dataset through rules to voice providers
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {stats.ruleStats.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <p className="text-sm font-medium text-foreground">No rules configured</p>
-                  <p className="text-xs text-muted-foreground mt-1">Add routing rules to see the flow visualization.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto pb-4 -mx-2 px-2">
-                  <div className="grid grid-cols-1 lg:grid-cols-[180px_1fr_220px] gap-0 lg:gap-0 items-stretch min-w-[800px] lg:min-w-0">
-  
-                    {/* Column 1: Dataset Source */}
-                    <div className="flex items-center justify-center lg:border-r border-border px-4 py-6">
-                      <div className="flex flex-col items-center gap-2 text-center">
-                        <div className="size-12 rounded-2xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
-                          <Database className="size-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">
-                            {stats.datasets[0] || "All Data"}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">Data Source</p>
-                          {stats.totalDatasetRecords !== undefined && (
-                            <Badge variant="secondary" className="mt-2 text-[10px]">
-                              {stats.totalDatasetRecords.toLocaleString()} records
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-  
-                    {/* Column 2: Rule Conditions */}
-                    <div className="flex flex-col gap-2 px-4 py-3 lg:border-r border-border">
-                      {stats.ruleStats.map((rule: RuleAnalyticsStat) => {
-                        const colors = getProviderColor(rule.provider);
-                        return (
-                          <div
-                            key={rule.ruleId}
-                            className={cn(
-                              "flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors",
-                              "bg-card hover:bg-accent/50 cursor-default"
-                            )}
-                          >
-                            {/* Connector dot */}
-                            <div className="flex items-center gap-2 shrink-0">
-                              <div className={cn(
-                                "size-6 rounded-md flex items-center justify-center text-[10px] font-bold",
-                                rule.isActive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"
-                              )}>
-                                {rule.priority}
-                              </div>
-                              <ChevronRight className="size-3 text-muted-foreground hidden lg:block" />
-                            </div>
-  
-                            {/* Rule condition */}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-foreground truncate">
-                                {rule.conditionsSummary}
-                              </p>
-                              <p className="text-[11px] text-muted-foreground">
-                                {rule.matchCount} matched · <span className="text-emerald-600 dark:text-emerald-400 font-medium">{rule.successCount} successful</span> · <span className="text-rose-500 font-medium">{rule.failedCount} failed</span>
-                              </p>
-                            </div>
-  
-                            {/* Arrow to provider */}
-                            <ChevronRight className="size-3.5 text-muted-foreground shrink-0 hidden lg:block" />
-  
-                            {/* Provider chip */}
-                            <Badge variant="outline" className={cn("shrink-0 text-[10px] font-semibold capitalize", colors.text)}>
-                              {rule.provider}
-                            </Badge>
-                          </div>
-                        );
-                      })}
-                    </div>
-  
-                    {/* Column 3: Provider Summary */}
-                    <div className="flex flex-col gap-2 px-4 py-3">
-                      {stats.providerBreakdown.length > 0 ? (
-                        stats.providerBreakdown.map((p) => {
-                          const colors = getProviderColor(p.providerName);
-                          const pct = totalProviderCalls > 0
-                            ? Math.round((p.callCount / totalProviderCalls) * 100)
-                            : 0;
-                          return (
-                            <div
-                              key={p.providerId}
-                              className="flex items-center gap-3 rounded-lg border px-3 py-2.5 bg-card"
-                            >
-                              <div className={cn("size-8 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase", colors.bg, colors.text)}>
-                                {p.providerName.slice(0, 2)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-foreground capitalize truncate">{p.providerName}</p>
-                                <p className="text-[11px] text-muted-foreground tabular-nums">{p.callCount} calls · {pct}%</p>
-                              </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        // Show a placeholder based on rule provider names
-                        [...new Set(stats.ruleStats.map((r: RuleAnalyticsStat) => r.provider))].map((name) => {
-                          const colors = getProviderColor(name);
-                          return (
-                            <div key={name} className="flex items-center gap-3 rounded-lg border border-dashed px-3 py-2.5 bg-card">
-                              <div className={cn("size-8 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase", colors.bg, colors.text)}>
-                                {name.slice(0, 2)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-foreground capitalize truncate">{name}</p>
-                                <p className="text-[11px] text-muted-foreground">0 calls · awaiting data</p>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
+          <div className="flex flex-col gap-8">
+            <Card className="border-border shadow-sm rounded-xl overflow-hidden">
+              <CardHeader className="p-6 border-b border-border bg-card">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2">
+                      <Activity className="size-4 text-muted-foreground/60" />
+                      Voice Provider Distribution
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-1">Workload balance across connected AI engines</CardDescription>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="p-6 bg-card">
+                {stats.providerBreakdown.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Zap className="size-8 text-muted/20 mb-3" />
+                    <p className="text-xs font-bold text-muted-foreground/60 uppercase tracking-widest">Awaiting execution data...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {stats.providerBreakdown.map((provider) => {
+                      const pct = totalProviderCalls > 0
+                        ? Math.round((provider.callCount / totalProviderCalls) * 100)
+                        : 0;
+                      const colors = getProviderColor(provider.providerName);
+                      return (
+                        <div key={provider.providerId} className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={cn("size-9 rounded-lg flex items-center justify-center text-[10px] font-black uppercase border shadow-sm", colors.bg, colors.text)}>
+                                {provider.providerName.slice(0, 2)}
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-foreground capitalize">{provider.providerName}</p>
+                                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-tight">
+                                  {provider.callCount} calls {provider.avgDurationMs > 0 && `· ${formatMs(provider.avgDurationMs)}`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded">
+                                <CheckCircle2 className="size-3" /> {provider.successCount}
+                              </div>
+                              <div className="text-[10px] font-bold text-foreground bg-muted px-2 py-1 rounded-md min-w-[36px] text-center">
+                                {pct}%
+                              </div>
+                            </div>
+                          </div>
+                          <Progress
+                            value={pct}
+                            className="h-1.5 bg-muted"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-          {/* ── 5. Rules Detail Table ───────────────────────── */}
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <BarChart3 className="size-4 text-muted-foreground" />
-                Rules Performance
-              </CardTitle>
-              <CardDescription>
-                Detailed breakdown of each routing rule&apos;s performance
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {stats.ruleStats.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No rules configured for this routing.</p>
-              ) : (
-                <div className="overflow-x-auto -mx-6">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-16 pl-6">Priority</TableHead>
-                        <TableHead>Rule Conditions</TableHead>
-                        <TableHead>Voice Provider</TableHead>
-                        <TableHead className="text-right">Matched</TableHead>
-                        <TableHead className="text-right">Processed</TableHead>
-                        <TableHead className="text-right">Success Rate</TableHead>
-                        <TableHead className="text-right pr-6">Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {stats.ruleStats.map((rule: RuleAnalyticsStat) => {
-                        const colors = getProviderColor(rule.provider);
-                        return (
-                          <TableRow key={rule.ruleId}>
-                            <TableCell className="pl-6">
-                              <Badge variant="outline" className="font-mono text-xs w-8 justify-center">
-                                {rule.priority}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <p className="text-sm font-medium text-foreground max-w-[300px] truncate">
-                                {rule.conditionsSummary}
-                              </p>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn("text-xs font-semibold capitalize", colors.text)}>
+            <Card className="border-border shadow-sm rounded-xl overflow-hidden">
+              <CardHeader className="p-6 border-b border-border bg-card">
+                <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2">
+                  <GitBranch className="size-4 text-muted-foreground/60" />
+                  Routing Logic Pipeline
+                </CardTitle>
+                <CardDescription className="text-xs mt-1">Visual flow from source dataset to voice providers</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 bg-card overflow-y-auto max-h-[400px] custom-scrollbar">
+                {stats.ruleStats.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <p className="text-xs font-bold text-muted-foreground/40 uppercase tracking-widest">No rules found</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {stats.ruleStats.map((rule: RuleAnalyticsStat) => {
+                      const colors = getProviderColor(rule.provider);
+                      return (
+                        <div
+                          key={rule.ruleId}
+                          className="flex items-center gap-4 rounded-xl border border-border p-4 bg-muted/10 hover:bg-muted/20 transition-colors"
+                        >
+                          <div className={cn(
+                            "size-8 rounded-lg flex items-center justify-center text-xs font-black border shadow-sm shrink-0",
+                            rule.isActive ? "bg-background text-foreground border-border" : "bg-muted text-muted-foreground border-border"
+                          )}>
+                            {rule.priority}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-foreground truncate">
+                              {rule.conditionsSummary}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1.5">
+                              <Badge variant="outline" className={cn("text-[10px] font-black uppercase tracking-widest h-5 px-2", colors.text)}>
                                 {rule.provider}
                               </Badge>
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums font-medium">
-                              {(rule.matchCount ?? 0).toLocaleString()}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums font-medium">
-                              {(rule.callCount ?? 0).toLocaleString()}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span className={cn(
-                                "text-sm font-semibold tabular-nums",
-                                rule.successRate >= 90 ? "text-emerald-600 dark:text-emerald-400" :
-                                rule.successRate >= 50 ? "text-amber-600 dark:text-amber-400" :
-                                rule.callCount === 0 ? "text-muted-foreground" :
-                                "text-red-600 dark:text-red-400"
-                              )}>
-                                {rule.callCount > 0 ? `${rule.successRate}%` : "—"}
+                              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">
+                                {rule.matchCount} matches
                               </span>
-                            </TableCell>
-                            <TableCell className="text-right pr-6">
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  "text-[10px] font-semibold",
-                                  rule.isActive
-                                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
-                                    : "bg-muted text-muted-foreground"
-                                )}
-                              >
-                                {rule.isActive ? "Active" : "Inactive"}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                            </div>
+                          </div>
+                          <ChevronRight className="size-4 text-slate-300" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* ── 4. Rules Detail Table ───────────────────────── */}
+          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-border">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2">
+                <BarChart3 className="size-4 text-muted-foreground/60" />
+                Rules Performance Deep-Dive
+              </CardTitle>
+            </div>
+            {stats.ruleStats.length === 0 ? (
+              <div className="p-12 text-center text-xs font-bold text-muted-foreground/40 uppercase tracking-widest">No rule execution history available</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent border-b border-border">
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-6 h-12 w-20">Priority</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-6 h-12">Rule Conditions</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-6 h-12">Voice Provider</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-6 h-12 text-right">Matched</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-6 h-12 text-right">Processed</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-6 h-12 text-right">Success Rate</TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 px-6 h-12 text-right">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stats.ruleStats.map((rule: RuleAnalyticsStat) => {
+                      const colors = getProviderColor(rule.provider);
+                      return (
+                        <TableRow key={rule.ruleId} className="hover:bg-muted/50 border-b border-border last:border-0 transition-colors">
+                          <TableCell className="px-6 py-5">
+                            <div className="size-8 rounded-lg bg-muted flex items-center justify-center text-[10px] font-black text-muted-foreground border border-border">
+                              {rule.priority}
+                            </div>
+                          </TableCell>
+                          <TableCell className="px-6 py-5">
+                            <p className="text-sm font-bold text-foreground max-w-[350px] truncate">
+                              {rule.conditionsSummary}
+                            </p>
+                          </TableCell>
+                          <TableCell className="px-6 py-5">
+                            <Badge variant="outline" className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-1", colors.text)}>
+                              {rule.provider}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="px-6 py-5 text-right font-bold text-foreground tabular-nums text-sm">
+                            {(rule.matchCount ?? 0).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="px-6 py-5 text-right font-bold text-foreground tabular-nums text-sm">
+                            {(rule.callCount ?? 0).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="px-6 py-5 text-right">
+                            <span className={cn(
+                              "text-xs font-black tabular-nums uppercase",
+                              rule.successRate >= 90 ? "text-emerald-600" :
+                              rule.successRate >= 50 ? "text-amber-600" :
+                              rule.callCount === 0 ? "text-slate-300" :
+                              "text-rose-600"
+                            )}>
+                              {rule.callCount > 0 ? `${rule.successRate}%` : "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-6 py-5 text-right">
+                            {rule.isActive ? (
+                              <div className="inline-flex items-center px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-black uppercase tracking-wider">
+                                Active
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border text-[9px] font-black uppercase tracking-wider">
+                                Inactive
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
 
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+function StatsCard({ title, value, trend, barColor, isTrendPositive, progress = 40 }: any) {
+  return (
+    <Card className="border-border bg-card shadow-sm overflow-hidden rounded-xl border hover:shadow-md transition-all duration-300">
+      <CardContent className="p-7">
+        <div className="flex items-start justify-between">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/80">{title}</p>
+          <div className={cn(
+            "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider",
+            isTrendPositive ? "text-emerald-500 bg-emerald-500/10" : "text-rose-600 bg-rose-500/10",
+            trend === "Stable" && "text-muted-foreground bg-muted"
+          )}>
+            {trend}
+          </div>
+        </div>
+        <div className="mt-5">
+          <h3 className="text-3xl font-bold tracking-tight text-foreground tabular-nums">
+            {value}
+          </h3>
+          <div className="mt-8 h-1 w-full bg-muted rounded-full overflow-hidden">
+            <div 
+              className={cn("h-full transition-all duration-1000", barColor)} 
+              style={{ width: `${progress}%` }} 
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

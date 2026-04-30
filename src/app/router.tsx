@@ -18,9 +18,11 @@ import { RoutingsPage } from "@/features/voice-tech/presentation/pages/routings-
 import { RoutingAnalyticsPage } from "@/features/voice-tech/presentation/pages/routing-analytics-page"
 import { ExecutePage } from "@/features/voice-tech/presentation/pages/execute-page"
 import { VendorsPage } from "@/features/voice-tech/presentation/pages/vendors-page"
-import { AgentsPage } from "@/features/voice-tech/presentation/pages/agents-page"
+import { VendorAgentsPage } from "@/features/voice-tech/presentation/pages/vendor-agents-page"
 import { OrchestrationWizardPage } from "@/features/voice-tech/presentation/pages/orchestration-wizard-page"
 import { DatasetFieldsPage } from "@/features/voice-tech/presentation/pages/dataset-fields-page"
+import { CreateVendorPage } from "@/features/voice-tech/presentation/pages/create-vendor-page"
+import { CreateAgentPage } from "@/features/voice-tech/presentation/pages/create-agent-page"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -83,10 +85,10 @@ const voiceTechVendorsRoute = createRoute({
   component: VendorsPage,
 })
 
-const voiceTechAgentsRoute = createRoute({
+const voiceTechVendorAgentsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "voice-tech/agents",
-  component: AgentsPage,
+  path: "voice-tech/vendors/agents",
+  component: VendorAgentsPage,
 })
 
 const voiceTechCreateRoute = createRoute({
@@ -99,6 +101,18 @@ const voiceTechDatasetFieldsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "voice-tech/datasets/$name",
   component: DatasetFieldsPage,
+})
+
+const voiceTechCreateVendorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "voice-tech/vendors/create",
+  component: CreateVendorPage,
+})
+
+const voiceTechCreateAgentRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "voice-tech/agents/create",
+  component: CreateAgentPage,
 })
 
 
@@ -162,9 +176,11 @@ const routeTree = rootRoute.addChildren([
   botTestRoute,
   loginRoute,
   voiceTechVendorsRoute,
-  voiceTechAgentsRoute,
+  voiceTechVendorAgentsRoute,
   voiceTechCreateRoute,
   voiceTechDatasetFieldsRoute,
+  voiceTechCreateVendorRoute,
+  voiceTechCreateAgentRoute,
 ])
 
 const router = createRouter({

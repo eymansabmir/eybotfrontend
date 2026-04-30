@@ -226,7 +226,7 @@ function Header() {
         {/* Removed duplicate EY text as requested to keep only one EY icon in the navbar/sidebar */}
         <div className="ml-auto flex min-w-0 items-center gap-3">
           <Input className="hidden w-40 lg:w-56 md:block h-9 bg-slate-50/50 border-slate-200 text-xs rounded-lg" placeholder="Quick search..." />
-          <Button size="sm" className="bg-black text-white hover:bg-black/90 transition-all shadow-sm h-9 px-5 rounded-lg text-xs font-bold">
+          <Button size="sm" className="bg-primary text-primary-foreground hover:opacity-90 transition-all shadow-sm h-9 px-5 rounded-lg text-xs font-bold">
             New flow
           </Button>
           <Button variant="ghost" size="icon">

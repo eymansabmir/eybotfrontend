@@ -232,13 +232,13 @@ export function OrchestrationWizardPage() {
 
       {/* ── Progress Header ───────────────────────────────── */}
         <div className="flex flex-col gap-1">
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-            ORCHESTRATOR <span className="mx-2 text-slate-300">›</span> NEW ORCHESTRATION
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+            ORCHESTRATOR <span className="mx-2 text-muted-foreground/30">›</span> NEW ORCHESTRATION
           </p>
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
             Create New Orchestration
           </h1>
-          <p className="text-sm font-medium text-slate-500 max-w-2xl">
+          <p className="text-sm font-medium text-muted-foreground max-w-2xl">
             Configure institutional-grade data pipelines with precision rule mapping.
           </p>
         </div>
@@ -253,22 +253,22 @@ export function OrchestrationWizardPage() {
               <div key={step.id} className={cn(
                 "flex items-center gap-3 px-5 py-4 rounded-xl border transition-all duration-200",
                 isActive
-                  ? "bg-white border-slate-900 shadow-sm"
+                  ? "bg-card border-primary shadow-sm"
                   : isCompleted
-                  ? "bg-white border-slate-200"
-                  : "bg-white/60 border-slate-100 opacity-50"
+                  ? "bg-card border-border"
+                  : "bg-card/40 border-border/50 opacity-50"
               )}>
                 <div className={cn(
                   "size-9 rounded-lg flex items-center justify-center font-black text-sm shrink-0",
-                  isActive ? "bg-slate-900 text-white" : isCompleted ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400"
+                  isActive ? "bg-primary text-primary-foreground" : isCompleted ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
                 )}>
                   {step.id}
                 </div>
                 <div className="min-w-0">
-                  <p className={cn("text-[13px] font-bold tracking-wide truncate", isActive ? "text-slate-900" : "text-slate-500")}>
+                  <p className={cn("text-[13px] font-bold tracking-wide truncate", isActive ? "text-foreground" : "text-muted-foreground")}>
                     {step.name}
                   </p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mt-0.5">
                     {isActive ? "Active" : isCompleted ? "Completed" : "Pending"}
                   </p>
                 </div>
@@ -281,14 +281,14 @@ export function OrchestrationWizardPage() {
 
 
       {/* ── Step Content ──────────────────────────────────── */}
-      <Card className="border-slate-200 shadow-sm overflow-hidden rounded-xl bg-white">
+      <Card className="border-border shadow-sm overflow-hidden rounded-xl bg-card">
         <CardContent className="p-10">
 
           {currentStep === 1 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="space-y-8">
                 <div className="space-y-3 relative">
-                  <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+                  <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
                     Orchestration Name
                   </label>
                   <div className="relative">
@@ -300,7 +300,7 @@ export function OrchestrationWizardPage() {
                         setCreatedConfigId(null); 
                       }}
                       className={cn(
-                        "h-14 rounded-md bg-white border-slate-200 focus-visible:ring-1 focus-visible:ring-primary text-lg font-bold placeholder:text-slate-300",
+                        "h-14 rounded-md bg-background border-border focus-visible:ring-1 focus-visible:ring-primary text-lg font-bold placeholder:text-muted-foreground/30",
                         createdConfigId && "border-emerald-500/50"
                       )}
                     />
@@ -346,7 +346,7 @@ export function OrchestrationWizardPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+                  <label className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">
                     Select Dataset Source
                   </label>
                   <DatasetSelector 
@@ -358,33 +358,33 @@ export function OrchestrationWizardPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-5 rounded-md border border-slate-100 bg-slate-50/50 flex gap-4">
-                    <div className="size-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="size-5 text-slate-900" />
+                  <div className="p-5 rounded-md border border-border bg-muted/20 flex gap-4">
+                    <div className="size-10 rounded-full bg-card border border-border flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="size-5 text-foreground" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-900">Schema Validation</p>
-                      <p className="text-[11px] font-medium text-slate-500 mt-0.5">Ensures source data matches orchestration requirements.</p>
+                      <p className="text-sm font-bold text-foreground">Schema Validation</p>
+                      <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Ensures source data matches orchestration requirements.</p>
                     </div>
                   </div>
-                  <div className="p-5 rounded-md border border-slate-100 bg-slate-50/50 flex gap-4">
-                    <div className="size-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shrink-0">
-                      <Activity className="size-5 text-slate-900" />
+                  <div className="p-5 rounded-md border border-border bg-muted/20 flex gap-4">
+                    <div className="size-10 rounded-full bg-card border border-border flex items-center justify-center shrink-0">
+                      <Activity className="size-5 text-foreground" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-900">Lineage Tracking</p>
-                      <p className="text-[11px] font-medium text-slate-500 mt-0.5">Automatic audit trails enabled for this project.</p>
+                      <p className="text-sm font-bold text-foreground">Lineage Tracking</p>
+                      <p className="text-[11px] font-medium text-muted-foreground mt-0.5">Automatic audit trails enabled for this project.</p>
                     </div>
                   </div>
                 </div>
               </div>
 
 
-              <div className="pt-8 border-t border-slate-100 flex items-center gap-4">
+              <div className="pt-8 border-t border-border flex items-center gap-4">
                 <Button 
                   variant="outline"
                   onClick={() => navigate({ to: "/voice-tech" })}
-                  className="h-12 px-10 rounded-md border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                  className="h-12 px-10 rounded-md border-border text-sm font-bold text-foreground hover:bg-muted"
                 >
                   Cancel
                 </Button>
@@ -412,17 +412,17 @@ export function OrchestrationWizardPage() {
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                     Step 2 — Define Rules
                   </p>
-                  <h3 className="text-xl font-extrabold text-slate-900">Configure Routing Rules</h3>
-                  <p className="text-sm font-medium text-slate-500">
-                    Define logic for <span className="font-bold text-slate-700">"{orchestrationName}"</span> using {selectedDatasetIds.length} dataset{selectedDatasetIds.length !== 1 ? 's' : ''}: {datasetNames.join(", ")}
+                  <h3 className="text-xl font-extrabold text-foreground">Configure Routing Rules</h3>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Define logic for <span className="font-bold text-foreground">"{orchestrationName}"</span> using {selectedDatasetIds.length} dataset{selectedDatasetIds.length !== 1 ? 's' : ''}: {datasetNames.join(", ")}
                   </p>
                 </div>
                 <Button 
                   onClick={() => setIsCreateRuleOpen(true)} 
-                  className="gap-2 h-11 px-6 rounded-md bg-slate-900 text-white hover:bg-slate-800 font-bold text-sm shrink-0"
+                  className="gap-2 h-11 px-6 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-sm shrink-0"
                 >
                   <Plus className="size-4" />
                   Add Rule
@@ -455,8 +455,8 @@ export function OrchestrationWizardPage() {
                 )}
               </div>
 
-              <div className="pt-8 border-t border-slate-100 flex items-center gap-4">
-                <Button variant="outline" onClick={handleBack} className="h-12 px-8 rounded-md border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50">Back</Button>
+              <div className="pt-8 border-t border-border flex items-center gap-4">
+                <Button variant="outline" onClick={handleBack} className="h-12 px-8 rounded-md border-border text-sm font-bold text-foreground hover:bg-muted">Back</Button>
                 <div className="flex-1" />
                 <Button onClick={handleNext} className="gap-2 h-12 px-10 rounded-md bg-[#FFE600] text-[#1A1A24] hover:bg-[#FFE600]/90 border-none font-black text-sm uppercase tracking-wider group">
                   Review & Execute
@@ -471,9 +471,9 @@ export function OrchestrationWizardPage() {
               {/* Step 3 Header */}
               {!isProcessing && !executionResult && (
                 <div className="space-y-1">
-                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Step 3 — Review & Launch</p>
-                  <h3 className="text-xl font-extrabold text-slate-900">Finalize &amp; Execute</h3>
-                  <p className="text-sm font-medium text-slate-500">Review your configuration and initiate calls for all matched entities.</p>
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground">Step 3 — Review & Launch</p>
+                  <h3 className="text-xl font-extrabold text-foreground">Finalize &amp; Execute</h3>
+                  <p className="text-sm font-medium text-muted-foreground">Review your configuration and initiate calls for all matched entities.</p>
                 </div>
               )}
               {isProcessing ? (
@@ -566,8 +566,8 @@ export function OrchestrationWizardPage() {
                     </p>
                   </div>
 
-                  <div className="pt-8 border-t border-slate-100 flex items-center gap-4">
-                    <Button variant="outline" onClick={handleBack} className="h-12 px-8 rounded-md border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50">Back</Button>
+                  <div className="pt-8 border-t border-border flex items-center gap-4">
+                    <Button variant="outline" onClick={handleBack} className="h-12 px-8 rounded-md border-border text-sm font-bold text-foreground hover:bg-muted">Back</Button>
                     <div className="flex-1" />
                     <Button 
                       onClick={handleExecute} 

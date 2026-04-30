@@ -57,37 +57,37 @@ export function RoutingRuleList({
 
   if (rules.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-slate-200 rounded-xl bg-white">
-        <div className="size-12 rounded-xl bg-slate-100 grid place-items-center mb-4">
+      <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-border rounded-xl bg-card">
+        <div className="size-12 rounded-xl bg-muted grid place-items-center mb-4">
            <Play className="size-5 text-slate-400" />
         </div>
-        <p className="font-bold text-slate-900 text-[15px]">No routing rules yet</p>
+        <p className="font-bold text-foreground text-[15px]">No routing rules yet</p>
         <p className="text-sm font-medium text-slate-500 mt-1 text-center max-w-xs">Rules define where your calls go. Create your first rule to start routing.</p>
       </div>
     );
   }
 
   return (
-    <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+    <div className="border border-border rounded-xl bg-card overflow-hidden">
       {/* Table Header */}
-      <div className="grid grid-cols-[50px_1fr_180px_90px_50px] items-center gap-0 bg-[#fcfcfc] border-b border-slate-100 px-4">
-        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500/80 text-center">Prio</div>
-        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500/80 px-3">Conditions</div>
-        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500/80">Action</div>
-        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500/80 text-center">Matches</div>
+      <div className="grid grid-cols-[50px_1fr_180px_90px_50px] items-center gap-0 bg-muted/30 border-b border-border px-4">
+        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/80 text-center">Prio</div>
+        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/80 px-3">Conditions</div>
+        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/80">Action</div>
+        <div className="py-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground/80 text-center">Matches</div>
         <div className="py-4" />
       </div>
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-border">
         {rules.sort((a, b) => a.priority - b.priority).map((rule) => {
           const transport = getTransport(rule);
           const isWhatsapp = transport === "whatsapp";
           return (
-          <div key={rule.id} className="grid grid-cols-[50px_1fr_180px_90px_50px] items-center gap-0 group hover:bg-slate-50/50 transition-colors px-4 py-3">
+          <div key={rule.id} className="grid grid-cols-[50px_1fr_180px_90px_50px] items-center gap-0 group hover:bg-muted/50 transition-colors px-4 py-3">
 
             {/* Priority */}
             <div className="flex flex-col items-center justify-center gap-0.5">
-               <span className="text-sm font-black font-mono text-slate-900">{rule.priority}</span>
-               <div className={`size-1.5 rounded-full ${rule.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+               <span className="text-sm font-black font-mono text-foreground">{rule.priority}</span>
+               <div className={`size-1.5 rounded-full ${rule.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-muted'}`} />
             </div>
 
             {/* Conditions Block */}
@@ -99,14 +99,14 @@ export function RoutingRuleList({
 
             {/* Action Block */}
             <div className="min-w-0">
-               <div className="flex items-center gap-2 p-2 rounded-md bg-slate-50 border border-slate-100">
+               <div className="flex items-center gap-2 p-2 rounded-md bg-muted/30 border border-border">
                   <ProviderBadge provider={getProvider(rule) as any} />
                   <div className="min-w-0">
-                     <p className="text-[10px] font-bold text-slate-400 uppercase leading-none">Agent ID</p>
-                     <p className="text-[11px] font-mono truncate mt-0.5 text-slate-700">{rule.action.agentId}</p>
-                  <p className="text-[9px] mt-0.5 inline-flex items-center gap-1 rounded-full bg-white border px-1.5 py-0.5">
-                    {isWhatsapp ? <MessageCircle className="size-2.5 text-emerald-600" /> : <Phone className="size-2.5 text-indigo-600" />}
-                    <span className="font-bold text-slate-500">{isWhatsapp ? "WhatsApp" : "Telephony"}</span>
+                     <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none">Agent ID</p>
+                     <p className="text-[11px] font-mono truncate mt-0.5 text-foreground">{rule.action.agentId}</p>
+                  <p className="text-[9px] mt-0.5 inline-flex items-center gap-1 rounded-full bg-background border border-border px-1.5 py-0.5">
+                    {isWhatsapp ? <MessageCircle className="size-2.5 text-emerald-500" /> : <Phone className="size-2.5 text-indigo-500" />}
+                    <span className="font-bold text-muted-foreground">{isWhatsapp ? "WhatsApp" : "Telephony"}</span>
                   </p>
                   </div>
                </div>
@@ -125,13 +125,13 @@ export function RoutingRuleList({
             <div className="flex items-center justify-end">
                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-8 hover:bg-slate-100 transition-colors">
-                      <MoreVertical className="size-4 text-slate-400" />
+                    <Button variant="ghost" size="icon" className="size-8 hover:bg-muted transition-colors">
+                      <MoreVertical className="size-4 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48 border-slate-200 shadow-lg">
-                    <DropdownMenuItem onClick={() => onEdit(rule)} className="gap-2 py-2">
-                       <Settings2 className="size-4 text-slate-500" />
+                  <DropdownMenuContent align="end" className="w-48 border-border shadow-lg bg-popover">
+                    <DropdownMenuItem onClick={() => onEdit(rule)} className="gap-2 py-2 text-foreground">
+                       <Settings2 className="size-4 text-muted-foreground" />
                        <span className="font-medium">Edit Rule Details</span>
                     </DropdownMenuItem>
                     {rule.isActive ? (
