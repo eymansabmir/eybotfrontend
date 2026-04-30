@@ -47,21 +47,21 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
         );
     };
 
-    const localization = bot?.settings?.localization;
+
     const nodeLanguages = Array.isArray(data.languages) ? data.languages : [];
     const nodeLocalizationEnabled = typeof data.localizationEnabled === "boolean" ? data.localizationEnabled : undefined;
     const hasNodeLocalization = nodeLocalizationEnabled !== undefined || nodeLanguages.length > 0 || Boolean(data.defaultLanguage);
 
-    const effectiveLocalization = hasNodeLocalization
+    const effectiveLocalization: { isEnabled: boolean; languages: string[]; defaultLanguage?: string } = hasNodeLocalization
         ? {
             isEnabled: !!(nodeLocalizationEnabled ?? (nodeLanguages.length > 0)),
             languages: nodeLanguages,
             defaultLanguage: data.defaultLanguage || nodeLanguages[0],
         }
         : {
-            isEnabled: !!localization?.isEnabled,
-            languages: localization?.languages ?? [],
-            defaultLanguage: localization?.defaultLanguage,
+            isEnabled: false,
+            languages: [],
+            defaultLanguage: undefined,
         };
 
     const isEnabled = effectiveLocalization.isEnabled;
@@ -72,7 +72,9 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
     };
 
     const handleToggleLocalization = (checked: boolean) => {
-        if (!botId || !bot) return;
+        updateData({ localizationEnabled: checked });
+
+        if (!botId || !bot || botId === "new") return;
 
         updateBot({
             settings: {
@@ -84,17 +86,29 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                 },
             },
         });
-
-        updateData({ localizationEnabled: checked });
     };
 
     const handleAddLanguage = (langCode: string) => {
-        if (!botId || !bot) return;
-
-        const currentLangs = bot.settings?.localization?.languages ?? [];
+        const currentLangs = Array.isArray(data.languages) ? data.languages : [];
         if (currentLangs.includes(langCode)) return;
 
+        if (currentLangs.length >= 10) {
+            toast.error("Maximum 10 languages allowed per node.");
+            return;
+        }
+
         const newLangs = [...currentLangs, langCode];
+        updateData({ languages: newLangs, localizationEnabled: true });
+
+        if (!botId || !bot || botId === "new") return;
+
+        // Keep global languages as a union of all language nodes
+        const allNodes = (bot as any).nodes || [];
+        const otherNodesLangs = allNodes
+            .filter((n: any) => n.id !== id && n.type === 'language')
+            .flatMap((n: any) => n.data?.languages || []);
+
+        const unionLangs = Array.from(new Set([...otherNodesLangs, ...newLangs]));
 
         updateBot({
             settings: {
@@ -102,19 +116,27 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                 localization: {
                     ...bot.settings?.localization,
                     isEnabled: true,
-                    languages: newLangs,
+                    languages: unionLangs,
                 },
             },
         });
-
-        updateData({ languages: newLangs, localizationEnabled: true });
     };
 
     const handleRemoveLanguage = (langCode: string) => {
-        if (!botId || !bot) return;
-
-        const currentLangs = bot.settings?.localization?.languages ?? [];
+        const currentLangs = Array.isArray(data.languages) ? data.languages : [];
         const newLangs = currentLangs.filter((l) => l !== langCode);
+
+        updateData({ languages: newLangs });
+
+        if (!botId || !bot || botId === "new") return;
+
+        // Update global union
+        const allNodes = (bot as any).nodes || [];
+        const otherNodesLangs = allNodes
+            .filter((n: any) => n.id !== id && n.type === 'language')
+            .flatMap((n: any) => n.data?.languages || []);
+
+        const unionLangs = Array.from(new Set([...otherNodesLangs, ...newLangs]));
 
         updateBot({
             settings: {
@@ -122,12 +144,10 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                 localization: {
                     ...bot.settings?.localization,
                     isEnabled: bot.settings?.localization?.isEnabled ?? false,
-                    languages: newLangs,
+                    languages: unionLangs,
                 },
             },
         });
-
-        updateData({ languages: newLangs });
     };
 
     const handleSync = async () => {
@@ -217,9 +237,9 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                                                 variant="outline"
                                                 role="combobox"
                                                 aria-expanded={open}
-                                                className="w-full justify-between h-8 bg-primary/5 border-primary/20 hover:bg-primary/10 text-primary font-medium text-[11px]"
+                                                className="w-full justify-between h-8 bg-primary/10 border-primary/30 hover:bg-primary/20 text-foreground font-medium text-[11px]"
                                             >
-                                                Add language...
+                                                <span className="opacity-70">Add language...</span>
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
@@ -261,14 +281,17 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                                             <Badge
                                                 key={code}
                                                 variant="secondary"
-                                                className="h-5 px-1.5 py-0 text-[9px] font-medium bg-primary/5 hover:bg-primary/10 text-primary border-primary/20 flex items-center gap-1"
+                                                className="h-5 px-2 py-0 text-[10px] font-bold bg-primary text-primary-foreground border-primary/20 flex items-center gap-1.5 shadow-sm hover:bg-primary/90 transition-all cursor-default"
                                             >
                                                 {getLanguageName(code)}
                                                 <button
-                                                    onClick={() => handleRemoveLanguage(code)}
-                                                    className="hover:text-destructive transition-colors"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleRemoveLanguage(code);
+                                                    }}
+                                                    className="hover:bg-black/10 rounded-full p-0.5 transition-colors"
                                                 >
-                                                    <X size={10} />
+                                                    <X size={10} strokeWidth={3} />
                                                 </button>
                                             </Badge>
                                         ))}
@@ -323,9 +346,9 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between bg-primary/5 p-2 rounded-xl border border-primary/10 mt-1">
+                            <div className="flex items-center justify-between bg-primary/10 p-2 rounded-xl border border-primary/20 mt-1">
                                 <div className="flex flex-col gap-0.5">
-                                    <label className="text-[9px] font-bold text-primary/80 uppercase tracking-tight">Skip logic</label>
+                                    <label className="text-[9px] font-bold text-foreground uppercase tracking-tight">Skip logic</label>
                                     <p className="text-[8px] text-muted-foreground leading-none font-medium">Skip if already selected</p>
                                 </div>
                                 <Switch
