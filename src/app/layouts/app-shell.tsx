@@ -6,12 +6,15 @@ import {
   LayoutDashboardIcon,
   MegaphoneIcon,
   MoonIcon,
+  PhoneCallIcon,
   Settings2Icon,
   SunIcon,
   UsersIcon,
+  ChevronRight,
 } from "lucide-react"
 import { Link, useRouterState } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
+import { EYLogo } from "@/components/branding/ey-logo"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -29,21 +32,39 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { Separator } from "@/components/ui/separator"
-import { EYLogo } from "@/components/branding/ey-logo"
 
 const mainNav = [
   { label: "Dashboard", to: "/", icon: LayoutDashboardIcon },
   { label: "Bots", to: "/bots", icon: BotIcon },
   { label: "Campaign", to: "/campaign", icon: MegaphoneIcon },
+  {
+    label: "Voice Tech",
+    to: "/voice-tech",
+    icon: PhoneCallIcon,
+    items: [
+      { label: "Orchestrations", to: "/voice-tech" },
+      { label: "Datasets", to: "/voice-tech/datasets" },
+      { label: "Vendors", to: "/voice-tech/vendors" },
+    ],
+  },
   { label: "Users", to: "/users", icon: UsersIcon },
 ]
 
 const footerNav = [
   { label: "Settings", to: "/settings", icon: Settings2Icon },
 ]
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
 
@@ -73,24 +94,72 @@ export function AppShell({ children }: { children: ReactNode }) {
             <SidebarGroupLabel>Workspace</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {mainNav.map((item) => (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={item.label}
-                      isActive={
-                        item.to === "/"
-                          ? pathname === "/"
-                          : pathname === item.to || pathname.startsWith(item.to + "/")
-                      }
-                    >
-                      <Link to={item.to}>
-                        <item.icon className="size-4" />
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {mainNav.map((item) => {
+                  const hasSubItems = item.items && item.items.length > 0;
+                  const isActive = item.to === "/"
+                    ? pathname === "/"
+                    : pathname === item.to || pathname.startsWith(item.to + "/");
+
+                  if (hasSubItems) {
+                    return (
+                      <Collapsible
+                        key={item.label}
+                        asChild
+                        defaultOpen={isActive}
+                        className="group/collapsible"
+                      >
+                        <SidebarMenuItem>
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton 
+                              tooltip={item.label} 
+                              isActive={isActive}
+                              className={cn(
+                                "transition-all duration-200 h-10 rounded-none",
+                                isActive && "bg-slate-50 text-foreground border-l-[3px] border-yellow-400 font-bold"
+                              )}
+                            >
+                              <item.icon className={cn("size-4", isActive ? "text-primary" : "text-muted-foreground")} />
+                              <span>{item.label}</span>
+                              <ChevronRight className="ml-auto size-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              {item.items?.map((subItem) => (
+                                <SidebarMenuSubItem key={subItem.label}>
+                                  <SidebarMenuSubButton asChild isActive={pathname === subItem.to}>
+                                    <Link to={subItem.to}>
+                                      <span>{subItem.label}</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        </SidebarMenuItem>
+                      </Collapsible>
+                    )
+                  }
+
+                  return (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton
+                        asChild
+                        tooltip={item.label}
+                        isActive={isActive}
+                        className={cn(
+                          "transition-all duration-200 h-10 rounded-none",
+                          isActive && "bg-slate-50 text-foreground border-l-[3px] border-yellow-400 font-bold"
+                        )}
+                      >
+                        <Link to={item.to}>
+                          <item.icon className={cn("size-4", isActive ? "text-primary" : "text-muted-foreground")} />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -155,9 +224,9 @@ function Header() {
         <SidebarTrigger />
         <Separator orientation="vertical" className="h-6" />
         {/* Removed duplicate EY text as requested to keep only one EY icon in the navbar/sidebar */}
-        <div className="ml-auto flex min-w-0 items-center gap-2">
-          <Input className="hidden w-40 lg:w-56 md:block" placeholder="Quick search" />
-          <Button size="sm" className="bg-[#FFE600] text-black hover:brightness-95 transition-all shadow-sm">
+        <div className="ml-auto flex min-w-0 items-center gap-3">
+          <Input className="hidden w-40 lg:w-56 md:block h-9 bg-slate-50/50 border-slate-200 text-xs rounded-lg" placeholder="Quick search..." />
+          <Button size="sm" className="bg-primary text-primary-foreground hover:opacity-90 transition-all shadow-sm h-9 px-5 rounded-lg text-xs font-bold">
             New flow
           </Button>
           <Button variant="ghost" size="icon">
@@ -177,3 +246,4 @@ function Header() {
     </div>
   )
 }
+import { cn } from "@/lib/utils";
