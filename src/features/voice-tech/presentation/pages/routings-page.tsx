@@ -4,11 +4,6 @@ import {
   ArrowLeft,
   Plus,
   GitBranch,
-  BarChart2,
-  MoreVertical,
-  Trash2,
-  ChevronDown,
-  ChevronRight,
   Target,
   FlaskConical,
   Database,
@@ -17,21 +12,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,7 +46,6 @@ import {
 import { useQueries } from "@tanstack/react-query";
 import { voiceTechApi } from "../../api/voice-tech-api";
 import type { RoutingRule, EntityAttribute } from "../../types";
-import { formatDistanceToNow } from "date-fns";
 
 const TENANT_ID = "tenant-ey-001";
 
@@ -78,25 +57,24 @@ export function RoutingsPage() {
     (location.state as any)?.expandedConfigId || null
   );
   const [deleteConfigId, setDeleteConfigId] = useState<string | null>(null);
-  const [deleteConfigName, setDeleteConfigName] = useState("");
 
   // Rule-level state
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [ruleToEdit, setRuleToEdit] = useState<RoutingRule | null>(null);
   const [isSimulationOpen, setIsSimulationOpen] = useState(false);
   const [simulationInitialData, setSimulationInitialData] = useState<Record<string, string> | undefined>(undefined);
-  const [activeRuleForMatches, setActiveRuleForMatches] = useState<RoutingRule | null>(null);
+  const [activeRuleForMatches] = useState<RoutingRule | null>(null);
   const [isMatchesOpen, setIsMatchesOpen] = useState(false);
   const [activeRuleForCall, setActiveRuleForCall] = useState<RoutingRule | null>(null);
   const [isCallLaunchpadOpen, setIsCallLaunchpadOpen] = useState(false);
-  const [callLaunchMode, setCallLaunchMode] = useState<"single" | "bulk">("single");
+  const [callLaunchMode] = useState<"single" | "bulk">("single");
   const [confirmCampaignOpen, setConfirmCampaignOpen] = useState(false);
   const [pendingActiveRule, setPendingActiveRule] = useState<RoutingRule | null>(null);
 
   // Dataset selection for rules
   const [selectedEntityTypes, setSelectedEntityTypes] = useState<string[]>([]);
 
-  const { data: configs = [], isLoading: configsLoading } = useRoutingConfigs(TENANT_ID);
+  useRoutingConfigs(TENANT_ID);
   const { data: entityTypes = [] } = useEntityTypes(TENANT_ID);
   const { data: fullConfig, isLoading: rulesLoading } = useRoutingConfig(expandedConfigId, TENANT_ID);
 
@@ -152,14 +130,6 @@ export function RoutingsPage() {
     });
   };
 
-  const handleToggleExpanded = (configId: string) => {
-    if (expandedConfigId === configId) {
-      setExpandedConfigId(null);
-    } else {
-      setExpandedConfigId(configId);
-    }
-  };
-
   const handleSaveRule = (ruleData: any) => {
     if (!expandedConfigId) return;
     upsertRule.mutate({ ...ruleData, routingConfigId: expandedConfigId }, {
@@ -185,16 +155,7 @@ export function RoutingsPage() {
     }, { onSuccess: () => { setConfirmCampaignOpen(false); setPendingActiveRule(null); } });
   };
 
-  const handleExecuteTest = (rule: RoutingRule) => {
-    const initialData: Record<string, string> = {};
-    const traverse = (node: any) => { if (node.field) initialData[node.field] = node.value || ""; else if (node.children) node.children.forEach(traverse); };
-    traverse(rule.conditions);
-    setSimulationInitialData(initialData);
-    setIsSimulationOpen(true);
-  };
 
-  const handleQueryEntities = (rule: RoutingRule) => { setActiveRuleForMatches(rule); setIsMatchesOpen(true); };
-  const handleSingleCall = (rule: RoutingRule) => { setCallLaunchMode("single"); setActiveRuleForCall(rule); setIsCallLaunchpadOpen(true); };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -301,9 +262,7 @@ export function RoutingsPage() {
             ) : (
               <RoutingRuleList
                 rules={fullConfig?.rules ?? []}
-                onExecuteTest={handleExecuteTest}
-                onQueryEntities={handleQueryEntities}
-                onSingleCall={handleSingleCall}
+
                 onToggleActive={handleToggleActive}
                 onEdit={handleEditRule}
                 onDelete={handleDeleteRule}
@@ -391,7 +350,7 @@ export function RoutingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Routing Group?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete <strong>{deleteConfigName}</strong> and all its routing rules.
+              This will permanently delete this routing configuration and all its associated rules.
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

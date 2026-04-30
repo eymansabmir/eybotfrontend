@@ -1,4 +1,4 @@
-import { Users, Search, AlertCircle, Loader2, Database, ChevronDown, Zap, BarChart3, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Users, Search, AlertCircle, Loader2, Database, ChevronDown, Zap, BarChart3, Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -67,12 +67,14 @@ export function EntityMatchesDialog({
     return stripPrefixes(rule.conditions);
   }, [rule?.conditions]);
 
-  const { data: entities = [], isLoading, isError, error } = useQueryEntitiesByRule({
+  const { data, isLoading, isError, error } = useQueryEntitiesByRule({
     tenantId,
     entityType: activeEntityType || "",
     conditions: searchConditions,
     enabled: open && !!rule && !!activeEntityType,
   });
+
+  const entities = data?.entities ?? [];
 
   // Derive column keys from all entities
   const columns = entities.length > 0
@@ -265,7 +267,7 @@ export function EntityMatchesDialog({
                            </tr>
                          </thead>
                          <tbody className="divide-y divide-border/30">
-                           {entities.slice(0, 20).map((entity, i) => (
+                           {entities.slice(0, 20).map((entity, i: number) => (
                              <tr key={entity.id} className={`transition-all ${i % 2 === 0 ? "bg-background" : "bg-muted/5"}`}>
                                {columns.map((col) => (
                                  <td key={col} className="px-4 py-2.5 font-mono text-foreground/60 whitespace-nowrap border-r last:border-r-0 border-border/10">

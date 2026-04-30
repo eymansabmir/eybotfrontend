@@ -1,10 +1,8 @@
 import { 
   Sheet, 
   SheetContent, 
-  SheetHeader, 
   SheetTitle, 
-  SheetDescription,
-  SheetFooter 
+  SheetDescription
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Upload, FileSpreadsheet } from "lucide-react";

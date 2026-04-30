@@ -31,9 +31,7 @@ import { cn } from "@/lib/utils";
 
 interface RoutingRuleListProps {
   rules: RoutingRule[];
-  onExecuteTest: (rule: RoutingRule) => void;
-  onQueryEntities: (rule: RoutingRule) => void;
-  onSingleCall: (rule: RoutingRule) => void;
+
   onToggleActive: (rule: RoutingRule, active: boolean) => void;
   onEdit: (rule: RoutingRule) => void;
   onDelete: (ruleId: string) => void;
@@ -41,8 +39,7 @@ interface RoutingRuleListProps {
 
 export function RoutingRuleList({ 
   rules, 
-  onExecuteTest, 
-  onSingleCall,
+
   onToggleActive,
   onEdit,
   onDelete,

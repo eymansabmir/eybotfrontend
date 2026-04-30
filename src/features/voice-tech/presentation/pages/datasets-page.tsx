@@ -7,7 +7,6 @@ import {
   Trash2,
   Upload,
   Eye,
-  FileSpreadsheet,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
@@ -36,28 +35,15 @@ import { DatasetUploadSheet } from "../components/ingest/dataset-upload-sheet";
 import {
   useDeleteEntityType,
   useEntityTypes,
-  useVoiceTechAttributes,
 } from "../../api/voice-tech-queries";
-import type { EntityAttribute } from "../../types";
+
 
 const TENANT_ID = "tenant-ey-001";
 
 // Human-friendly labels for attribute types
-const TYPE_LABELS: Record<string, string> = {
-  enum: "Options",
-  string: "Text",
-  number: "Number",
-  boolean: "Yes / No",
-  date: "Date",
-};
 
-const TYPE_COLORS: Record<string, string> = {
-  enum: "bg-violet-100 text-violet-700",
-  string: "bg-sky-100 text-sky-700",
-  number: "bg-amber-100 text-amber-700",
-  boolean: "bg-emerald-100 text-emerald-700",
-  date: "bg-rose-100 text-rose-700",
-};
+
+
 
 export function DatasetsPage() {
   const navigate = useNavigate();

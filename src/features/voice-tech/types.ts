@@ -182,6 +182,16 @@ export interface RoutingAnalyticsResponse {
   rulesCount: number;
   providerBreakdown: ProviderBreakdown[];
   ruleStats: RuleAnalyticsStat[];
+  // Dashbaord fields
+  statusDistribution: Array<{ status: string; count: number; color: string }>;
+  funnel: Array<{ step: string; count: number }>;
+  totalRequests: number;
+  successRate: number;
+  avgLatency: number;
+  entitiesMatched: number;
+  trend: Array<{ time: string; latency: number }>;
+  alerts: any[];
+  providers: any[];
 }
 
 // ─── Ingest Job ─────────────────────────────────────────────────────

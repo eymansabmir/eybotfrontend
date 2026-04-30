@@ -224,7 +224,7 @@ export function useCreateRoutingConfig() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: voiceTechApi.createRoutingConfig,
-    onSuccess: (config, variables) => {
+    onSuccess: (_, variables) => {
       toast.success(`Config "${variables.name}" created`);
       qc.invalidateQueries({ queryKey: ["voice-tech", "routing", variables.tenantId] });
     },

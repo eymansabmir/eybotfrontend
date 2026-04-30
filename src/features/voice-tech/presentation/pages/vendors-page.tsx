@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -68,7 +67,7 @@ import {
   useUploadFile,
   useDeleteCredential
 } from "../../api/voice-tech-queries";
-import { PROVIDER_META, type VoiceProvider as VoiceProviderType } from "../../types";
+import { PROVIDER_META, type VoiceProvider as VoiceProviderType, type IntegrationCredential } from "../../types";
 import { format } from "date-fns";
 
 const ORG_ID = "tenant-ey-001";

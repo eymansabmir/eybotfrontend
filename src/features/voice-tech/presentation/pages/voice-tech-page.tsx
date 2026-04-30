@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useEntityTypes, useRoutingConfigs, useCredentials } from "../../api/voice-tech-queries";
 import { OrchestrationTable } from "../components/orchestration-table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check } from "lucide-react";
 
@@ -32,12 +32,12 @@ export function VoiceTechPage() {
   const { data: credentials = [] } = useCredentials(TENANT_ID);
 
   const totalRules = useMemo(() => 
-    configs.reduce((acc, config) => acc + (config.rules?.length || 0), 0), 
-    [configs]
+    0, // Total rules not available in summary
+    []
   );
 
   const vendorNames = useMemo(() => {
-    const names = Array.from(new Set(credentials.map(c => c.providerName || c.type)));
+    const names = Array.from(new Set(credentials.map(c => c.name || c.type)));
     if (names.length === 0) return "No vendors linked";
     if (names.length <= 2) return names.join(", ");
     return `${names.slice(0, 2).join(", ")}...`;

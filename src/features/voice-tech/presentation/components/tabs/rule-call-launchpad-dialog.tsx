@@ -629,7 +629,7 @@ export function RuleCallLaunchpadDialog({
                           <Badge variant="secondary">Calculating...</Badge>
                         ) : (
                           <Badge className="bg-blue-100 text-blue-800 border border-blue-200">
-                            {(entitiesMatchQuery.data?.length ?? 0).toLocaleString()} matched users
+                            {(entitiesMatchQuery.data?.entities?.length ?? 0).toLocaleString()} matched users
                           </Badge>
                         )}
                       </div>

@@ -1,4 +1,4 @@
-import { Trash2, Database, Search, Target, Activity, Settings2, ChevronRight, Check, Plus, ChevronsUpDown } from "lucide-react";
+import { Trash2, Database, Target, Check, Plus, ChevronsUpDown } from "lucide-react";
 import {
   Select,
   SelectContent,

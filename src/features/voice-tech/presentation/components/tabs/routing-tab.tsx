@@ -77,7 +77,7 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSimulationOpen, setIsSimulationOpen] = useState(false);
   const [isCreateConfigOpen, setIsCreateConfigOpen] = useState(false);
-  const [activeRuleForMatches, setActiveRuleForMatches] = useState<RoutingRule | null>(null);
+  const [activeRuleForMatches] = useState<RoutingRule | null>(null);
   const [isMatchesOpen, setIsMatchesOpen] = useState(false);
   const [simulationInitialData, setSimulationInitialData] = useState<Record<string, string> | undefined>(undefined);
   const [confirmCampaignOpen, setConfirmCampaignOpen] = useState(false);
@@ -86,7 +86,7 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
   const [isCallLaunchpadOpen, setIsCallLaunchpadOpen] = useState(false);
   const [activeRuleForCall, setActiveRuleForCall] = useState<RoutingRule | null>(null);
   const [isDeleteConfigOpen, setIsDeleteConfigOpen] = useState(false);
-  const [callLaunchMode, setCallLaunchMode] = useState<"single" | "bulk">("single");
+  const [callLaunchMode] = useState<"single" | "bulk">("single");
   const [ruleToEdit, setRuleToEdit] = useState<RoutingRule | null>(null);
 
   const { data: configs, isLoading: isConfigsLoading } = useRoutingConfigs(tenantId);
@@ -200,32 +200,7 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
     });
   };
 
-  const handleExecuteTest = (rule: RoutingRule) => {
-    // Extract fields from rule conditions to pre-fill simulation
-    const initialData: Record<string, string> = {};
-    const traverse = (node: any) => {
-      if (node.field) {
-        initialData[node.field] = node.value || "";
-      } else if (node.children) {
-        node.children.forEach(traverse);
-      }
-    };
-    traverse(rule.conditions);
 
-    setSimulationInitialData(initialData);
-    setIsSimulationOpen(true);
-  };
-
-  const handleQueryEntities = (rule: RoutingRule) => {
-    setActiveRuleForMatches(rule);
-    setIsMatchesOpen(true);
-  };
-
-  const handleSingleCall = (rule: RoutingRule) => {
-    setCallLaunchMode("single");
-    setActiveRuleForCall(rule);
-    setIsCallLaunchpadOpen(true);
-  };
 
 
   return (
@@ -418,9 +393,7 @@ export function RoutingTab({ tenantId, entityType, onTabChange }: RoutingTabProp
         ) : (
           <RoutingRuleList
             rules={fullConfig?.rules ?? []}
-            onExecuteTest={handleExecuteTest}
-            onQueryEntities={handleQueryEntities}
-            onSingleCall={handleSingleCall}
+
             onToggleActive={handleToggleActive}
             onEdit={handleEditRule}
             onDelete={handleDeleteRule}

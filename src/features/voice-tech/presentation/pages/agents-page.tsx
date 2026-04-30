@@ -4,11 +4,9 @@ import {
   Bot,
   Plus,
   Search,
-  Filter,
   MoreVertical,
   Trash2,
   Edit2,
-  Shield,
   Loader2,
   CheckCircle2,
   AlertCircle

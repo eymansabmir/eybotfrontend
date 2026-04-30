@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { MessageCircle, Smartphone, AlertTriangle, Bot, CheckCircle2 } from "lucide-react";
+import { MessageCircle, AlertTriangle, Bot, CheckCircle2 } from "lucide-react";
 import { StepperSidebar, type StepConfig } from "@/features/campaign/presentation/components/wizard/stepper-sidebar";
 import { ConditionBuilder } from "./condition-builder";
 import { ProviderBadge } from "../shared/provider-badge";
@@ -114,7 +114,7 @@ export function CreateRoutingRuleDialog({
   const [priority, setPriority] = useState(String(nextPriority));
   const [isActive, setIsActive] = useState(true);
 
-  const { data: providerCredentials = [] } = useVoiceProviderCredentials(tenantId, provider);
+  useVoiceProviderCredentials(tenantId, provider);
   const telephonyCredentialType = TELEPHONY_PROVIDER_TO_CREDENTIAL_TYPE[telephonyProvider] ?? 'EXOTEL';
   const { data: telephonyCredentials = [] } = useCredentialsByType(tenantId, telephonyCredentialType);
   const { data: allAgents = [] } = useVoiceAgents(tenantId);

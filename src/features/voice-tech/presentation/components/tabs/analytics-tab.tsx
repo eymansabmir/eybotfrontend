@@ -8,8 +8,6 @@ import {
   Search,
   ArrowUpRight,
   ArrowDownRight,
-  MoreHorizontal,
-  ChevronRight,
   ShieldAlert
 } from "lucide-react";
 import { 
@@ -33,10 +31,11 @@ import { cn } from "@/lib/utils";
 
 interface AnalyticsTabProps {
   tenantId: string;
+  configId?: string | null;
 }
 
-export function AnalyticsTab({ tenantId }: AnalyticsTabProps) {
-  const { data: stats, isLoading } = useOrchestrationStats(tenantId);
+export function AnalyticsTab({ tenantId, configId = null }: AnalyticsTabProps) {
+  const { data: stats, isLoading } = useOrchestrationStats(tenantId, configId);
   const statusDistribution = stats?.statusDistribution || [];
 
   if (isLoading) {

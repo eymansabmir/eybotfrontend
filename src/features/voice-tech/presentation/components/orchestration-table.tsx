@@ -12,7 +12,7 @@ import {
   ChevronRight,
   Zap,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 
 import {
   Table,
