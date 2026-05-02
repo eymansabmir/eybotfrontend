@@ -73,7 +73,6 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
     };
 
     const handleToggleLocalization = (checked: boolean) => {
-        updateData({ localizationEnabled: checked });
 
         if (!botId || !bot || botId === "new") return;
 
@@ -100,7 +99,6 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
         }
 
         const newLangs = [...currentLangs, langCode];
-        updateData({ languages: newLangs, localizationEnabled: true });
 
         if (!botId || !bot || botId === "new") return;
 
@@ -129,7 +127,6 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
         const currentLangs = Array.isArray(data.languages) ? data.languages : [];
         const newLangs = currentLangs.filter((l) => l !== langCode);
 
-        updateData({ languages: newLangs });
 
         if (!botId || !bot || botId === "new") return;
 
@@ -262,7 +259,6 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                                     {enabledLanguages.length === 0 && (
                                         <span className="text-[10px] text-muted-foreground italic px-1">No languages added yet.</span>
                                     )}
-                                </div>
                                 </div>
                             </div>
                         </div>

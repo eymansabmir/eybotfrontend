@@ -1,14 +1,19 @@
 import { apiClient } from "@/lib/api-client";
-import type { ChatbotTemplate } from "../templates-data";
+import { CHATBOT_TEMPLATES, type ChatbotTemplate } from "../templates-data";
 
 export const templatesApi = {
   getTemplates: async (): Promise<ChatbotTemplate[]> => {
-    const { data } = await apiClient.get("/templates");
-    return data;
+    // Return static mock data since backend /templates doesn't exist yet
+    return Promise.resolve(CHATBOT_TEMPLATES);
   },
 
   getTemplateById: async (id: string): Promise<any> => {
-    const { data } = await apiClient.get(`/templates/${id}`);
-    return data;
+    // Return a mock basic nodes structure for now to allow bot creation
+    return Promise.resolve({
+      nodes: [
+        { id: "1", type: "text", position: { x: 100, y: 100 }, data: { text: `Hello from ${id} template!` } }
+      ],
+      edges: []
+    });
   },
 };

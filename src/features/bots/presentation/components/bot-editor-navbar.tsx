@@ -64,7 +64,11 @@ export function BotEditorNavbar({
     isSaving,
     isPublishing,
     isUnpublishing,
-    isTranslationMode
+    isTranslationMode,
+    onNavigateToBots,
+    onNavigateToFlow,
+    onNavigateToSettings,
+    liveLanguages
 }: BotEditorNavbarProps) {
     const localization = bot?.settings?.localization;
     const languages = liveLanguages?.length ? liveLanguages : (localization?.languages || []);
