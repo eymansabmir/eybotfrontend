@@ -1,9 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Plus, ArrowRight, Bot, Clock, User2, MessageSquare, Loader2, MoreVertical, Pencil, Trash2, Download } from "lucide-react";
+import { Plus, ArrowRight, Bot, Clock, User2, MessageSquare, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useBots, useDeleteBot, useUpdateBot, useImportBot } from "../../data/queries/use-bots";
+import { useBots, useDeleteBot, useUpdateBot } from "../../data/queries/use-bots";
 import { formatDistanceToNow } from "date-fns";
 import {
   DropdownMenu,
@@ -32,10 +32,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import type { Bot as BotType } from "../../data/schemas/bot.schema";
-import { CreateBotDialog } from "../components/create-bot-dialog";
 
 
 import {
@@ -210,8 +209,6 @@ function BotActionsMenu({ bot }: BotActionsMenuProps) {
 export function BotsPage() {
   const { data: bots, isLoading, error } = useBots();
   const navigate = useNavigate();
-  const importBotMutation = useImportBot();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -240,7 +237,7 @@ export function BotsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
+          <Button className="gap-2" onClick={() => navigate({ to: "/create-bot" })}>
             <Plus className="size-4" />
             Create New Bot
           </Button>
@@ -250,7 +247,7 @@ export function BotsPage() {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Empty state / CTA Card */}
         <div
-          onClick={() => setIsCreateDialogOpen(true)}
+          onClick={() => navigate({ to: "/create-bot" })}
           className="group h-full cursor-pointer"
         >
           <div className="flex h-full min-h-[220px] flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-border bg-muted/10 p-6 transition-all hover:bg-muted/20 hover:border-primary/50">
@@ -322,10 +319,6 @@ export function BotsPage() {
           </div>
         ))}
       </div>
-      <CreateBotDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-      />
     </div>
   );
 }

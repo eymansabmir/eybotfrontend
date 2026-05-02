@@ -23,6 +23,7 @@ import { OrchestrationWizardPage } from "@/features/voice-tech/presentation/page
 import { DatasetFieldsPage } from "@/features/voice-tech/presentation/pages/dataset-fields-page"
 import { CreateVendorPage } from "@/features/voice-tech/presentation/pages/create-vendor-page"
 import { CreateAgentPage } from "@/features/voice-tech/presentation/pages/create-agent-page"
+import { CreateBotPage } from "../features/bots/presentation/pages/create-bot-page"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -152,6 +153,12 @@ const botTestRoute = createRoute({
   component: BotTestPage,
 })
 
+const createBotRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "create-bot",
+  component: CreateBotPage,
+})
+
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "login",
@@ -181,6 +188,7 @@ const routeTree = rootRoute.addChildren([
   voiceTechDatasetFieldsRoute,
   voiceTechCreateVendorRoute,
   voiceTechCreateAgentRoute,
+  createBotRoute,
 ])
 
 const router = createRouter({

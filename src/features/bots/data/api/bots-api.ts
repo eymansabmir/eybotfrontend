@@ -13,8 +13,8 @@ export const botsApi = {
     },
 
     createBot: async (input: CreateBotInput): Promise<Bot> => {
-console.log(JSON.stringify(input))
-        const { data } = await apiClient.post("/flows", input);
+        const payload = { ...input, orgId: "68b08633907a113536238290" };
+        const { data } = await apiClient.post("/flows", payload);
         return data;
     },
 

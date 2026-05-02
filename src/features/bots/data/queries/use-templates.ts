@@ -8,13 +8,6 @@ export const templateKeys = {
   detail: (id: string) => [...templateKeys.details(), id] as const,
 };
 
-export function useTemplates() {
-  return useQuery({
-    queryKey: templateKeys.lists(),
-    queryFn: templatesApi.getTemplates,
-  });
-}
-
 export function useTemplate(id: string) {
   return useQuery({
     queryKey: templateKeys.detail(id),
