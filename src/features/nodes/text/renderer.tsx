@@ -79,7 +79,7 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
                             ))}
 
                             {!isTranslationMode && (
-                                <div className="w-[140px]">
+                                <div className="w-full">
                                     <VariableSelect
                                         value=""
                                         onValueChange={(val: string) => addVariable(val)}

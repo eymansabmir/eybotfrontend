@@ -5,6 +5,7 @@ import { useResolveUrl, MediaUploader } from "@/lib/storage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 
 export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: ImageNodeData }) {
     const { setNodes } = useReactFlow();
@@ -71,9 +72,12 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
                                     placeholder="https://example.com/image.jpg or {{var}}"
                                     onChange={(e) => updateData({ url: e.target.value })}
                                 />
-                                <p className="text-[10px] text-muted-foreground">
-                                    Use <code className="text-primary font-bold">{"{{variable_name}}"}</code> to use a dynamic image.
-                                </p>
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mt-2 block">Or pick a variable</label>
+                                <VariableSelect
+                                    value={isVariable ? "" : ""}
+                                    onValueChange={(val) => { if (val) updateData({ url: `{{session.${val}}}` }); }}
+                                    placeholder="Insert variable..."
+                                />
                             </div>
                         </TabsContent>
                     </Tabs>

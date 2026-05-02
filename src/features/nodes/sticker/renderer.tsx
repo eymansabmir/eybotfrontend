@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { isDynamicVariable } from "../utils";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 
 /** Returns true if the value looks like an absolute URL (not a storage path). */
 function isAbsoluteUrl(value: string) {
@@ -117,9 +118,12 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
                                     placeholder="https://example.com/sticker.webp or {{var}}"
                                     onChange={(e) => updateData({ url: e.target.value, mediaId: undefined })}
                                 />
-                                <p className="text-[10px] text-muted-foreground self-start">
-                                    Use <code className="text-primary font-bold">{`{{variable_name}}`}</code> to use a dynamic sticker.
-                                </p>
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mt-2 block self-start">Or pick a variable</label>
+                                <VariableSelect
+                                    value=""
+                                    onValueChange={(val) => { if (val) updateData({ url: `{{session.${val}}}`, mediaId: undefined }); }}
+                                    placeholder="Insert variable..."
+                                />
                                 {data.mediaId && (
                                     <div className="w-full mt-2">
                                         <div className="flex items-center gap-1.5 mb-1">

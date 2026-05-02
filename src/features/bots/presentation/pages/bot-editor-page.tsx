@@ -566,9 +566,19 @@ export function BotEditorPage() {
                 resetDirtyState(localNodes, localEdges);
                 return true;
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast.error("Failed to save bot.");
+            const responseData = error?.response?.data;
+            // Extract specific Zod validation detail if available
+            const zodDetail = Array.isArray(responseData?.details) && responseData.details.length > 0
+                ? `Validation: ${responseData.details[0]?.message || responseData.details[0]}`
+                : null;
+            const apiMessage = zodDetail
+                || responseData?.message
+                || responseData?.error
+                || error?.message
+                || "Failed to save bot.";
+            toast.error(apiMessage, { duration: 8000 });
             return false;
         }
     };

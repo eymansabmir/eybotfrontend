@@ -1,10 +1,11 @@
 import type { NodeProps } from "@xyflow/react";
 import { useReactFlow } from "@xyflow/react";
-import { BarChartHorizontal } from "lucide-react";
+import { BarChartHorizontal, Variable as VarIcon } from "lucide-react";
 
 import type { NpsNodeData } from "./schema";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 
 export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsNodeData }) {
     const { setNodes } = useReactFlow();
@@ -28,6 +29,7 @@ export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsN
             popoverTitle="Configure NPS"
             summary={data.message ? data.message : "Click to configure NPS question..."}
             showPopover={selected}
+            popoverContentClassName="p-4 space-y-4"
             popoverBody={
                 <div className="space-y-3">
                     <div className="space-y-1.5">
@@ -55,6 +57,18 @@ export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsN
                             value={data.rightLabel || ""}
                             placeholder="Very likely"
                             onChange={(e) => updateData({ rightLabel: e.target.value })}
+                        />
+                    </div>
+
+                    {/* Score variable storage */}
+                    <div className="rounded-lg bg-muted/20 border border-[var(--border-dim)] p-3 space-y-2">
+                        <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                            <VarIcon size={10} /> Save Score To
+                        </label>
+                        <VariableSelect
+                            value={data.variable || ""}
+                            onValueChange={(val) => updateData({ variable: val })}
+                            placeholder="Select variable for score..."
                         />
                     </div>
                 </div>

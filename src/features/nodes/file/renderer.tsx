@@ -1,9 +1,10 @@
 import type { NodeProps } from "@xyflow/react";
-import { FileUp, Variable } from "lucide-react";
+import { FileUp, Variable as VarIcon } from "lucide-react";
 import type { FileNodeData } from "./schema";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 
 export function FileNodeRenderer({ id, data, selected }: NodeProps & { data: FileNodeData }) {
     const { setNodes } = useReactFlow();
@@ -32,6 +33,7 @@ export function FileNodeRenderer({ id, data, selected }: NodeProps & { data: Fil
                     ➔ @{data.variableName || "variable"}
                 </div>
             }
+            popoverContentClassName="p-4 space-y-4"
             popoverBody={
                 <>
                     <div className="space-y-1.5 flex flex-col">
@@ -44,23 +46,17 @@ export function FileNodeRenderer({ id, data, selected }: NodeProps & { data: Fil
                         />
                     </div>
 
-                    <div className="space-y-1.5 pt-2 border-t border-[var(--border-dim)]">
-                        <div className="flex items-center gap-1.5 mb-1">
-                            <Variable size={10} className="text-muted-foreground" />
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Save File URL To</label>
-                        </div>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground">@</span>
-                            <input
-                                type="text"
-                                className="w-full bg-background rounded-md border border-[var(--border-dim)] pl-7 pr-3 py-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                                value={data.variableName}
-                                placeholder="e.g. user_document"
-                                onChange={(e) => updateData({ variableName: e.target.value })}
-                            />
-                        </div>
-                        <p className="text-[9px] text-muted-foreground mt-1 leading-relaxed">
-                            When a file is uploaded, its URL will be saved to this variable name for use in later steps.
+                    <div className="rounded-lg bg-muted/20 border border-[var(--border-dim)] p-3 space-y-2">
+                        <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                            <VarIcon size={10} /> Save File URL To
+                        </label>
+                        <VariableSelect
+                            value={data.variableName || ""}
+                            onValueChange={(val) => updateData({ variableName: val })}
+                            placeholder="Select variable..."
+                        />
+                        <p className="text-[9px] text-muted-foreground leading-relaxed">
+                            When a file is uploaded, its URL will be saved to this variable for use in later steps.
                         </p>
                     </div>
                 </>

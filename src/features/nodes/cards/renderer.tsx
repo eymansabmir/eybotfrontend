@@ -6,6 +6,7 @@ import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { SortableList } from "@/components/ui/sortable-list";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 
 export function CardsNodeRenderer({ id, data, selected }: NodeProps & { data: CardsNodeData }) {
     const { setNodes } = useReactFlow();
@@ -242,28 +243,24 @@ export function CardsNodeRenderer({ id, data, selected }: NodeProps & { data: Ca
 
                     {/* Variable capture */}
                     {data.interaction?.mode === 'input' && (
-                        <div className="space-y-2 mt-4 pt-4 border-t border-[var(--border-dim)]">
-                            <div className="space-y-1.5">
-                                <div className="flex items-center gap-1.5">
-                                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Capture selection to variable</label>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <input
-                                        type="text"
-                                        className="bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                        <div className="rounded-lg bg-muted/20 border border-[var(--border-dim)] p-3 space-y-2 mt-4">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Capture Response</label>
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <VariableSelect
                                         value={data.interaction?.input?.variableName || ""}
-                                        placeholder="e.g. choice"
-                                        onChange={(e) => updateVariableSettings({ variableName: e.target.value })}
+                                        onValueChange={(val) => updateVariableSettings({ variableName: val })}
+                                        placeholder="Save to variable..."
                                     />
-                                    <select
-                                        className="bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                                        value={data.interaction?.input?.variableScope || 'session'}
-                                        onChange={(e) => updateVariableSettings({ variableScope: e.target.value })}
-                                    >
-                                        <option value="session">Session</option>
-                                        <option value="contact">Contact</option>
-                                    </select>
                                 </div>
+                                <select
+                                    className="w-24 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] cursor-pointer h-8 transition-all"
+                                    value={data.interaction?.input?.variableScope || 'session'}
+                                    onChange={(e) => updateVariableSettings({ variableScope: e.target.value })}
+                                >
+                                    <option value="session">Session</option>
+                                    <option value="contact">Contact</option>
+                                </select>
                             </div>
                         </div>
                     )}
