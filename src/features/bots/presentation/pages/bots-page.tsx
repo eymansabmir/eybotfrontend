@@ -5,10 +5,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Badge } from "@/components/ui/badge";
 import { useBots, useDeleteBot, useUpdateBot, useImportBot } from "../../data/queries/use-bots";
 import { formatDistanceToNow } from "date-fns";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
@@ -35,6 +35,8 @@ import { Label } from "@/components/ui/label";
 import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 import type { Bot as BotType } from "../../data/schemas/bot.schema";
+import { CreateBotDialog } from "../components/create-bot-dialog";
+
 
 import {
   Tooltip,
@@ -51,12 +53,12 @@ function BotActionsMenu({ bot }: BotActionsMenuProps) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [newName, setNewName] = useState(bot.name);
-  
+
   // Keep rename state in sync with external updates
   useEffect(() => {
     setNewName(bot.name);
   }, [bot.name]);
-  
+
   const updateBot = useUpdateBot(bot.id);
   const deleteBot = useDeleteBot();
 
@@ -102,12 +104,12 @@ function BotActionsMenu({ bot }: BotActionsMenuProps) {
           <Tooltip delayDuration={300}>
             <TooltipTrigger asChild>
               <div className="w-full">
-                <DropdownMenuItem 
-                   onClick={(e) => {
-                     e.preventDefault();
-                     setIsRenameOpen(true);
-                   }}
-                   disabled={isPublished}
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsRenameOpen(true);
+                  }}
+                  disabled={isPublished}
                 >
                   <Pencil className="mr-2 size-4" />
                   Rename
@@ -126,7 +128,7 @@ function BotActionsMenu({ bot }: BotActionsMenuProps) {
           <Tooltip delayDuration={300}>
             <TooltipTrigger asChild>
               <div className="w-full">
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
                   onClick={(e) => {
                     e.preventDefault();
@@ -191,7 +193,7 @@ function BotActionsMenu({ bot }: BotActionsMenuProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsDeleteOpen(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleteBot.isPending}
@@ -237,6 +239,8 @@ export function BotsPage() {
     e.target.value = ""; // Reset for same file re-upload
   };
 
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
   if (isLoading) {
     return (
       <div className="flex h-[400px] w-full items-center justify-center">
@@ -275,18 +279,19 @@ export function BotsPage() {
             <Download className="size-4 rotate-180" />
             Import JSON
           </Button>
-          <Button className="gap-2" asChild>
-            <Link to="/bot/$id" params={{ id: "new" }}>
-              <Plus className="size-4" />
-              Create New Bot
-            </Link>
+          <Button className="gap-2" onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="size-4" />
+            Create New Bot
           </Button>
         </div>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Empty state / CTA Card */}
-        <Link to="/bot/$id" params={{ id: "new" }} className="group h-full">
+        <div
+          onClick={() => setIsCreateDialogOpen(true)}
+          className="group h-full cursor-pointer"
+        >
           <div className="flex h-full min-h-[220px] flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-border bg-muted/10 p-6 transition-all hover:bg-muted/20 hover:border-primary/50">
             <div className="rounded-full bg-background p-4 shadow-sm group-hover:scale-110 transition-transform">
               <Plus className="size-8 text-muted-foreground group-hover:text-primary" />
@@ -296,15 +301,16 @@ export function BotsPage() {
               <p className="text-[11px] text-muted-foreground">Create a fresh conversational agent</p>
             </div>
           </div>
-        </Link>
+        </div>
+
 
         {(bots || []).map((bot) => (
           <div key={bot.id} className="relative group">
-            <Card 
+            <Card
               className="h-full cursor-pointer transition-all duration-300 hover:shadow-xl hover:border-primary/30 relative overflow-hidden group-hover:-translate-y-1"
               onClick={() => navigate({ to: "/bot/$id", params: { id: bot.id } })}
             >
-              <div 
+              <div
                 className="absolute top-4 right-4 flex items-center gap-2 z-10"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -355,6 +361,11 @@ export function BotsPage() {
           </div>
         ))}
       </div>
+      <CreateBotDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+      />
     </div>
   );
 }
+

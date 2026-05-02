@@ -65,7 +65,7 @@ export function VariablesCombobox({ value, onChange, placeholder = "Select varia
                     <div className="flex items-center gap-1.5 truncate">
                         <span className="text-[10px] font-bold text-ey-yellow-text/40">@</span>
                         <span className="truncate">
-                            {value ? value : <span className="text-muted-foreground/60">{placeholder}</span>}
+                            {value ? <span className="text-foreground">{value}</span> : <span className="text-muted-foreground/60">{placeholder}</span>}
                         </span>
                     </div>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-ey-yellow-text" />

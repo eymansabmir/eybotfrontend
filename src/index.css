@@ -150,6 +150,13 @@
   --canvas-bg: #F9FAFB;
   --border-dim: #E5E7EB;
   --canvas-dot: #D1D5DB;
+
+  /* Voice Tech: WhatsApp setup panel */
+  --vt-whatsapp-bg: oklch(0.97 0.02 160);
+  --vt-whatsapp-border: oklch(0.83 0.08 160);
+  --vt-whatsapp-text: oklch(0.34 0.06 160);
+  --vt-whatsapp-chip-bg: oklch(0.54 0.16 160);
+  --vt-whatsapp-chip-text: oklch(0.99 0 0);
 }
 
 .dark {
@@ -203,6 +210,13 @@
   --canvas-bg: #1A1A1A;
   --border-dim: #333333;
   --canvas-dot: #4B5563;
+
+  /* Voice Tech: WhatsApp setup panel */
+  --vt-whatsapp-bg: oklch(0.32 0.03 160);
+  --vt-whatsapp-border: oklch(0.64 0.08 160);
+  --vt-whatsapp-text: oklch(0.93 0.03 160);
+  --vt-whatsapp-chip-bg: oklch(0.62 0.14 160);
+  --vt-whatsapp-chip-text: oklch(0.99 0 0);
 }
 
 
@@ -312,4 +326,40 @@ body {
 
 .react-flow__controls-button:hover {
   background-color: var(--border-dim) !important;
+}
+
+.vt-whatsapp-panel {
+  background: var(--vt-whatsapp-bg);
+  border-color: var(--vt-whatsapp-border);
+  color: var(--vt-whatsapp-text);
+}
+
+.vt-whatsapp-chip {
+  background: var(--vt-whatsapp-chip-bg);
+  color: var(--vt-whatsapp-chip-text);
+}
+
+.vt-scrollbar,
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--foreground) 25%, transparent) transparent;
+}
+
+.vt-scrollbar::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.vt-scrollbar::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vt-scrollbar::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--foreground) 28%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }

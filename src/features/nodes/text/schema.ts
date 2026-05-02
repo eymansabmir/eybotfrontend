@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const TextNodeSchema = z.object({
     message: z.string().min(1, "Message is required"),
+    footer: z.string().optional(),
     variables: z.array(z.string()).optional(),
 });
 

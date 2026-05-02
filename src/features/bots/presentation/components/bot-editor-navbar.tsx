@@ -13,6 +13,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { EYLogo } from "@/components/branding/ey-logo";
+import { ISO_TO_NATIVE_NAME } from "@/features/i18n/languages";
 
 interface BotEditorNavbarProps {
     id: string;
@@ -39,6 +40,7 @@ interface BotEditorNavbarProps {
     onNavigateToBots?: () => void;
     onNavigateToFlow?: () => void;
     onNavigateToSettings?: () => void;
+    liveLanguages?: string[];
 }
 
 export function BotEditorNavbar({
@@ -62,13 +64,10 @@ export function BotEditorNavbar({
     isSaving,
     isPublishing,
     isUnpublishing,
-    isTranslationMode,
-    onNavigateToBots,
-    onNavigateToFlow,
-    onNavigateToSettings
+    isTranslationMode
 }: BotEditorNavbarProps) {
     const localization = bot?.settings?.localization;
-    const languages = localization?.languages || [];
+    const languages = liveLanguages?.length ? liveLanguages : (localization?.languages || []);
 
     return (
         <header className="flex items-center justify-between border-b px-6 py-3 bg-background/80 backdrop-blur-xl sticky top-0 z-40 shadow-sm border-border">
@@ -140,7 +139,7 @@ export function BotEditorNavbar({
                                 <SelectItem value="default" className="text-[11px] font-medium">Default (English)</SelectItem>
                                 {languages.map((lang: string) => (
                                     <SelectItem key={lang} value={lang} className="text-[11px] font-medium">
-                                        {lang.toUpperCase()}
+                                        {ISO_TO_NATIVE_NAME[lang] || lang.toUpperCase()}
                                     </SelectItem>
                                 ))}
                             </SelectContent>

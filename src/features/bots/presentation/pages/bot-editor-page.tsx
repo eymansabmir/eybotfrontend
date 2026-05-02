@@ -95,7 +95,6 @@ export function BotEditorPage() {
     const [pendingNavigation, setPendingNavigation] = useState<"bots" | "settings" | null>(null);
 
     const { variables, setVariables } = useVariablesStore();
-    
     const isPublished = bot?.status === "published";
     const [isEditingName, setIsEditingName] = useState(false);
     const [tempName, setTempName] = useState(bot?.name || "");
@@ -104,6 +103,17 @@ export function BotEditorPage() {
         if (bot?.name) setTempName(bot.name);
     }, [bot?.name]);
 
+    const [liveLanguages, setLiveLanguages] = useState<string[]>([]);
+
+    const handleNodesChange = useCallback((nodes: Node[]) => {
+        const langNode = nodes.find(n => n.type === NodeType.LANGUAGE);
+        if (langNode) {
+            const langs = (langNode.data as any).languages || [];
+            setLiveLanguages(langs);
+        } else {
+            setLiveLanguages([]);
+        }
+    }, []);
     useEffect(() => {
         if (bot?.settings?.variables) {
             setVariables(bot.settings.variables as any);
@@ -112,6 +122,508 @@ export function BotEditorPage() {
         }
     }, [bot, isNew, setVariables]);
 
+    const getIntegrationValidationError = () => {
+        const flowState = flowBuilderRef.current?.getFlowState();
+        const sourceNodes = flowState?.nodes ?? initialNodes;
+        for (const node of sourceNodes) {
+            if (
+                node.type !== NodeType.OPENAI &&
+                node.type !== NodeType.ELEVENLABS &&
+                node.type !== NodeType.GOOGLE_SHEETS &&
+                node.type !== NodeType.HTTP_REQUEST
+            ) {
+                continue;
+            }
+
+            const nodeData = node.data as Record<string, unknown>;
+            const nodeLabel = `${node.type} (${node.id})`;
+
+            if (node.type === NodeType.HTTP_REQUEST) {
+                const url = typeof nodeData["url"] === "string" ? nodeData["url"].trim() : "";
+                const method = typeof nodeData["method"] === "string" ? nodeData["method"].trim() : "";
+
+                if (!url) {
+                    return `${nodeLabel}: URL is required.`;
+                }
+
+                try {
+                    // Mirror backend zod URL validation to avoid generic save failures.
+                    new URL(url);
+                } catch {
+                    return `${nodeLabel}: URL must be a valid absolute URL.`;
+                }
+
+                if (!method) {
+                    return `${nodeLabel}: HTTP method is required.`;
+                }
+
+                continue;
+            }
+
+            if (node.type === NodeType.ELEVENLABS) {
+                if (!nodeData["credentialId"] || !nodeData["voiceId"] || !nodeData["text"] || !nodeData["resultVariable"]) {
+                    return `${nodeLabel}: credential, voice, text, and result variable are required.`;
+                }
+                continue;
+            }
+
+            if (node.type === NodeType.GOOGLE_SHEETS) {
+                const action = (nodeData["action"] as string | undefined) ?? "insert_row";
+                const hasValues = typeof nodeData["values"] === "object" && nodeData["values"] !== null && Object.keys(nodeData["values"] as Record<string, unknown>).length > 0;
+
+                if (!nodeData["credentialId"] || !nodeData["spreadsheetId"] || !nodeData["sheetId"]) {
+                    return `${nodeLabel}: credential, spreadsheet, and worksheet are required.`;
+                }
+
+                if (action === "insert_row") {
+                    if (!hasValues) {
+                        return `${nodeLabel}: at least one column value is required for insert row.`;
+                    }
+                    continue;
+                }
+
+                if (action === "update_row") {
+                    const rowId = nodeData["rowId"];
+                    const validRowId = typeof rowId === "number" && Number.isInteger(rowId) && rowId > 0;
+                    if (!validRowId || !hasValues) {
+                        return `${nodeLabel}: row ID and at least one value are required for update row.`;
+                    }
+                }
+
+                continue;
+            }
+
+            const mode = (nodeData["mode"] as string | undefined) ?? "chat_completion";
+            const voiceAction = (nodeData["voiceAction"] as string | undefined) ?? "create_speech";
+
+            if (!nodeData["credentialId"]) {
+                return `${nodeLabel}: OpenAI credential is required.`;
+            }
+
+            if (mode !== "assistant" && !nodeData["model"]) {
+                return `${nodeLabel}: model is required for mode ${mode}.`;
+            }
+
+            if (mode === "chat_completion") {
+                if (!hasValidOpenAIChatCompletionInput({
+                    messages: nodeData["messages"],
+                })) {
+                    return `${nodeLabel}: at least one non-empty message is required for chat completion.`;
+                }
+                continue;
+            }
+
+            if (mode === "voice" && voiceAction === "create_speech") {
+                if (!nodeData["prompt"] || !nodeData["voice"]) {
+                    return `${nodeLabel}: text and voice are required for speech generation.`;
+                }
+                continue;
+            }
+
+            if (mode === "voice" && voiceAction === "create_transcription") {
+                if (!nodeData["audioUrl"] && !nodeData["prompt"]) {
+                    return `${nodeLabel}: audio URL or transcription prompt is required.`;
+                }
+                continue;
+            }
+
+            if (mode === "assistant") {
+                if (!nodeData["assistantId"] || !nodeData["prompt"]) {
+                    return `${nodeLabel}: assistant ID and message are required for assistant mode.`;
+                }
+
+                if (!isValidAssistantThreadIdInput(nodeData["threadId"])) {
+                    return `${nodeLabel}: thread ID template must be {{session.key}} or {{contact.key}}.`;
+                }
+
+                continue;
+            }
+
+            if (mode === "generate_variables") {
+                const variables = Array.isArray(nodeData["variablesToExtract"])
+                    ? (nodeData["variablesToExtract"] as unknown[])
+                    : [];
+                if (!nodeData["prompt"] || variables.length === 0) {
+                    return `${nodeLabel}: prompt and at least one variable are required for generate variables mode.`;
+                }
+                continue;
+            }
+
+            if (mode === "image") {
+                if (!nodeData["prompt"]) {
+                    return `${nodeLabel}: prompt is required for image generation.`;
+                }
+            }
+
+            continue;
+        }
+
+        return null;
+    };
+
+    const handleSave = async () => {
+        if (!flowBuilderRef.current) return;
+
+        if (isTranslationMode) {
+            const { nodes: localNodes } = flowBuilderRef.current.getFlowState();
+            
+            // Map frontend nodes back to backend node format for translation storage
+            const mappedNodes = localNodes.map(n => {
+                let backendData = { ...n.data };
+
+                // Strip technical/logic fields that must ONLY live on the master flow.
+                // Translation records should only contain translatable content (messages, labels).
+                // Without this, stale technical values (e.g. skipIfAlreadySelected) baked into
+                // old translation saves will overwrite the master flow's current settings at runtime.
+                if (n.type === "language") {
+                    const {
+                        skipIfAlreadySelected,
+                        localizationEnabled,
+                        languages,
+                        defaultLanguage,
+                        variableName,
+                        variable,
+                        variableScope,
+                        timeoutSeconds,
+                        isTranslationMode,
+                        branches,
+                        ...contentOnly
+                    } = backendData;
+                    backendData = contentOnly;
+                }
+
+                // Reverse same mapping used in initialNodes for translation save
+                if (n.type === "ask_question") {
+                    backendData = {
+                        ...backendData,
+                        message: n.data.question,
+                        variableName: n.data.variable || n.data.variableName,
+                        inputType: n.data.validationType,
+                    };
+                } else if (n.type === "nps") {
+                    backendData = {
+                        ...backendData,
+                        message: n.data.message,
+                        variableName: n.data.variable || n.data.variableName,
+                        variableScope: n.data.variableScope,
+                    };
+                }
+                return {
+                    id: n.id,
+                    type: n.type,
+                    label: n.type, // Standard label
+                    data: backendData,
+                    position: n.position,
+                    branches: (n as any).branches || (n.data as any).branches || []
+                };
+            });
+
+            try {
+                await updateTranslationMutation.mutateAsync(mappedNodes);
+                toast.success(`${selectedLang.toUpperCase()} translation saved successfully!`);
+                return;
+            } catch (err) {
+                console.error(err);
+                toast.error("Failed to save translation.");
+                return;
+            }
+        }
+
+        const integrationValidationError = getIntegrationValidationError();
+        if (integrationValidationError) {
+            toast.error(integrationValidationError);
+            return;
+        }
+
+        const { nodes: localNodes, edges: localEdges } = flowBuilderRef.current.getFlowState();
+
+        const languageNodes = localNodes.filter((n) => n.type === NodeType.LANGUAGE);
+        let localizationSettings = bot?.settings?.localization;
+
+        if (languageNodes.length > 0) {
+            const firstLangNode = languageNodes[0];
+            const data = firstLangNode.data as any;
+            localizationSettings = {
+                isEnabled: typeof data.localizationEnabled === "boolean" 
+                    ? data.localizationEnabled 
+                    : (Array.isArray(data.languages) && data.languages.length > 0),
+                languages: Array.isArray(data.languages) ? data.languages : [],
+                defaultLanguage: data.defaultLanguage || (Array.isArray(data.languages) ? data.languages[0] : undefined),
+            };
+        }
+
+        if (languageNodes.length > 1) {
+            toast.warning("Multiple language nodes detected. Localization settings will follow the first language node in the flow.");
+        }
+
+        const mapNodeToBackend = (n: Node & { branches?: { key: string; label: string }[] }) => {
+            let backendData = { ...n.data };
+            const resolvedBranches = (n.branches ?? backendData.branches ?? []) as { key: string; label: string }[];
+            let branches: { key: string; label: string }[] = [...resolvedBranches];
+
+            if (backendData.branches) {
+                delete (backendData as any).branches;
+            }
+
+            if (n.type === "ask_question") {
+                backendData = {
+                    message: n.data.question || "Default question",
+                    variableName: n.data.variable || "var",
+                    variableScope: "session",
+                    inputType: n.data.validationType || "text",
+                    timeoutSeconds: n.data.timeoutSeconds || 3600
+                };
+                branches = [
+                    { key: "default", label: "Success" },
+                    { key: "error", label: "Error / Timeout" }
+                ];
+            } else if (n.type === "nps") {
+                backendData = {
+                    message: n.data.message || "How likely are you to recommend us?",
+                    variableName: n.data.variable || "nps_score",
+                    variableScope: n.data.variableScope || "session",
+                    length: n.data.length ?? 10,
+                    startsAt: n.data.startsAt ?? 1,
+                    leftLabel: n.data.leftLabel,
+                    rightLabel: n.data.rightLabel,
+                    buttonLabel: n.data.buttonLabel || "Rate",
+                    timeoutSeconds: n.data.timeoutSeconds || 3600
+                };
+                branches = [{ key: "default", label: "Default" }];
+            } else if (n.type === "send_buttons") {
+                backendData = {
+                    ...backendData,
+                    timeoutSeconds: 3600
+                };
+                const buttons = (n.data.buttons as any[]) || [];
+                if (!branches.length) {
+                    branches = buttons.map(b => ({ key: b.id, label: b.title }));
+                    branches.push({ key: "timeout", label: "Timeout" });
+                }
+            } else if (n.type === "send_list") {
+                const sections = (n.data.sections as Array<{ rows?: Array<{ id: string; title: string }> }>) || [];
+                if (!branches.length) {
+                    branches = sections.flatMap(section =>
+                        (section.rows || []).map(row => ({ key: row.id, label: row.title || row.id }))
+                    );
+                    if (!branches.length) {
+                        branches = [{ key: "default", label: "Default" }];
+                    }
+                }
+                if (!branches.some(b => b.key === "default")) {
+                    branches.push({ key: "default", label: "Default" });
+                }
+            } else if (n.type === "language") {
+                const currentData = n.data as Record<string, unknown>;
+                const languages = Array.isArray(currentData.languages)
+                    ? (currentData.languages as string[]).map((lang) => lang.trim()).filter(Boolean)
+                    : [];
+                const limitedLanguages = Array.from(new Set(languages)).slice(0, MAX_LANGUAGE_NODE_LANGUAGES);
+                const localizationEnabled = typeof currentData.localizationEnabled === "boolean"
+                    ? currentData.localizationEnabled
+                    : limitedLanguages.length > 0;
+                const defaultLanguage = typeof currentData.defaultLanguage === "string" && currentData.defaultLanguage.trim().length > 0
+                    ? currentData.defaultLanguage.trim()
+                    : limitedLanguages[0];
+
+                if (languages.length > MAX_LANGUAGE_NODE_LANGUAGES) {
+                    toast.error(`Language node supports up to ${MAX_LANGUAGE_NODE_LANGUAGES} languages. Extra languages were removed.`);
+                }
+
+                backendData = {
+                    message: (currentData.message as string) || "Please select your language",
+                    variable: (currentData.variableName as string) || (currentData.variable as string) || "selected_language",
+                    variableName: (currentData.variableName as string) || (currentData.variable as string) || "selected_language",
+                    variableScope: (currentData.variableScope as string) || "session",
+                    timeoutSeconds: (currentData.timeoutSeconds as number) || 3600,
+                    localizationEnabled,
+                    languages: limitedLanguages,
+                    defaultLanguage,
+                    skipIfAlreadySelected: !!currentData.skipIfAlreadySelected,
+                };
+
+                branches = [{ key: "default", label: "Default" }];
+            } else if (n.type === "start") {
+                branches = [{ key: "default", label: "Default" }];
+            } else if (n.type === "end") {
+                branches = []; // End nodes theoretically have no outbound branches
+            } else if (n.type === "send_carousel") {
+                const cards = (n.data.cards as any[]) || [];
+                const firstCard = cards[0];
+                
+                // Sync all cards with the first card's buttons
+                if (firstCard) {
+                    n.data.cards = cards.map(card => ({
+                        ...card,
+                        buttonType: firstCard.buttonType,
+                        ctaUrlButton: firstCard.ctaUrlButton,
+                        quickReplyButtons: firstCard.quickReplyButtons,
+                    }));
+                }
+
+                const allQuickReplies = (firstCard?.buttonType === 'quick_reply' ? (firstCard.quickReplyButtons || []) : []);
+
+                // Ensure interaction object is correctly populated for the engine
+                if (allQuickReplies.length > 0) {
+                    n.data.interaction = {
+                        mode: 'input',
+                        input: {
+                            type: 'choice',
+                            timeoutSeconds: 3600,
+                            options: allQuickReplies.map((btn: any) => ({
+                                id: btn.id,
+                                label: btn.title,
+                                branchKey: btn.id,
+                            })) as any,
+                        }
+                    };
+                } else {
+                    delete n.data.interaction;
+                }
+
+                if (allQuickReplies.length > 0) {
+                    branches = [
+                        ...allQuickReplies.map((btn: any) => ({ key: btn.id, label: btn.title })),
+                        { key: "timeout", label: "Timeout" }
+                    ];
+                } else {
+                    branches = [{ key: "default", label: "Default" }];
+                }
+            } else if (n.type === "send_cards") {
+                // SEND_CARDS in interactive mode: each card can have buttons with IDs
+                // that become branch keys on the edges. In the renderer, it specifically
+                // uses 'branchKey' as the handle ID.
+                const items = (n.data.items as any[]) || [];
+                const interaction = n.data.interaction as any;
+                if (interaction?.mode === 'input') {
+                    const buttonBranches = items.flatMap((item: any) =>
+                        (item.buttons || []).map((b: any) => ({ key: b.branchKey || b.id, label: b.text || b.id }))
+                    );
+                    // Deduplicate by key
+                    const seen = new Set<string>();
+                    branches = [];
+                    for (const b of buttonBranches) {
+                        if (!seen.has(b.key)) { seen.add(b.key); branches.push(b); }
+                    }
+                    if (!branches.length) {
+                        branches = [{ key: "default", label: "Default" }];
+                    }
+                    if (!branches.some(b => b.key === "timeout")) {
+                        branches.push({ key: "timeout", label: "Timeout" });
+                    }
+                } else {
+                    branches = [{ key: "default", label: "Default" }];
+                }
+            } else {
+                // send_text, send_image, etc. Use existing branches if renderer supplied them
+                if (!branches.length) {
+                    branches = [{ key: "default", label: "Default" }];
+                }
+            }
+
+            return {
+                id: n.id,
+                type: n.type,
+                label: n.type,
+                position: n.position,
+                data: backendData,
+                branches: branches
+            };
+        };
+
+        const mapEdgeToBackend = (e: Edge) => ({
+            id: e.id,
+            sourceNodeId: e.source,
+            sourceBranchKey: e.sourceHandle || "default",
+            targetNodeId: e.target,
+        });
+
+        const nodesToSave = localNodes.map(mapNodeToBackend);
+
+
+        const payload = {
+            name: bot?.name || "New Bot",
+            orgId: "68b08633907a113536238290", 
+            nodes: nodesToSave,
+            edges: localEdges.map(mapEdgeToBackend),
+            triggerType: bot?.triggerType || "inbound",
+            triggerConfig: bot?.triggerConfig || { keywords: [] },
+            status: bot?.status || "draft",
+            settings: { 
+                ...(bot?.settings || { timeoutSeconds: 300, maxSteps: 100 }), 
+                variables,
+                localization: localizationSettings
+            },
+        };
+
+        try {
+            if (isNew) {
+                const newBot = await createBotMutation.mutateAsync(payload as any);
+                toast.success("Bot created! Let's configure your WhatsApp settings.");
+                navigate({ to: "/bot/$id/settings", params: { id: newBot.id } });
+            } else {
+                await updateBotMutation.mutateAsync(payload as any);
+                toast.success("Bot saved successfully!");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to save bot.");
+        }
+    };
+
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [tempName, setTempName] = useState(bot?.name || "");
+
+    useEffect(() => {
+        if (bot?.name) setTempName(bot.name);
+    }, [bot?.name]);
+
+    const handleInlineRename = async (nextName = tempName) => {
+        if (!nextName.trim() || nextName === bot?.name) {
+            setIsEditingName(false);
+            return;
+        }
+
+        try {
+            await updateBotMutation.mutateAsync({ name: nextName });
+            toast.success("Bot renamed successfully!");
+            setTempName(nextName);
+            setIsEditingName(false);
+        } catch (error) {
+            toast.error("Failed to rename bot.");
+            setTempName(bot?.name || "");
+            setIsEditingName(false);
+        }
+    };
+
+    const isPublished = bot?.status === "published";
+
+    const handlePublish = async () => {
+        const integrationValidationError = getIntegrationValidationError();
+        if (integrationValidationError) {
+            toast.error(integrationValidationError);
+            return;
+        }
+
+        try {
+            await handleSave();
+            publishBotMutation.mutate(id, {
+                onSuccess: () => toast.success("Bot published successfully!"),
+                onError: () => toast.error("Failed to publish bot"),
+            });
+        } catch {
+            // Save already reports errors.
+        }
+    };
+
+    const handleUnpublish = () => {
+        archiveBotMutation.mutate(id, {
+            onSuccess: () => toast.success("Bot archived. You can now edit it."),
+            onError: () => toast.error("Failed to archive bot"),
+        });
+    };
+
+>>>>>>> 2961fc1aafbc16924ff3c8a09c0e001b9001347f
     const initialNodes = useMemo(() => {
         const baseNodes = (bot?.nodes as any[]) || [];
         const translatedSource = translationData?.translatedData as any[] | undefined;
@@ -729,12 +1241,7 @@ export function BotEditorPage() {
                 isTranslationMode={isTranslationMode}
                 onNavigateToBots={() => handleGuardedNavigate("bots")}
                 onNavigateToSettings={() => handleGuardedNavigate("settings")}
-            />
-            
-            <FloatingValidationBanner 
-                isVisible={isDirty && !isTranslationMode}
-                isSaving={updateBotMutation.isPending || createBotMutation.isPending}
-                onSave={handleSave}
+                liveLanguages={liveLanguages}
             />
 
             <main className="relative flex-1 overflow-hidden">
@@ -750,6 +1257,7 @@ export function BotEditorPage() {
                         initialEdges={initialEdges}
                         isTranslationMode={isTranslationMode}
                         onFlowChange={handleFlowChange}
+                        onNodesChange={handleNodesChange}
                     />
                 )}
             </main>

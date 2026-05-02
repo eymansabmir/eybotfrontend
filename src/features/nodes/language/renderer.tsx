@@ -48,21 +48,21 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
         );
     };
 
-    const localization = bot?.settings?.localization;
+
     const nodeLanguages = Array.isArray(data.languages) ? data.languages : [];
     const nodeLocalizationEnabled = typeof data.localizationEnabled === "boolean" ? data.localizationEnabled : undefined;
     const hasNodeLocalization = nodeLocalizationEnabled !== undefined || nodeLanguages.length > 0 || Boolean(data.defaultLanguage);
 
-    const effectiveLocalization = hasNodeLocalization
+    const effectiveLocalization: { isEnabled: boolean; languages: string[]; defaultLanguage?: string } = hasNodeLocalization
         ? {
             isEnabled: !!(nodeLocalizationEnabled ?? (nodeLanguages.length > 0)),
             languages: nodeLanguages,
             defaultLanguage: data.defaultLanguage || nodeLanguages[0],
         }
         : {
-            isEnabled: !!localization?.isEnabled,
-            languages: localization?.languages ?? [],
-            defaultLanguage: localization?.defaultLanguage,
+            isEnabled: false,
+            languages: [],
+            defaultLanguage: undefined,
         };
 
     const isEnabled = effectiveLocalization.isEnabled;
@@ -73,7 +73,9 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
     };
 
     const handleToggleLocalization = (checked: boolean) => {
-        if (!botId || !bot) return;
+        updateData({ localizationEnabled: checked });
+
+        if (!botId || !bot || botId === "new") return;
 
         updateBot({
             settings: {
@@ -85,17 +87,30 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                 },
             },
         });
-
         handleUpdateData({ localizationEnabled: checked });
     };
 
     const handleAddLanguage = (langCode: string) => {
-        if (!botId || !bot) return;
-
-        const currentLangs = bot.settings?.localization?.languages ?? [];
+        const currentLangs = Array.isArray(data.languages) ? data.languages : [];
         if (currentLangs.includes(langCode)) return;
 
+        if (currentLangs.length >= 10) {
+            toast.error("Maximum 10 languages allowed per node.");
+            return;
+        }
+
         const newLangs = [...currentLangs, langCode];
+        updateData({ languages: newLangs, localizationEnabled: true });
+
+        if (!botId || !bot || botId === "new") return;
+
+        // Keep global languages as a union of all language nodes
+        const allNodes = (bot as any).nodes || [];
+        const otherNodesLangs = allNodes
+            .filter((n: any) => n.id !== id && n.type === 'language')
+            .flatMap((n: any) => n.data?.languages || []);
+
+        const unionLangs = Array.from(new Set([...otherNodesLangs, ...newLangs]));
 
         updateBot({
             settings: {
@@ -103,19 +118,28 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                 localization: {
                     ...bot.settings?.localization,
                     isEnabled: true,
-                    languages: newLangs,
+                    languages: unionLangs,
                 },
             },
         });
-
         handleUpdateData({ languages: newLangs, localizationEnabled: true });
     };
 
     const handleRemoveLanguage = (langCode: string) => {
-        if (!botId || !bot) return;
-
-        const currentLangs = bot.settings?.localization?.languages ?? [];
+        const currentLangs = Array.isArray(data.languages) ? data.languages : [];
         const newLangs = currentLangs.filter((l) => l !== langCode);
+
+        updateData({ languages: newLangs });
+
+        if (!botId || !bot || botId === "new") return;
+
+        // Update global union
+        const allNodes = (bot as any).nodes || [];
+        const otherNodesLangs = allNodes
+            .filter((n: any) => n.id !== id && n.type === 'language')
+            .flatMap((n: any) => n.data?.languages || []);
+
+        const unionLangs = Array.from(new Set([...otherNodesLangs, ...newLangs]));
 
         updateBot({
             settings: {
@@ -123,11 +147,10 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                 localization: {
                     ...bot.settings?.localization,
                     isEnabled: bot.settings?.localization?.isEnabled ?? false,
-                    languages: newLangs,
+                    languages: unionLangs,
                 },
             },
         });
-
         handleUpdateData({ languages: newLangs });
     };
 
@@ -239,6 +262,7 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                                     {enabledLanguages.length === 0 && (
                                         <span className="text-[10px] text-muted-foreground italic px-1">No languages added yet.</span>
                                     )}
+                                </div>
                                 </div>
                             </div>
                         </div>

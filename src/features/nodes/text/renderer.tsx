@@ -58,6 +58,16 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
                         />
                     </div>
 
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Footer (Optional)</label>
+                        <textarea
+                            className="w-full min-h-[60px] bg-background rounded-xl border border-[var(--border-dim)] p-3 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-y transition-all placeholder:italic opacity-80"
+                            value={data.footer || ""}
+                            placeholder="Type footer text (optional)..."
+                            onChange={(e) => updateData({ footer: e.target.value })}
+                        />
+                    </div>
+
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Variables</label>
