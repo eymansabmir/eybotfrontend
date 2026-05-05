@@ -3,8 +3,10 @@ import type { NodeProps } from "@xyflow/react";
 import { List as ListIcon, Trash2, MessageSquare, Type, Footprints } from "lucide-react";
 import type { ListNodeData } from "./schema";
 import { useReactFlow } from "@xyflow/react";
-import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
+import { SortableList } from "@/components/ui/sortable-list";
 
 export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: ListNodeData & { isTranslationMode?: boolean } }) {
     const { setNodes } = useReactFlow();
@@ -153,8 +155,8 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                             <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
                                 <Type size={10} /> Body Message
                             </label>
-                            <textarea
-                                className="w-full min-h-[80px] bg-background rounded-lg border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-y transition-all"
+                            <AutosizeTextarea
+                                className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                 value={data.body}
                                 placeholder="Type your message..."
                                 onChange={(e) => updateData({ body: e.target.value })}
@@ -193,7 +195,7 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                             {!isTranslationMode && (
                                 <button
                                     onClick={addSection}
-                                    className="text-[10px] text-[var(--ey-yellow)] hover:underline font-bold"
+                                    className="text-[10px] text-ey-yellow-text hover:underline font-bold"
                                 >
                                     + Add Section
                                 </button>
@@ -201,8 +203,8 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                         </div>
 
                         <div className="space-y-3">
-                            {(data.sections ?? []).map((section, si) => (
-                                <div key={si} className="rounded-xl border border-[var(--border-dim)] bg-muted/5 p-3 space-y-2">
+                            {(data.sections ?? []).map((section: any, si: number) => (
+                                <div key={`section-${si}`} className="rounded-xl border border-[var(--border-dim)] bg-muted/5 p-3 space-y-2 flex-1">
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="text"
@@ -219,22 +221,32 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                                     </div>
 
                                     <div className="space-y-1.5 pl-2">
-                                        {section.rows.map((row, ri) => (
-                                            <div key={row.id} className="flex items-center gap-2">
-                                                <div className="w-1 h-1 rounded-full bg-teal-500 shrink-0" />
-                                                <input
-                                                    type="text"
-                                                    className="flex-1 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
-                                                    value={row.title}
-                                                    onChange={(e) => updateRowTitle(si, ri, e.target.value)}
-                                                />
-                                                {!isTranslationMode && (
-                                                    <button onClick={() => removeRow(si, ri)} className="text-muted-foreground hover:text-destructive">
-                                                        <Trash2 size={10} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
+                                        <SortableList
+                                            items={section.rows}
+                                            onReorder={(newRows: any[]) => {
+                                                const newSections = (data.sections ?? []).map((s, i) =>
+                                                    i === si ? { ...s, rows: newRows } : s
+                                                );
+                                                syncBranchesAndInteraction(newSections);
+                                            }}
+                                            keyExtractor={(row: any) => row.id}
+                                            renderItem={(row: any, ri: number) => (
+                                                <div className="flex items-center gap-2 flex-1">
+                                                    <div className="w-1 h-1 rounded-full bg-teal-500 shrink-0" />
+                                                    <input
+                                                        type="text"
+                                                        className="flex-1 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
+                                                        value={row.title}
+                                                        onChange={(e) => updateRowTitle(si, ri, e.target.value)}
+                                                    />
+                                                    {!isTranslationMode && (
+                                                        <button onClick={() => removeRow(si, ri)} className="text-muted-foreground hover:text-destructive">
+                                                            <Trash2 size={10} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        />
                                         {!isTranslationMode && (
                                             <button
                                                 onClick={() => addRow(si)}
@@ -256,9 +268,9 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                         </label>
                         <div className="flex gap-2">
                             <div className="flex-1">
-                                <VariablesCombobox 
+                                <VariableSelect 
                                     value={data.interaction?.input?.variableName || ""} 
-                                    onChange={(val) => updateVariableSettings({ variableName: val })} 
+                                    onValueChange={(val: string) => updateVariableSettings({ variableName: val })} 
                                     placeholder="Select variable..." 
                                 />
                             </div>

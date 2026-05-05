@@ -1,12 +1,11 @@
 import { useReducer, useState, useEffect, useRef } from "react";
-import { Handle, Position, useReactFlow } from "@xyflow/react";
+import { useReactFlow } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
 import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { DEFAULT_ORG_ID } from "@/features/integrations/google-sheets/domain/google-sheets.constants";
 import { 
   useGoogleSheetsCredentials, 
@@ -22,6 +21,7 @@ import { createGoogleSheetsConfigDraft, googleSheetsConfigReducer } from "@/feat
 import type { GoogleSheetsNodeData } from "./schema";
 import { GoogleSheetsLogo } from "./logo";
 import type { CellItem } from "@/features/integrations/google-sheets/presentation/components/cell-value-stack";
+import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 const ResponseMappingSchema = z.object({
   jsonPath: z.string().min(1),
@@ -199,109 +199,68 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
   };
 
   return (
-    <div className="relative">
-      {/* 1) Condensed Block Face */}
-      <div
-          className={cn(
-              "flex flex-col justify-center relative w-[220px] min-h-[85px] rounded-xl border p-3.5 select-none transition-all cursor-pointer",
-              "bg-[var(--node-bg)] border-[var(--border-dim)] hover:shadow-md",
-              selected && "border-2 border-[var(--ey-yellow)] shadow-[0_0_10px_rgba(255,230,0,0.15)] -m-[1px]"
-          )}
-      >
-          <Handle
-              type="target"
-              position={Position.Top}
-              className="h-3 w-3 border-2 border-[var(--border-dim)] bg-background shadow-sm hover:scale-125 transition-transform"
-          />
+    <NodeFrame
+        selected={selected}
+        icon={<GoogleSheetsLogo className="size-4" />}
+        title="Google Sheets"
+        popoverTitle="Configure Google Sheets"
+        summary={getActionLabel()}
+        showPopover={selected && !pickerOpen}
+        popoverClassName="w-[380px]"
+        compactBody={
+            isConfigured && (
+                <div className="text-[9px] text-muted-foreground tracking-wide mt-1 max-w-full truncate">
+                    &#91; {data.spreadsheetName}{data.sheetName ? ` - ${data.sheetName}` : ""} &#93;
+                </div>
+            )
+        }
+        popoverBody={
+            <div className="space-y-4">
+                <GoogleSheetsConfigForm
+                    draft={draft}
+                    credentials={credentialsQuery.data ?? []}
+                    sheets={sheetsQuery.data ?? []}
+                    columns={columnsQuery.data ?? []}
+                    sheetsLoading={sheetsQuery.isLoading}
+                    columnsLoading={columnsQuery.isLoading}
+                    onDraftChange={(patch) => dispatch({ type: "set", payload: patch })}
+                    onConnectAccount={() => setCredentialsOpen(true)}
+                    onPickSpreadsheet={onPickSpreadsheet}
+                    onTestConnection={onTestConnection}
+                    testingConnection={testCredential.isPending}
+                />
+            </div>
+        }
+        popoverFooter={
+            <Button 
+                onClick={onSaveConfig} 
+                size="sm" 
+                className="h-8 gap-1.5 font-bold shadow-sm bg-[var(--ey-yellow)] text-black hover:brightness-95 transition-all w-full"
+            >
+                <Save className="size-3.5" />
+                Save Configuration
+            </Button>
+        }
+        extraContent={
+            <>
+                <GoogleSheetsCredentialsDialog
+                    orgId={DEFAULT_ORG_ID}
+                    open={credentialsOpen}
+                    onOpenChange={setCredentialsOpen}
+                    onCreated={() => {
+                        awaitingNewCredential.current = true;
+                        queryClient.invalidateQueries({ queryKey: ["integrations", "google-sheets", "credentials", DEFAULT_ORG_ID] });
+                    }}
+                />
 
-          <div className="flex flex-col gap-2.5 w-full">
-              <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300">
-                      <GoogleSheetsLogo className="size-4" />
-                  </div>
-                  <span className="text-sm font-semibold truncate text-foreground leading-none pr-1">Google Sheets</span>
-              </div>
-
-              <div className="min-w-0 flex flex-col mt-0.5">
-                  <div className="bg-black/5 dark:bg-black/20 rounded-md p-2 border border-[var(--border-dim)] mt-0.5">
-                        <span className="text-[11px] text-foreground/70 line-clamp-3 leading-snug whitespace-pre-wrap">
-                            {getActionLabel()}
-                        </span>
-                    </div>
-                  
-                  {isConfigured && (
-                      <div className="text-[9px] text-muted-foreground tracking-wide mt-1 max-w-full truncate">
-                          &#91; {data.spreadsheetName}{data.sheetName ? ` - ${data.sheetName}` : ""} &#93;
-                      </div>
-                  )}
-              </div>
-          </div>
-
-          <Handle
-              type="source"
-              position={Position.Bottom}
-              className="h-3 w-3 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
-          />
-      </div>
-
-      {/* 2) Popover Configuration Panel */}
-      {selected && !pickerOpen && (
-          <div 
-              className="absolute top-0 left-[230px] w-[380px] bg-[var(--node-bg)] border border-[var(--border-dim)] rounded-xl shadow-2xl z-[100] cursor-auto nodrag nopan flex flex-col overflow-hidden"
-          >
-              <div className="flex items-center justify-between border-b border-[var(--border-dim)] px-4 py-3 bg-muted/20">
-                  <div className="flex items-center gap-2">
-                      <GoogleSheetsLogo className="size-4 text-muted-foreground" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Configure Google Sheets</span>
-                  </div>
-              </div>
-              
-              <div className="flex-1 max-h-[500px] overflow-y-auto custom-scrollbar p-4 text-foreground">
-                  <GoogleSheetsConfigForm
-                      draft={draft}
-                      credentials={credentialsQuery.data ?? []}
-                      sheets={sheetsQuery.data ?? []}
-                      columns={columnsQuery.data ?? []}
-                      sheetsLoading={sheetsQuery.isLoading}
-                      columnsLoading={columnsQuery.isLoading}
-                      onDraftChange={(patch) => dispatch({ type: "set", payload: patch })}
-                      onConnectAccount={() => setCredentialsOpen(true)}
-                      onPickSpreadsheet={onPickSpreadsheet}
-                      onTestConnection={onTestConnection}
-                      testingConnection={testCredential.isPending}
-                  />
-              </div>
-
-              <div className="flex justify-end border-t border-[var(--border-dim)] px-4 py-3 bg-muted/10">
-                  <Button 
-                      onClick={onSaveConfig} 
-                      size="sm" 
-                      className="h-8 gap-1.5 font-bold shadow-sm bg-[var(--ey-yellow)] text-black hover:brightness-95 transition-all w-full"
-                  >
-                      <Save className="size-3.5" />
-                      Save Configuration
-                  </Button>
-              </div>
-          </div>
-      )}
-
-      {/* Global Modals */}
-      <GoogleSheetsCredentialsDialog
-        orgId={DEFAULT_ORG_ID}
-        open={credentialsOpen}
-        onOpenChange={setCredentialsOpen}
-        onCreated={() => {
-          awaitingNewCredential.current = true;
-          queryClient.invalidateQueries({ queryKey: ["integrations", "google-sheets", "credentials", DEFAULT_ORG_ID] });
-        }}
-      />
-
-      <GoogleSpreadsheetPicker
-        open={pickerOpen}
-        onOpenChange={onPickerClose}
-        getAccessToken={onGetSpreadsheetPickerAccessToken}
-        onPick={onPickerResult}
-      />
-    </div>
+                <GoogleSpreadsheetPicker
+                    open={pickerOpen}
+                    onOpenChange={onPickerClose}
+                    getAccessToken={onGetSpreadsheetPickerAccessToken}
+                    onPick={onPickerResult}
+                />
+            </>
+        }
+    />
   );
 }

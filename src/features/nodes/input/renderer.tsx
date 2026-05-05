@@ -3,8 +3,9 @@ import { Keyboard, Variable, ShieldCheck } from "lucide-react";
 import type { InputNodeData } from "./schema";
 import { useReactFlow } from "@xyflow/react";
 import { LockedBadge } from "@/components/ui/locked-badge";
-import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 
 
 
@@ -39,8 +40,8 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight text-foreground/60 flex items-center gap-1.5">
                             <Keyboard size={10} /> Question
                         </label>
-                        <textarea
-                            className="w-full min-h-[100px] bg-background rounded-xl border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-none transition-all"
+                        <AutosizeTextarea
+                            className="w-full bg-background rounded-xl border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                             value={data.question}
                             placeholder="What would you like to ask?"
                             onChange={(e) => updateData({ question: e.target.value })}
@@ -55,9 +56,9 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                             {isTranslationMode && <LockedBadge />}
                         </div>
                         <div className="relative">
-                            <VariablesCombobox 
+                            <VariableSelect 
                                 value={data.variable || ""} 
-                                onChange={(val) => updateData({ variable: val })} 
+                                onValueChange={(val: string) => updateData({ variable: val })} 
                                 placeholder="e.g. user_age" 
                                 className={isTranslationMode ? "opacity-50 pointer-events-none" : ""}
                             />

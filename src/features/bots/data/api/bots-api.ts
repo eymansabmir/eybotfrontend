@@ -13,8 +13,8 @@ export const botsApi = {
     },
 
     createBot: async (input: CreateBotInput): Promise<Bot> => {
-console.log(JSON.stringify(input))
-        const { data } = await apiClient.post("/flows", input);
+        const payload = { ...input, orgId: "68b08633907a113536238290" };
+        const { data } = await apiClient.post("/flows", payload);
         return data;
     },
 
@@ -44,5 +44,10 @@ console.log(JSON.stringify(input))
 
     updateFlowTranslation: async (id: string, language: string, translatedData: any): Promise<void> => {
         await apiClient.put(`/flows/${id}/translations/${language}`, { translatedData });
+    },
+    
+    importBot: async (input: any): Promise<Bot> => {
+        const { data } = await apiClient.post("/flows/import?orgId=68b08633907a113536238290", input);
+        return data;
     },
 };

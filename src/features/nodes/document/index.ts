@@ -4,6 +4,7 @@ import type { DocumentNodeData } from "./schema";
 import { DocumentNodeSchema } from "./schema";
 import { DocumentNodeRenderer } from "./renderer";
 import { DocumentNodeHandler } from "./handler";
+import { isValidUrlOrVariable } from "../utils";
 
 export const documentNode: NodeDefinition<DocumentNodeData> = {
     config: DocumentNodeConfig,
@@ -12,6 +13,12 @@ export const documentNode: NodeDefinition<DocumentNodeData> = {
     handler: DocumentNodeHandler,
     defaultData: { url: '', caption: '', filename: '' },
     defaultBranches: [{ key: 'default', label: 'Default' }],
+    validate: (data) => {
+        if (!isValidUrlOrVariable(data.url)) {
+            return ["Document URL or variable is required"];
+        }
+        return null;
+    },
 };
 
 export * from "./schema";
