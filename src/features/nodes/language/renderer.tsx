@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import type { LanguageNodeData } from "./schema";
 import { cn } from "@/lib/utils";
-import { useBot, useUpdateBot } from "@/features/bots/data/queries/use-bots";
+
 import { apiClient } from "@/lib/api-client";
 import { SUPPORTED_LANGUAGES, COMMON_LANGUAGES } from "@/features/i18n/languages";
 import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
@@ -29,14 +29,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data: LanguageNodeData }) {
-    const { setNodes } = useReactFlow();
+    const { setNodes, getNodes } = useReactFlow();
 
     const editorMatch = useMatch({ from: "/bot/$id", shouldThrow: false });
     const testMatch = useMatch({ from: "/bot/$id/test", shouldThrow: false });
     const botId = editorMatch?.params?.id ?? testMatch?.params?.id;
 
-    const { data: bot } = useBot(botId ?? "");
-    const { mutate: updateBot } = useUpdateBot(botId ?? "");
+
 
     const [open, setOpen] = React.useState(false);
     const [isSyncing, setIsSyncing] = React.useState(false);
@@ -73,19 +72,6 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
 
     const handleToggleLocalization = (checked: boolean) => {
         updateData({ localizationEnabled: checked });
-
-        if (!botId || !bot || botId === "new") return;
-
-        updateBot({
-            settings: {
-                ...bot.settings,
-                localization: {
-                    ...bot.settings?.localization,
-                    isEnabled: checked,
-                    languages: bot.settings?.localization?.languages ?? [],
-                },
-            },
-        });
     };
 
     const handleAddLanguage = (langCode: string) => {
@@ -99,55 +85,12 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
 
         const newLangs = [...currentLangs, langCode];
         updateData({ languages: newLangs, localizationEnabled: true });
-
-        if (!botId || !bot || botId === "new") return;
-
-        // Keep global languages as a union of all language nodes
-        const allNodes = (bot as any).nodes || [];
-        const otherNodesLangs = allNodes
-            .filter((n: any) => n.id !== id && n.type === 'language')
-            .flatMap((n: any) => n.data?.languages || []);
-
-        const unionLangs = Array.from(new Set([...otherNodesLangs, ...newLangs]));
-
-        updateBot({
-            settings: {
-                ...bot.settings,
-                localization: {
-                    ...bot.settings?.localization,
-                    isEnabled: true,
-                    languages: unionLangs,
-                },
-            },
-        });
     };
 
     const handleRemoveLanguage = (langCode: string) => {
         const currentLangs = Array.isArray(data.languages) ? data.languages : [];
         const newLangs = currentLangs.filter((l) => l !== langCode);
-
         updateData({ languages: newLangs });
-
-        if (!botId || !bot || botId === "new") return;
-
-        // Update global union
-        const allNodes = (bot as any).nodes || [];
-        const otherNodesLangs = allNodes
-            .filter((n: any) => n.id !== id && n.type === 'language')
-            .flatMap((n: any) => n.data?.languages || []);
-
-        const unionLangs = Array.from(new Set([...otherNodesLangs, ...newLangs]));
-
-        updateBot({
-            settings: {
-                ...bot.settings,
-                localization: {
-                    ...bot.settings?.localization,
-                    isEnabled: bot.settings?.localization?.isEnabled ?? false,
-                    languages: unionLangs,
-                },
-            },
-        });
     };
 
     const handleSync = async () => {
@@ -158,7 +101,8 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
 
         setIsSyncing(true);
         try {
-            await apiClient.post(`/flows/${botId}/sync-translations`);
+            const currentNodes = getNodes();
+            await apiClient.post(`/flows/${botId}/sync-translations`, { nodes: currentNodes });
             toast.success("Translations synced successfully.");
         } catch (error) {
             toast.error((error as Error)?.message || "Failed to sync translations");
@@ -223,6 +167,7 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                                 checked={isEnabled}
                                 size="sm"
                                 onCheckedChange={handleToggleLocalization}
+                                disabled={data.isTranslationMode}
                             />
                         </div>
 
@@ -237,7 +182,12 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                                                 variant="outline"
                                                 role="combobox"
                                                 aria-expanded={open}
-                                                className="w-full justify-between h-8 bg-primary/10 border-primary/30 hover:bg-primary/20 text-foreground font-medium text-[11px]"
+                                                disabled={data.isTranslationMode}
+                                                className={cn(
+                                                    "w-full justify-between h-8 bg-primary/10 border-primary/30 hover:bg-primary/20 text-foreground font-medium text-[11px]",
+                                                    data.isTranslationMode && "opacity-50 grayscale-[0.5] cursor-not-allowed"
+                                                )}
+                                                title={data.isTranslationMode ? "Structural changes must be made in Default (English) view" : undefined}
                                             >
                                                 <span className="opacity-70">Add language...</span>
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -281,18 +231,23 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                                             <Badge
                                                 key={code}
                                                 variant="secondary"
-                                                className="h-5 px-2 py-0 text-[10px] font-bold bg-primary text-primary-foreground border-primary/20 flex items-center gap-1.5 shadow-sm hover:bg-primary/90 transition-all cursor-default"
+                                                className={cn(
+                                                    "h-5 px-2 py-0 text-[10px] font-bold bg-primary text-primary-foreground border-primary/20 flex items-center gap-1.5 shadow-sm transition-all cursor-default",
+                                                    !data.isTranslationMode && "hover:bg-primary/90"
+                                                )}
                                             >
                                                 {getLanguageName(code)}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleRemoveLanguage(code);
-                                                    }}
-                                                    className="hover:bg-black/10 rounded-full p-0.5 transition-colors"
-                                                >
-                                                    <X size={10} strokeWidth={3} />
-                                                </button>
+                                                {!data.isTranslationMode && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRemoveLanguage(code);
+                                                        }}
+                                                        className="hover:bg-black/10 rounded-full p-0.5 transition-colors"
+                                                    >
+                                                        <X size={10} strokeWidth={3} />
+                                                    </button>
+                                                )}
                                             </Badge>
                                         ))}
                                         {enabledLanguages.length === 0 && (

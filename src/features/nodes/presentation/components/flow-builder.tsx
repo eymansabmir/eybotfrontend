@@ -137,7 +137,12 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
                 existingNames.add(vName);
             }
         });
-    }, [nodes]);
+
+        // Notify parent of ALL node data changes (including direct setNodes calls from renderers).
+        // onNodesChange only fires for ReactFlow structural events (move/select/delete),
+        // NOT for programmatic setNodes calls. This effect bridges that gap.
+        onNodesChangeProp?.(nodes);
+    }, [nodes, onNodesChangeProp]);
 
 
 

@@ -45,10 +45,15 @@ export function BotEditorPage() {
     const [liveLanguages, setLiveLanguages] = useState<string[]>([]);
 
     const handleNodesChange = useCallback((nodes: Node[]) => {
-        const langNode = nodes.find(n => n.type === NodeType.LANGUAGE);
-        if (langNode) {
-            const langs = (langNode.data as any).languages || [];
-            setLiveLanguages(langs);
+        // Collect the union of languages from ALL language nodes so that
+        // adding/removing a language on any node is immediately reflected
+        // in the navbar dropdown without requiring a save.
+        const langNodes = nodes.filter(n => n.type === NodeType.LANGUAGE);
+        if (langNodes.length > 0) {
+            const unionLangs = Array.from(
+                new Set(langNodes.flatMap(n => (n.data as any).languages || []))
+            ).filter(Boolean) as string[];
+            setLiveLanguages(unionLangs);
         } else {
             setLiveLanguages([]);
         }
@@ -615,9 +620,14 @@ export function BotEditorPage() {
                 };
             } else if (n.type === "language") {
                 const settingsLocalization = bot?.settings?.localization;
-                const languageList = Array.isArray(n.data.languages) && n.data.languages.length > 0
-                    ? (n.data.languages as string[]).slice(0, MAX_LANGUAGE_NODE_LANGUAGES)
+                const nodeLangs = Array.isArray(n.data.languages) ? n.data.languages : [];
+                
+                // If the node has no languages, fallback to global settings.
+                // Otherwise, use the node's specific list.
+                const languageList = nodeLangs.length > 0
+                    ? nodeLangs.slice(0, MAX_LANGUAGE_NODE_LANGUAGES)
                     : (settingsLocalization?.languages || []);
+
                 const localizationEnabled = typeof n.data.localizationEnabled === "boolean"
                     ? n.data.localizationEnabled
                     : (settingsLocalization?.isEnabled ?? languageList.length > 0);
@@ -649,9 +659,12 @@ export function BotEditorPage() {
     }, [bot?.nodes, bot?.settings?.localization, translationData, isTranslationMode]);
 
     useEffect(() => {
-        const langNode = initialNodes.find(n => n.type === NodeType.LANGUAGE);
-        if (langNode) {
-            setLiveLanguages((langNode.data as any).languages || []);
+        const langNodes = initialNodes.filter(n => n.type === NodeType.LANGUAGE);
+        if (langNodes.length > 0) {
+            const unionLangs = Array.from(
+                new Set(langNodes.flatMap(n => (n.data as any).languages || []))
+            ).filter(Boolean) as string[];
+            setLiveLanguages(unionLangs);
         } else {
             setLiveLanguages([]);
         }
