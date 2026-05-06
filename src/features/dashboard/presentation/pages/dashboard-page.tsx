@@ -114,13 +114,6 @@ function buildWeeklySeries(bots: Bot[]) {
     point.value += weightedExecutions
   }
 
-  if (points.every((point) => point.value === 0)) {
-    return points.map((point, index) => ({
-      label: point.label,
-      value: (index + 1) * 2,
-    }))
-  }
-
   return points.map((point) => ({
     label: point.label,
     value: point.value,
@@ -198,11 +191,9 @@ export function DashboardPage() {
       .slice(0, 4)
       .map((bot) => {
         const executions = toSafeNumber(bot.executions)
+        const successes = toSafeNumber((bot as any).successfulExecutions)
         const status = mapBotStatus(bot.status)
-        const successRate = Math.min(
-          99,
-          72 + (bot.status === "published" ? 16 : 4) + (bot.isConfigured ? 8 : 0),
-        )
+        const successRate = executions > 0 ? (successes / executions) * 100 : 0
 
         return {
           name: bot.name,
@@ -220,7 +211,7 @@ export function DashboardPage() {
         value: totalSessions.toLocaleString(),
         delta: `${bots.length} bots`,
         note: "cumulative execution volume",
-        progress: Math.min(100, totalSessions > 0 ? 45 + Math.log10(totalSessions + 1) * 18 : 8),
+        progress: bots.length > 0 ? (publishedBots.length / bots.length) * 100 : 0,
         icon: MessageSquareTextIcon,
       },
       {

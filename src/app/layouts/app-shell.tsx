@@ -15,6 +15,7 @@ import {
 import { Link, useRouterState } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
 import { EYLogo } from "@/components/branding/ey-logo"
+import { ENV } from "@/config/env"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -47,18 +48,29 @@ import { Separator } from "@/components/ui/separator"
 const mainNav = [
   { label: "Dashboard", to: "/", icon: LayoutDashboardIcon },
   { label: "Bots", to: "/bots", icon: BotIcon },
-  { label: "Campaign", to: "/campaign", icon: MegaphoneIcon },
+  { 
+    label: "Campaign", 
+    to: "/campaign", 
+    icon: MegaphoneIcon,
+    featureFlag: "CAMPAIGNS" as const
+  },
   {
     label: "Voice Tech",
     to: "/voice-tech",
     icon: PhoneCallIcon,
+    featureFlag: "VOICE_TECH" as const,
     items: [
       { label: "Orchestrations", to: "/voice-tech" },
       { label: "Datasets", to: "/voice-tech/datasets" },
       { label: "Vendors", to: "/voice-tech/vendors" },
     ],
   },
-  { label: "Users", to: "/users", icon: UsersIcon },
+  { 
+    label: "Users", 
+    to: "/users", 
+    icon: UsersIcon,
+    featureFlag: "USERS" as const
+  },
 ]
 
 const footerNav = [
@@ -94,7 +106,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             <SidebarGroupLabel>Workspace</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {mainNav.map((item) => {
+                {mainNav
+                  .filter((item) => !item.featureFlag || ENV.FEATURES[item.featureFlag])
+                  .map((item) => {
                   const hasSubItems = item.items && item.items.length > 0;
                   const isActive = item.to === "/"
                     ? pathname === "/"
