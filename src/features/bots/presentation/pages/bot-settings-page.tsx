@@ -13,15 +13,13 @@ import { WhatsAppCredentialsDialog } from "@/features/integrations/whatsapp/pres
 import { useWhatsAppCredentials, useDeleteWhatsAppCredential } from "@/features/integrations/whatsapp/hooks/use-whatsapp-credentials";
 import { LocalizationForm } from "@/features/settings/presentation/components/localization-form";
 import { BotEditorNavbar } from "../components/bot-editor-navbar";
-
-type ApiLikeError = {
-    response?: {
-        data?: {
-            message?: string;
-        };
-    };
-    message?: string;
-};
+import { getErrorMessage } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type LocalizationSettings = {
     isEnabled: boolean;
@@ -29,10 +27,6 @@ type LocalizationSettings = {
     defaultLanguage?: string;
 };
 
-const getErrorMessage = (error: unknown, fallback: string): string => {
-    const candidate = error as ApiLikeError;
-    return candidate?.response?.data?.message || candidate?.message || fallback;
-};
 
 export function BotSettingsPage() {
     const { id } = useParams({ from: "/bot/$id/settings" });
@@ -215,7 +209,7 @@ export function BotSettingsPage() {
             toast.success("Bot renamed successfully!");
             setIsEditingName(false);
         } catch (error) {
-            toast.error("Failed to rename bot.");
+            toast.error(getErrorMessage(error, "Failed to rename bot."));
             setTempName(bot?.name || "");
             setIsEditingName(false);
         }
@@ -263,7 +257,7 @@ export function BotSettingsPage() {
                 }
             });
         } catch (error) {
-            toast.error("Failed to save and publish.");
+            toast.error(getErrorMessage(error, "Failed to save and publish."));
         }
     };
 
@@ -298,7 +292,7 @@ export function BotSettingsPage() {
              });
              toast.success("Localization settings saved.");
         } catch (err) {
-             toast.error("Failed to save localization settings.");
+             toast.error(getErrorMessage(err, "Failed to save localization settings."));
         }
     };
 
@@ -343,7 +337,7 @@ export function BotSettingsPage() {
                 }}
                 onUnpublish={() => archiveBotMutation.mutate(id, {
                     onSuccess: () => toast.success("Bot archived. You can now edit it."),
-                    onError: () => toast.error("Failed to archive bot"),
+                    onError: (err) => toast.error(getErrorMessage(err, "Failed to archive bot")),
                 })}
                 isSaving={updateBotMutation.isPending}
                 isPublishing={publishBotMutation.isPending}
@@ -613,9 +607,43 @@ export function BotSettingsPage() {
                                                                                 <SelectValue />
                                                                             </SelectTrigger>
                                                                             <SelectContent>
-                                                                                <SelectItem value="EQUALS">Equals</SelectItem>
-                                                                                <SelectItem value="CONTAINS">Contains</SelectItem>
-                                                                                <SelectItem value="STARTS_WITH">Starts with</SelectItem>
+                                                                                <TooltipProvider>
+                                                                                    <Tooltip delayDuration={300}>
+                                                                                        <TooltipTrigger asChild>
+                                                                                            <div className="w-full">
+                                                                                                <SelectItem value="EQUALS">Equals</SelectItem>
+                                                                                            </div>
+                                                                                        </TooltipTrigger>
+                                                                                        <TooltipContent side="right" className="max-w-xs p-3">
+                                                                                            <p className="font-bold mb-1">Exact Match</p>
+                                                                                            <p className="text-xs text-muted-foreground">The bot triggers only if the message matches your keyword exactly (e.g., "Help" matches "help").</p>
+                                                                                        </TooltipContent>
+                                                                                    </Tooltip>
+
+                                                                                    <Tooltip delayDuration={300}>
+                                                                                        <TooltipTrigger asChild>
+                                                                                            <div className="w-full">
+                                                                                                <SelectItem value="CONTAINS">Contains</SelectItem>
+                                                                                            </div>
+                                                                                        </TooltipTrigger>
+                                                                                        <TooltipContent side="right" className="max-w-xs p-3">
+                                                                                            <p className="font-bold mb-1">Flexible Match</p>
+                                                                                            <p className="text-xs text-muted-foreground">The bot triggers if the keyword appears anywhere in the user's message (e.g., "I need help" matches "help").</p>
+                                                                                        </TooltipContent>
+                                                                                    </Tooltip>
+
+                                                                                    <Tooltip delayDuration={300}>
+                                                                                        <TooltipTrigger asChild>
+                                                                                            <div className="w-full">
+                                                                                                <SelectItem value="STARTS_WITH">Starts with</SelectItem>
+                                                                                            </div>
+                                                                                        </TooltipTrigger>
+                                                                                        <TooltipContent side="right" className="max-w-xs p-3">
+                                                                                            <p className="font-bold mb-1">Prefix Match</p>
+                                                                                            <p className="text-xs text-muted-foreground">The bot triggers if the message begins with your keyword (e.g., "Help me please" matches "help").</p>
+                                                                                        </TooltipContent>
+                                                                                    </Tooltip>
+                                                                                </TooltipProvider>
                                                                             </SelectContent>
                                                                         </Select>
                                                                         <Input 

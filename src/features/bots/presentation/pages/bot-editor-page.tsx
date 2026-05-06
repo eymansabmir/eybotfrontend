@@ -24,6 +24,7 @@ import {
     AlertDialogDescription,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getErrorMessage } from "@/lib/utils";
 
 import { DEFAULT_NODES, DEFAULT_EDGES } from "@/features/nodes/defaults";
 import { BotEditorNavbar } from "../components/bot-editor-navbar";
@@ -465,7 +466,7 @@ export function BotEditorPage() {
                 return true;
             } catch (err) {
                 console.error(err);
-                toast.error("Failed to save translation.");
+                toast.error(getErrorMessage(err, "Failed to save translation."));
                 return false;
             }
         }
@@ -501,9 +502,7 @@ export function BotEditorPage() {
             }
         } catch (error: any) {
             console.error(error);
-            const responseData = error?.response?.data;
-            const apiMessage = responseData?.message || responseData?.error || error?.message || "Failed to save bot.";
-            toast.error(apiMessage, { duration: 8000 });
+            toast.error(getErrorMessage(error, "Failed to save bot."), { duration: 8000 });
             return false;
         }
     };
@@ -543,7 +542,7 @@ export function BotEditorPage() {
             setTempName(nextName);
             setIsEditingName(false);
         } catch (error) {
-            toast.error("Failed to rename bot.");
+            toast.error(getErrorMessage(error, "Failed to rename bot."));
             setTempName(bot?.name || "");
             setIsEditingName(false);
         }
@@ -555,7 +554,7 @@ export function BotEditorPage() {
             if (!saved) return;
             publishBotMutation.mutate(id, {
                 onSuccess: () => toast.success("Bot published successfully!"),
-                onError: () => toast.error("Failed to publish bot"),
+                onError: (err) => toast.error(getErrorMessage(err, "Failed to publish bot")),
             });
         } catch {}
     };
@@ -563,7 +562,7 @@ export function BotEditorPage() {
     const handleUnpublish = () => {
         archiveBotMutation.mutate(id, {
             onSuccess: () => toast.success("Bot archived. You can now edit it."),
-            onError: () => toast.error("Failed to archive bot"),
+            onError: (err) => toast.error(getErrorMessage(err, "Failed to archive bot")),
         });
     };
 

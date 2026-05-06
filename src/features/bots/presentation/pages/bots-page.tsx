@@ -35,6 +35,7 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import type { Bot as BotType } from "../../data/schemas/bot.schema";
+import { getErrorMessage } from "@/lib/utils";
 
 
 import {
@@ -72,7 +73,7 @@ function BotActionsMenu({ bot }: BotActionsMenuProps) {
       toast.success("Bot renamed successfully");
       setIsRenameOpen(false);
     } catch (error: any) {
-      toast.error(error.message || "Failed to rename bot");
+      toast.error(getErrorMessage(error, "Failed to rename bot"));
     }
   };
 
@@ -82,7 +83,7 @@ function BotActionsMenu({ bot }: BotActionsMenuProps) {
       toast.success("Bot deleted successfully");
       setIsDeleteOpen(false);
     } catch (error: any) {
-      toast.error(error.message || "Failed to delete bot");
+      toast.error(getErrorMessage(error, "Failed to delete bot"));
     }
   };
 
