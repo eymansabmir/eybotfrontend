@@ -1,6 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { useReactFlow } from "@xyflow/react";
 import { BarChartHorizontal, Variable as VarIcon } from "lucide-react";
+import { npsNode } from "./index";
 
 import type { NpsNodeData } from "./schema";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
@@ -27,16 +28,23 @@ export function NpsNodeRenderer({ id, data, selected }: NodeProps & { data: NpsN
             icon={<BarChartHorizontal size={16} />}
             title="NPS Survey"
             popoverTitle="Configure NPS"
+            description={npsNode.config.description}
             summary={data.message ? data.message : "Click to configure NPS question..."}
             showPopover={selected}
             popoverContentClassName="p-4 space-y-4"
             popoverBody={
                 <div className="space-y-3">
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Question</label>
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Question</label>
+                            <NodeFrame.Tooltip>
+                                The NPS question text. Max 1024 characters.
+                            </NodeFrame.Tooltip>
+                        </div>
                         <AutosizeTextarea
                             className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
                             value={data.message || ""}
+                            maxLength={1024}
                             placeholder="How likely are you to recommend us?"
                             onChange={(e) => updateData({ message: e.target.value })}
                         />

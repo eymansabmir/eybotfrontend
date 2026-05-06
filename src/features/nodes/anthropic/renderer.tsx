@@ -12,6 +12,7 @@ import { createAnthropicConfigDraft, anthropicConfigReducer } from "@/features/i
 import { AnthropicCredentialsDialog } from "@/features/integrations/anthropic/presentation/anthropic-credentials-dialog";
 import { AnthropicLogo } from "./logo";
 import type { AnthropicNodeData } from "./schema";
+import { anthropicNode } from "./index";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 function toErrorMessage(error: unknown): string {
@@ -123,6 +124,7 @@ export function AnthropicNodeRenderer({ id, data, selected }: NodeProps & { data
         icon={<AnthropicLogo className="size-4" />}
         title="Anthropic"
         popoverTitle="Configure Anthropic"
+        description={anthropicNode.config.description}
         summary={data.mode ? data.mode.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Configure..."}
         showPopover={selected}
         popoverClassName="w-[380px]"

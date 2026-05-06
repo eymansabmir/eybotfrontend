@@ -1,6 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { FileUp, Variable as VarIcon } from "lucide-react";
 import type { FileNodeData } from "./schema";
+import { fileNode } from "./index";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
@@ -26,6 +27,7 @@ export function FileNodeRenderer({ id, data, selected }: NodeProps & { data: Fil
             icon={<FileUp size={16} />}
             title="Wait for File"
             popoverTitle="Configure Wait for File"
+            description={fileNode.config.description}
             summary={data.message || "Enter prompt message..."}
             showPopover={selected}
             compactBody={
@@ -37,10 +39,16 @@ export function FileNodeRenderer({ id, data, selected }: NodeProps & { data: Fil
             popoverBody={
                 <>
                     <div className="space-y-1.5 flex flex-col">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Prompt Message</label>
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Prompt Message</label>
+                            <NodeFrame.Tooltip>
+                                The message sent to user to ask for a file. Max 1024 characters.
+                            </NodeFrame.Tooltip>
+                        </div>
                         <AutosizeTextarea
                             className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                             value={data.message}
+                            maxLength={1024}
                             placeholder="Please upload a file..."
                             onChange={(e) => updateData({ message: e.target.value })}
                         />

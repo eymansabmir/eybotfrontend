@@ -3,6 +3,7 @@ import type { NodeProps } from "@xyflow/react";
 import { Shuffle as ShuffleIcon, Plus, Trash2 } from "lucide-react";
 
 import type { RandomSplitNodeData, SplitBranch } from "./schema";
+import { randomSplitNode } from "./index";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
@@ -49,6 +50,7 @@ export function RandomSplitNodeRenderer({ id, data, selected }: NodeProps & { da
             icon={<ShuffleIcon size={16} />}
             title="Random Split"
             popoverTitle="Configure Split"
+            description={randomSplitNode.config.description}
             summary={`${(data.branches?.length || 0)} branches configured`}
             showPopover={selected}
             showBottomHandle={false}

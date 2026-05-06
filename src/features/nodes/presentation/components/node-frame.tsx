@@ -1,5 +1,13 @@
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 import { Handle, Position } from "@xyflow/react";
+import { Info } from "lucide-react";
+
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { cn } from "@/lib/utils";
 
@@ -24,6 +32,7 @@ interface NodeFrameProps {
     popoverFooter?: ReactNode;
     extraPopoverHeader?: ReactNode;
     extraContent?: ReactNode;
+    description?: string;
 }
 
 export function NodeFrame({
@@ -47,6 +56,7 @@ export function NodeFrame({
     popoverFooter,
     extraPopoverHeader,
     extraContent,
+    description,
 }: NodeFrameProps) {
     return (
         <div className="relative">
@@ -114,6 +124,18 @@ export function NodeFrame({
                     <div className="flex items-center justify-between border-b border-[var(--border-dim)] px-4 py-3 bg-muted/20">
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{popoverTitle}</span>
+                            {description && (
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3.5 text-muted-foreground/60 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="max-w-[240px] p-3 text-[11px] leading-relaxed bg-popover text-popover-foreground border-border shadow-xl">
+                                            {description}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
                         </div>
                         {extraPopoverHeader}
                     </div>
@@ -133,3 +155,19 @@ export function NodeFrame({
         </div>
     );
 }
+
+// Static helper for field-level tooltips
+NodeFrame.Tooltip = function NodeFrameTooltip({ children }: { children: React.ReactNode }) {
+    return (
+        <TooltipProvider>
+            <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                    <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-[200px] text-[10px] leading-relaxed">
+                    {children}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+};

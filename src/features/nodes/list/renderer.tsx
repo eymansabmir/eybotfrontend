@@ -1,8 +1,15 @@
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { List as ListIcon, Trash2, MessageSquare, Type, Footprints } from "lucide-react";
+import { List as ListIcon, Trash2, MessageSquare, Type, Footprints, Info } from "lucide-react";
 import type { ListNodeData } from "./schema";
+import { listNode } from "./index";
 import { useReactFlow } from "@xyflow/react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { VariableSelect } from "@/features/variables/components/variable-select";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
@@ -119,6 +126,7 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
             icon={<ListIcon size={16} />}
             title="List Message"
             popoverTitle="Configure List"
+            description={listNode.config.description}
             summary={data.body || "Click to configure list message..."}
             showPopover={selected}
             showBottomHandle={false}
@@ -152,9 +160,21 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                     {/* Header/Body */}
                     <div className="space-y-4">
                         <div className="space-y-1.5">
-                            <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-                                <Type size={10} /> Body Message
-                            </label>
+                            <div className="flex items-center gap-1.5">
+                                <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                    <Type size={10} /> Body Message
+                                </label>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                            The main content of the message. Max 1024 characters. You can use {"{{variable}}"} to personalize it.
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                             <AutosizeTextarea
                                 className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                 value={data.body}
@@ -164,24 +184,50 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Button Label</label>
+                            <div className="flex items-center gap-1.5">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Button Label</label>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                            The label on the button that the user clicks to open the list menu. Max 20 characters.
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                             <input
                                 type="text"
                                 className="w-full bg-background rounded-lg border border-[var(--border-dim)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                 value={data.buttonTitle || ""}
+                                maxLength={20}
                                 placeholder="View options"
                                 onChange={(e) => updateData({ buttonTitle: e.target.value })}
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-                                <Footprints size={10} /> Footer (Optional)
-                            </label>
+                            <div className="flex items-center gap-1.5">
+                                <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                    <Footprints size={10} /> Footer (Optional)
+                                </label>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                            Small grey text that appears below the body message. Max 60 characters.
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                             <input
                                 type="text"
                                 className="w-full bg-background rounded-lg border border-[var(--border-dim)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                 value={data.footer || ""}
+                                maxLength={60}
                                 placeholder="Footer text..."
                                 onChange={(e) => updateData({ footer: e.target.value })}
                             />
@@ -191,7 +237,19 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                     {/* Sections */}
                     <div className="space-y-3 pt-4 border-t border-[var(--border-dim)]">
                         <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Sections & Options</label>
+                            <div className="flex items-center gap-1.5">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Sections & Options</label>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                            Group your list options into sections. Max 24 chars for section/option titles, 72 chars for option descriptions.
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                             {!isTranslationMode && (
                                 <button
                                     onClick={addSection}
@@ -210,6 +268,7 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                                             type="text"
                                             className="flex-1 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1.5 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
                                             value={section.title}
+                                            maxLength={24}
                                             placeholder="Section Title"
                                             onChange={(e) => updateSectionTitle(si, e.target.value)}
                                         />
@@ -233,12 +292,29 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                                             renderItem={(row: any, ri: number) => (
                                                 <div className="flex items-center gap-2 flex-1">
                                                     <div className="w-1 h-1 rounded-full bg-teal-500 shrink-0" />
-                                                    <input
-                                                        type="text"
-                                                        className="flex-1 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
-                                                        value={row.title}
-                                                        onChange={(e) => updateRowTitle(si, ri, e.target.value)}
-                                                    />
+                                                    <div className="flex-1 flex flex-col gap-1">
+                                                        <input
+                                                            type="text"
+                                                            className="w-full bg-background rounded-md border border-[var(--border-dim)] px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
+                                                            value={row.title}
+                                                            maxLength={24}
+                                                            placeholder="Option Title"
+                                                            onChange={(e) => updateRowTitle(si, ri, e.target.value)}
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            className="w-full bg-background rounded-md border border-[var(--border-dim)] px-2 py-0.5 text-[9px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
+                                                            value={row.description || ""}
+                                                            maxLength={72}
+                                                            placeholder="Optional Description (Max 72)"
+                                                            onChange={(e) => {
+                                                                const sections = (data.sections ?? []).map((s, i) =>
+                                                                    i === si ? { ...s, rows: s.rows.map((r, j) => j === ri ? { ...r, description: e.target.value } : r) } : s
+                                                                );
+                                                                syncBranchesAndInteraction(sections);
+                                                            }}
+                                                        />
+                                                    </div>
                                                     {!isTranslationMode && (
                                                         <button onClick={() => removeRow(si, ri)} className="text-muted-foreground hover:text-destructive">
                                                             <Trash2 size={10} />
@@ -263,9 +339,21 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
 
                     {/* Variable Mapping */}
                     <div className="space-y-2 pt-4 border-t border-[var(--border-dim)]">
-                        <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-                            <MessageSquare size={10} /> Capture Response
-                        </label>
+                        <div className="flex items-center gap-1.5">
+                            <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                <MessageSquare size={10} /> Capture Response
+                            </label>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                        Choose where to save the text of the option that the user selects.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                         <div className="flex gap-2">
                             <div className="flex-1">
                                 <VariableSelect 

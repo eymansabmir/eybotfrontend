@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { SetVariableNodeData, VariableAssignment } from "./schema";
 import { SYSTEM_VARIABLES, OPERATION_TYPES } from "./constants";
+import { setVariableNode } from "./index";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { VariableSelect } from "@/features/variables/components/variable-select";
@@ -52,6 +53,7 @@ export function SetVariableNodeRenderer({ id, data, selected }: NodeProps & { da
             icon={<VarIcon size={16} className="text-primary" />}
             title="Set Variable"
             popoverTitle="Variable Assignments"
+            description={setVariableNode.config.description}
             summary={`${(data.assignments?.length || 0)} assignments`}
             showPopover={selected}
             popoverClassName="w-[620px]"

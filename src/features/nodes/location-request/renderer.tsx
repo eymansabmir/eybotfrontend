@@ -1,6 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { MapPin as MapPinIcon, MessageSquare, Database } from "lucide-react";
 import type { LocationRequestNodeData } from "./schema";
+import { locationRequestNode } from "./index";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
@@ -22,18 +23,25 @@ export function LocationRequestNodeRenderer({ id, data, selected }: NodeProps & 
             icon={<MapPinIcon size={16} />}
             title="Request Location"
             popoverTitle="Ask for Location"
+            description={locationRequestNode.config.description}
             summary={data.message || "Click to configure message..."}
             showPopover={selected}
             bottomHandleId="default"
             popoverBody={
                 <div className="space-y-5">
                     <div className="space-y-1.5">
-                        <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-                            <MessageSquare size={10} /> Display Message
-                        </label>
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                <MessageSquare size={10} /> Display Message
+                            </label>
+                            <NodeFrame.Tooltip>
+                                Message sent to user to ask for their location. Max 1024 characters.
+                            </NodeFrame.Tooltip>
+                        </div>
                         <AutosizeTextarea
                             className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                             value={data.message || ""}
+                            maxLength={1024}
                             placeholder="e.g. Please share your location..."
                             onChange={(e) => updateData({ message: e.target.value })}
                         />

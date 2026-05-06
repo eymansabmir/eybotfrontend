@@ -21,6 +21,7 @@ import { createGoogleSheetsConfigDraft, googleSheetsConfigReducer } from "@/feat
 import type { GoogleSheetsNodeData } from "./schema";
 import { GoogleSheetsLogo } from "./logo";
 import type { CellItem } from "@/features/integrations/google-sheets/presentation/components/cell-value-stack";
+import { googleSheetsNode } from "./index";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 const ResponseMappingSchema = z.object({
@@ -204,6 +205,7 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
         icon={<GoogleSheetsLogo className="size-4" />}
         title="Google Sheets"
         popoverTitle="Configure Google Sheets"
+        description={googleSheetsNode.config.description}
         summary={getActionLabel()}
         showPopover={selected && !pickerOpen}
         popoverClassName="w-[380px]"

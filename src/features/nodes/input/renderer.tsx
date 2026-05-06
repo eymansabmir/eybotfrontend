@@ -1,7 +1,14 @@
 import type { NodeProps } from "@xyflow/react";
-import { Keyboard, Variable, ShieldCheck } from "lucide-react";
+import { Keyboard, Variable, ShieldCheck, Info } from "lucide-react";
 import type { InputNodeData } from "./schema";
+import { inputNode } from "./index";
 import { useReactFlow } from "@xyflow/react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { LockedBadge } from "@/components/ui/locked-badge";
 import { VariableSelect } from "@/features/variables/components/variable-select";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
@@ -30,6 +37,7 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
             icon={<Keyboard size={16} />}
             title="Wait for Reply"
             popoverTitle="Configure User Input"
+            description={inputNode.config.description}
             summary={data.question ? data.question : "Click to set question..."}
             showPopover={selected}
             popoverContentClassName="p-4 space-y-5"
@@ -37,9 +45,21 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                 <>
                     {/* Question Text */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight text-foreground/60 flex items-center gap-1.5">
-                            <Keyboard size={10} /> Question
-                        </label>
+                        <div className="flex items-center gap-1.5">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight text-foreground/60 flex items-center gap-1.5">
+                                <Keyboard size={10} /> Question
+                            </label>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                        The question that will be sent to the user to prompt their response.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                         <AutosizeTextarea
                             className="w-full bg-background rounded-xl border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                             value={data.question}
@@ -53,6 +73,16 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                         <div className="flex items-center gap-1.5 border-t border-border/50 pt-4">
                             <Variable size={10} className="text-muted-foreground" />
                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight text-foreground/60">Save Answer To</label>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                        Select or create a variable where the user's response will be stored.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                             {isTranslationMode && <LockedBadge />}
                         </div>
                         <div className="relative">
@@ -70,6 +100,16 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                         <div className="flex items-center gap-1.5 border-t border-border/50 pt-4">
                             <ShieldCheck size={10} className="text-muted-foreground" />
                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight text-foreground/60">Validation</label>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                        Enforce specific formats for the user's input (e.g., must be an email).
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                             {isTranslationMode && <LockedBadge />}
                         </div>
                         <select

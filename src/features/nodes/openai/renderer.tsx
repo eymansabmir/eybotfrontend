@@ -14,6 +14,7 @@ import { isValidAssistantThreadIdInput } from "@/features/integrations/openai/do
 import { OpenAICredentialsDialog } from "@/features/integrations/openai/presentation/openai-credentials-dialog";
 import { OpenAILogo } from "./logo";
 import type { OpenAINodeData } from "./schema";
+import { openAINode } from "./index";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 function toErrorMessage(error: unknown): string {
@@ -172,6 +173,7 @@ export function OpenAINodeRenderer({ id, data, selected }: NodeProps & { data: O
         icon={<OpenAILogo className="size-4" />}
         title="OpenAI"
         popoverTitle="Configure OpenAI"
+        description={openAINode.config.description}
         summary={data.mode ? data.mode.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Configure..."}
         showPopover={selected}
         popoverClassName="w-[380px]"

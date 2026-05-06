@@ -1,6 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { Music as MusicIcon, Link as LinkIcon } from "lucide-react";
 import type { AudioNodeData } from "./schema";
+import { audioNode } from "./index";
 import { MediaUploader } from "@/lib/storage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReactFlow } from "@xyflow/react";
@@ -33,6 +34,7 @@ export function AudioNodeRenderer({ id, data, selected }: NodeProps & { data: Au
             icon={<MusicIcon size={16} />}
             title="Audio"
             popoverTitle="Configure Audio"
+            description={audioNode.config.description}
             summary={getSummary()}
             showPopover={selected}
             popoverBody={
