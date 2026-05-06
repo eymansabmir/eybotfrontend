@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { type NodeProps } from "@xyflow/react";
 import { Sticker as StickerIcon, Link as LinkIcon } from "lucide-react";
 import type { StickerNodeData } from "./schema";
+import { stickerNode } from "./index";
 import { MediaUploader, useResolveUrl } from "@/lib/storage";
 import { ENV } from "@/config/env";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -71,6 +72,7 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
             icon={<StickerIcon size={16} />}
             title="Sticker"
             popoverTitle="Configure Sticker"
+            description={stickerNode.config.description}
             summary={isVariable ? `Dynamic: ${data.url}` : (data.url ? "1 attached sticker" : "Upload a sticker...")}
             showPopover={selected}
             popoverBody={

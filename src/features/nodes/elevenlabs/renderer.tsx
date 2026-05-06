@@ -17,6 +17,7 @@ import { ElevenLabsCredentialsDialog } from "@/features/integrations/elevenlabs/
 
 import type { ElevenLabsNodeData } from "./schema";
 import { ElevenLabsLogo } from "./logo";
+import { elevenLabsNode } from "./index";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 function toDraft(data: ElevenLabsNodeData): ElevenLabsConfigDraft {
@@ -99,6 +100,7 @@ export function ElevenLabsNodeRenderer({ id, data, selected }: NodeProps & { dat
         icon={<ElevenLabsLogo className="size-4" />}
         title="ElevenLabs"
         popoverTitle="Configure ElevenLabs"
+        description={elevenLabsNode.config.description}
         summary={isConfigured ? "Convert Text to Speech" : "Configure..."}
         showPopover={selected}
         popoverClassName="w-[380px]"

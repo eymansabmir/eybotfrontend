@@ -1,6 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { FileText as FileTextIcon, Link as LinkIcon, Type } from "lucide-react";
 import type { DocumentNodeData } from "./schema";
+import { documentNode } from "./index";
 import { MediaUploader } from "@/lib/storage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReactFlow } from "@xyflow/react";
@@ -33,6 +34,7 @@ export function DocumentNodeRenderer({ id, data, selected }: NodeProps & { data:
             icon={<FileTextIcon size={16} />}
             title="Document"
             popoverTitle="Configure Document"
+            description={documentNode.config.description}
             summary={getSummary()}
             showPopover={selected}
             popoverBody={
@@ -125,11 +127,15 @@ export function DocumentNodeRenderer({ id, data, selected }: NodeProps & { data:
                         <div className="flex items-center gap-1.5 mb-1">
                             <Type size={10} className="text-muted-foreground" />
                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Caption (Optional)</label>
+                            <NodeFrame.Tooltip>
+                                Max 1024 characters.
+                            </NodeFrame.Tooltip>
                         </div>
                         <input
                             type="text"
                             className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                             value={data.caption || ""}
+                            maxLength={1024}
                             placeholder="Add a caption..."
                             onChange={(e) => updateData({ caption: e.target.value })}
                         />

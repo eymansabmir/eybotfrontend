@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useBot, useUpdateBot } from "@/features/bots/data/queries/use-bots";
 import { apiClient } from "@/lib/api-client";
 import { SUPPORTED_LANGUAGES, COMMON_LANGUAGES } from "@/features/i18n/languages";
+import { languageNode } from "./index";
 import { VariableSelect } from "@/features/variables/components/variable-select";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -174,6 +175,7 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
             icon={<Languages size={16} />}
             title="Language"
             popoverTitle="Configure Language"
+            description={languageNode.config.description}
             summary={isEnabled ? `${enabledLanguages.length} languages enabled` : "Localization disabled"}
             showPopover={selected}
             popoverBody={
@@ -265,10 +267,16 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                     )}
 
                     <div className="space-y-1.5 pt-2 border-t border-[var(--border-dim)]">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mb-1">Question Prompt</label>
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Question Prompt</label>
+                            <NodeFrame.Tooltip>
+                                Message sent to user to ask for their language. Max 1024 characters.
+                            </NodeFrame.Tooltip>
+                        </div>
                         <AutosizeTextarea
                             className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all placeholder:italic"
                             value={data.message || ""}
+                            maxLength={1024}
                             placeholder="Select your preferred language..."
                             onChange={(e) => handleUpdateData({ message: e.target.value })}
                             disabled={!isEnabled}

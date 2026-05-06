@@ -12,6 +12,7 @@ import { HttpRequestCredentialsDialog } from "@/features/integrations/http-reque
 import { createHttpRequestConfigDraft, type HttpRequestConfigDraft, type HttpRequestKeyValuePair } from "@/features/integrations/http-request/state/http-request-config.state";
 
 import type { HttpRequestNodeData } from "./schema";
+import { httpRequestNode } from "./index";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { data: HttpRequestNodeData }) {
@@ -111,6 +112,7 @@ export function HttpRequestNodeRenderer({ id, data, selected }: NodeProps & { da
         icon={<Zap size={16} />}
         title="HTTP Request"
         popoverTitle="Configure HTTP Request"
+        description={httpRequestNode.config.description}
         summary={isConfigured ? `${data.method} Request` : "Configure..."}
         showPopover={selected}
         popoverClassName="w-[380px]"

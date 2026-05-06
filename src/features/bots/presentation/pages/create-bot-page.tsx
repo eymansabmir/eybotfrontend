@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { getErrorMessage } from "@/lib/utils";
 import { CHATBOT_TEMPLATES, type ChatbotTemplate } from "../../data/templates-data";
 import { useCreateBot } from "../../data/queries/use-bots";
 import { templatesApi } from "../../data/api/templates-api";
@@ -135,7 +136,7 @@ export function CreateBotPage() {
         toast.success("Template imported successfully and added to your collection.");
       } catch (error) {
         console.error(error);
-        toast.error("Invalid JSON file format.");
+        toast.error(getErrorMessage(error, "Invalid JSON file format."));
       }
     };
     reader.readAsText(file);
@@ -238,8 +239,7 @@ export function CreateBotPage() {
       navigate({ to: "/bot/$id", params: { id: newBot.id } });
     } catch (error: any) {
       console.error(error);
-      const msg = error?.response?.data?.message || "Failed to create bot. Check flow configuration.";
-      toast.error(msg);
+      toast.error(getErrorMessage(error, "Failed to create bot. Check flow configuration."));
     } finally {
       setIsCreating(false);
     }

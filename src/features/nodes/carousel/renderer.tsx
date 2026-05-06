@@ -1,12 +1,19 @@
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { Layout, X, Type, Image as ImageIcon, Video, Plus, ChevronLeft, ChevronRight, MessageSquare, AlertCircle } from "lucide-react";
+import { Layout, X, Type, Image as ImageIcon, Video, Plus, ChevronLeft, ChevronRight, MessageSquare, AlertCircle, Info } from "lucide-react";
 import type { CarouselNodeData } from "./schema";
+import { carouselNode } from "./index";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
 import { useState } from "react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data: CarouselNodeData }) {
     const { setNodes } = useReactFlow();
@@ -115,6 +122,7 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
             icon={<Layout size={16} />}
             title="Carousel"
             popoverTitle="Configure Carousel"
+            description={carouselNode.config.description}
             summary={`${(data.cards || []).length} Cards attached`}
             showPopover={selected}
             showBottomHandle={false}
@@ -171,11 +179,22 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                         <div className="flex items-center gap-1.5 w-full mb-1">
                             <Type size={10} className="text-muted-foreground" />
                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Main Body Text (Optional)</label>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                        Text that appears above the carousel cards. Max 1024 characters.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
                         <input
                             type="text"
                             className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                             value={data.bodyText || ""}
+                            maxLength={1024}
                             placeholder="Choose an option below:"
                             onChange={(e) => updateData({ bodyText: e.target.value })}
                         />
@@ -249,8 +268,18 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                         <div className="space-y-4 animate-in fade-in flex flex-col pt-2 border-t border-[var(--border-dim)]">
                             <div className="text-[10px] font-bold text-foreground mb-1 uppercase tracking-wider">Card {activeCardIndex + 1}</div>
                             {/* Header Type & URL */}
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
                                     <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Card Media URL or Variable</label>
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={300}>
+                                            <TooltipTrigger asChild>
+                                                <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                                The image or video to show at the top of this card.
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                     <div className="flex bg-muted/30 rounded-md p-0.5 border border-[var(--border-dim)]">
                                         <button
                                             onClick={() => updateCard(activeCardIndex, { headerType: 'image' })}
@@ -288,6 +317,16 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                                 <div className="flex items-center gap-1.5 mb-1">
                                     <Type size={10} className="text-muted-foreground" />
                                     <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Body text (max 160)</label>
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={300}>
+                                            <TooltipTrigger asChild>
+                                                <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                                Brief description for this specific card. Max 160 characters.
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </div>
                                 <AutosizeTextarea
                                     className="w-full bg-background rounded-md border border-[var(--border-dim)] p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
@@ -301,7 +340,19 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                             {/* Button Configuration */}
                             <div className="space-y-2 mt-4">
                                 <div className="flex items-center justify-between border-t border-[var(--border-dim)] pt-4">
-                                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Card Action</label>
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Card Action</label>
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={300}>
+                                                <TooltipTrigger asChild>
+                                                    <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                                    Decide if this card opens a link or shows interactive reply buttons.
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
                                     <select
                                         className="bg-background rounded-md px-2 py-1.5 text-[10px] border border-[var(--border-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
                                         value={activeCard.buttonType || 'cta_url'}
@@ -329,6 +380,7 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                                             type="text"
                                             className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                             value={activeCard.ctaUrlButton?.displayText || ""}
+                                            maxLength={20}
                                             placeholder="Button Text"
                                             onChange={(e) => updateCard(activeCardIndex, {
                                                 ctaUrlButton: { ...activeCard.ctaUrlButton, displayText: e.target.value }
@@ -365,6 +417,7 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                                                             }));
                                                             updateData({ cards: newCards });
                                                         }}
+                                                        maxLength={20}
                                                     />
                                                     <button
                                                         onClick={() => {
@@ -411,6 +464,16 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                             <div className="flex items-center gap-1.5 mb-1">
                                 <MessageSquare size={10} className="text-muted-foreground" />
                                 <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Capture selection to variable</label>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                            Save the title of the clicked button to a variable.
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                                 <input

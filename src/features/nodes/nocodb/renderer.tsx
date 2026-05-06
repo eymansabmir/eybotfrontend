@@ -13,6 +13,7 @@ import { createNocoDBConfigDraft, type NocoDBConfigDraft } from "@/features/inte
 import { NocodbLogo } from "./icon";
 
 import type { NocoDBNodeData } from "./schema";
+import { nocodbNode } from "./index";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 export function NocoDBNodeRenderer({ id, data, selected }: NodeProps & { data: NocoDBNodeData }) {
@@ -54,6 +55,7 @@ export function NocoDBNodeRenderer({ id, data, selected }: NodeProps & { data: N
         icon={<NocodbLogo className="size-4" />}
         title="NocoDB"
         popoverTitle="Configure NocoDB"
+        description={nocodbNode.config.description}
         summary={data.action ? getActionLabel(data.action) : "Configure..."}
         showPopover={selected}
         popoverClassName="w-[380px]"

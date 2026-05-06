@@ -12,6 +12,7 @@ import { createDeepSeekConfigDraft, deepSeekConfigReducer } from "@/features/int
 import { DeepSeekCredentialsDialog } from "@/features/integrations/deepseek/presentation/deepseek-credentials-dialog";
 import { DeepSeekLogo } from "./logo";
 import type { DeepSeekNodeData } from "./schema";
+import { deepseekNode } from "./index";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 function toErrorMessage(error: unknown): string {
@@ -123,6 +124,7 @@ export function DeepSeekNodeRenderer({ id, data, selected }: NodeProps & { data:
         icon={<DeepSeekLogo className="size-4" />}
         title="DeepSeek"
         popoverTitle="Configure DeepSeek"
+        description={deepseekNode.config.description}
         summary={data.mode ? data.mode.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : "Configure..."}
         showPopover={selected}
         popoverClassName="w-[380px]"

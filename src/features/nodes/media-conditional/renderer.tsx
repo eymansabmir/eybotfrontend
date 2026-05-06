@@ -40,6 +40,14 @@ import { cn } from "@/lib/utils";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 import { SortableList } from "@/components/ui/sortable-list";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
+import { MediaConditionalNode } from "./index";
 
 const TYPE_ICONS = {
     text: Type,
@@ -162,6 +170,7 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
             icon={<FileSpreadsheet size={16} />}
             title="Smart Media Input"
             popoverTitle="Configure Smart Media Input"
+            description={MediaConditionalNode.config.description}
             summary={summary}
             showPopover={selected}
             showBottomHandle={false}
@@ -193,7 +202,19 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                 <div className="space-y-4">
                     <div className="space-y-3">
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Prompt Message</label>
+                            <div className="flex items-center gap-1.5">
+                                <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Prompt Message</label>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                            The initial message sent to the user asking for media (e.g. "Please upload your ID").
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                             <AutosizeTextarea
                                 className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
                                 value={data.message}
@@ -202,9 +223,19 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5">
                                 <AlertCircle size={10} className="text-destructive" />
                                 <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Invalid Type Message</label>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                            Message sent if the user uploads the wrong type of media or an unsupported format.
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                             </div>
                             <AutosizeTextarea
                                 className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
@@ -218,6 +249,16 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                             <div className="w-[80px] space-y-1.5">
                                 <div className="flex items-center gap-2">
                                     <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Max Retries</label>
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={300}>
+                                            <TooltipTrigger asChild>
+                                                <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                                How many times the user can try uploading before the bot stops or moves on.
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                     {isTranslationMode && <LockedBadge />}
                                 </div>
                                 <input
@@ -252,6 +293,16 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Allowed Inputs & Branches</label>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                            Define which media types to accept and create branches for each.
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
                                 {isTranslationMode && <LockedBadge />}
                             </div>
                             {!isTranslationMode && (
@@ -382,6 +433,16 @@ export function MediaConditionalNodeRenderer({ id, data, selected }: NodeProps &
                         <div className="flex items-center gap-1.5">
                             <Variable size={10} className="text-muted-foreground" />
                             <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Save Input To</label>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                        Select where to save the URL of the uploaded media.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
                         <VariableSelect
                             value={data.variable || ""}

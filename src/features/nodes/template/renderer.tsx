@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { TemplateConfigForm } from "./components/template-config-form";
 import type { TemplateNodeData } from "./schema";
+import { templateNode } from "./index";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data: TemplateNodeData }) {
@@ -53,6 +54,7 @@ export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data:
             icon={<TemplateIcon size={16} />}
             title="Template"
             popoverTitle="Configure Template"
+            description={templateNode.config.description}
             summary={data.templateName || "Configure template..."}
             showPopover={selected}
             popoverClassName="w-[380px]"

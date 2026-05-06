@@ -1,6 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { Image as ImageIcon, Type } from "lucide-react";
 import type { ImageNodeData } from "./schema";
+import { imageNode } from "./index";
 import { useResolveUrl, MediaUploader } from "@/lib/storage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReactFlow } from "@xyflow/react";
@@ -35,6 +36,7 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
             icon={<ImageIcon size={16} />}
             title="Image"
             popoverTitle="Configure Image"
+            description={imageNode.config.description}
             summary={getSummary()}
             showPopover={selected}
             popoverBody={
@@ -115,13 +117,19 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
 
                     {/* Caption */}
                     <div className="space-y-1.5">
-                        <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-                            <Type size={10} /> Caption (Optional)
-                        </label>
+                        <div className="flex items-center gap-1.5">
+                            <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                <Type size={10} /> Caption (Optional)
+                            </label>
+                            <NodeFrame.Tooltip>
+                                Max 1024 characters.
+                            </NodeFrame.Tooltip>
+                        </div>
                         <input
                             type="text"
                             className="w-full bg-background rounded-lg border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                             value={data.caption || ""}
+                            maxLength={1024}
                             placeholder="Add a caption..."
                             onChange={(e) => updateData({ caption: e.target.value })}
                         />
