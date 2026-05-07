@@ -1,8 +1,3 @@
-const isTruthy = (value: string | undefined): boolean => {
-  if (!value) return false;
-  const v = value.toLowerCase().trim();
-  return v === "true" || v === "1" || v === "yes" || v === "on";
-};
 
 export const ENV = {
   API_URL: import.meta.env?.VITE_API_URL || "http://localhost:3000/api",

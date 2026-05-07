@@ -20,7 +20,7 @@ import { useNavigate } from "@tanstack/react-router"
 
 interface CommandMenuProps {
   open: boolean
-  setOpen: (open: boolean) => void
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export function CommandMenu({ open, setOpen }: CommandMenuProps) {
