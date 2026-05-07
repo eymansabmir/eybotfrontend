@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 
 import { Spinner } from "@/components/ui/spinner"
-import { ENV } from "@/config/env"
+import { authClient } from "@/lib/auth-client"
 
 interface ProtectedLayoutProps {
   children: React.ReactNode
@@ -16,42 +16,28 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const response = await fetch(`${ENV.API_URL}/auth/get-session`, {
-          method: "GET",
-          credentials: "include",
-        })
-
-        if (!response.ok) {
+        // Perform a direct fetch to ensure we have the latest session state
+        const { data: session } = await authClient.getSession()
+        
+        if (!session) {
           setIsAuthenticated(false)
+          void navigate({ to: "/login", replace: true })
           return
         }
-
-        const payload = await response.json()
-        setIsAuthenticated(Boolean(payload?.session || payload?.data?.session))
+        
+        setIsAuthenticated(true)
       } catch {
         setIsAuthenticated(false)
+        void navigate({ to: "/login", replace: true })
       } finally {
         setIsReady(true)
       }
     }
 
     void checkSession()
-  }, [])
+  }, [navigate])
 
-  useEffect(() => {
-    if (!isReady || isAuthenticated) return
-    void navigate({ to: "/login", replace: true })
-  }, [isReady, isAuthenticated, navigate])
-
-  if (!isReady) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-muted">
-        <Spinner className="size-6 text-muted-foreground" />
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
+  if (!isReady || !isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted">
         <Spinner className="size-6 text-muted-foreground" />
