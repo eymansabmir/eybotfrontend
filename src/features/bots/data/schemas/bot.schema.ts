@@ -33,6 +33,8 @@ export const BotSchema = z.object({
         timeoutSeconds: z.number().default(300),
         maxSteps: z.number().default(100),
         fallbackMessage: z.string().optional(),
+        invalidInputMessage: z.string().optional(),
+        finishedJourneyMessage: z.string().optional(),
         localization: z.object({
             isEnabled: z.boolean().default(false),
             languages: z.array(z.string()).max(10, "Maximum 10 languages are allowed").default([]),
@@ -48,6 +50,7 @@ export const BotSchema = z.object({
     updatedAt: z.string(),
     updatedBy: z.string().optional(), // Adding for UI metadata
     executions: z.number().default(0), // Adding for UI metadata
+    successfulExecutions: z.number().default(0), // Adding for UI metadata
     isConfigured: z.boolean().default(false),
 });
 

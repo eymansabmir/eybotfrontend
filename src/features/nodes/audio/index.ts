@@ -4,6 +4,7 @@ import type { AudioNodeData } from "./schema";
 import { AudioNodeSchema } from "./schema";
 import { AudioNodeRenderer } from "./renderer";
 import { AudioNodeHandler } from "./handler";
+import { isValidUrlOrVariable } from "../utils";
 
 export const audioNode: NodeDefinition<AudioNodeData> = {
     config: AudioNodeConfig,
@@ -12,6 +13,12 @@ export const audioNode: NodeDefinition<AudioNodeData> = {
     handler: AudioNodeHandler,
     defaultData: { url: '' },
     defaultBranches: [{ key: 'default', label: 'Default' }],
+    validate: (data) => {
+        if (!isValidUrlOrVariable(data.url)) {
+            return ["Audio URL or variable is required"];
+        }
+        return null;
+    },
 };
 
 export * from "./schema";

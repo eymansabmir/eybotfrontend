@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { DeepSeekCredential, DeepSeekModel } from "../domain/deepseek.types";
 import type { DeepSeekConfigDraft } from "../state/deepseek-config.state";
 import { DeepSeekModelSelector } from "./deepseek-model-selector";
-import { VariablesCombobox } from "@/features/variables/components/variables-combobox";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 
 interface DeepSeekConfigFormProps {
   draft: DeepSeekConfigDraft;
@@ -245,9 +245,9 @@ export function DeepSeekConfigForm({
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-xs text-muted-foreground">Result Variable</Label>
-                      <VariablesCombobox 
+                      <VariableSelect 
                         value={draft.resultVariable} 
-                        onChange={(val) => onDraftChange({ resultVariable: val })} 
+                        onValueChange={(val: string) => onDraftChange({ resultVariable: val })} 
                         placeholder="deepseek_response" 
                       />
                     </div>

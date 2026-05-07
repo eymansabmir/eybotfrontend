@@ -100,3 +100,14 @@ export function useUpdateFlowTranslation(id: string, language: string) {
         },
     });
 }
+
+export function useImportBot() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (input: any) => botsApi.importBot(input),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: botKeys.lists() });
+        },
+    });
+}
