@@ -135,6 +135,18 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 })
 
+const settingsCredentialsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "settings/credentials",
+  component: SettingsPage,
+})
+
+const settingsCredentialsCreateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "settings/credentials/create",
+  component: SettingsPage,
+})
+
 const botEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "bot/$id",
@@ -178,6 +190,8 @@ const routeTree = rootRoute.addChildren([
 
   usersRoute,
   settingsRoute,
+  settingsCredentialsRoute,
+  settingsCredentialsCreateRoute,
   botEditorRoute,
   botSettingsRoute,
   botTestRoute,

@@ -10,11 +10,14 @@ import {
   SunIcon,
   UsersIcon,
   ChevronRight,
+  LogOut,
+  MoreVertical,
   SearchIcon,
 } from "lucide-react"
-import { Link, useRouterState } from "@tanstack/react-router"
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
 import { EYLogo } from "@/components/branding/ey-logo"
+import { authClient } from "@/lib/auth-client"
 import { ENV } from "@/config/env"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -45,6 +48,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 
 const mainNav = [
@@ -81,9 +92,23 @@ const footerNav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const navigate = useNavigate()
+  const { data: session } = authClient.useSession()
   const [commandOpen, setCommandOpen] = useState(false)
 
   const isEditor = pathname.startsWith("/bot/")
+
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          void navigate({ to: "/login" })
+        },
+      },
+    })
+  }
+
+  const user = session?.user
 
   if (isEditor) {
     return <main className="h-screen w-screen overflow-hidden">{children}</main>
@@ -199,15 +224,44 @@ export function AppShell({ children }: { children: ReactNode }) {
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
-          <div className="flex items-center gap-3 rounded-xl bg-muted/40 p-3 group-data-[collapsible=icon]:hidden">
-            <Avatar className="size-10">
-              <AvatarImage src="https://i.pravatar.cc/100?img=68" alt="Operator" />
-              <AvatarFallback>OP</AvatarFallback>
-            </Avatar>
-            <div className="text-sm">
-              <p className="font-semibold">Ops Manager</p>
-              <p className="text-xs text-muted-foreground">online</p>
-            </div>
+          <div className="mt-auto border-t border-slate-200/50 pt-4 dark:border-slate-800/50">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex w-full items-center gap-3 rounded-xl bg-muted/40 p-3 transition-colors hover:bg-muted/60 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2">
+                  <Avatar className="size-9 shrink-0 ring-2 ring-white/50 dark:ring-slate-900/50">
+                    <AvatarImage src={user?.image || `https://avatar.vercel.sh/${user?.email}`} alt={user?.name || "User"} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                      {user?.name?.substring(0, 2).toUpperCase() || "US"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex min-w-0 flex-1 flex-col items-start text-left group-data-[collapsible=icon]:hidden">
+                    <p className="truncate text-sm font-bold leading-tight">{user?.name || "User"}</p>
+                    <p className="truncate text-[10px] font-medium text-muted-foreground uppercase tracking-tight">
+                      {user?.email || "online"}
+                    </p>
+                  </div>
+                  <MoreVertical className="size-4 text-muted-foreground group-data-[collapsible=icon]:hidden" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="end" className="w-56" sideOffset={12}>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex w-full items-center">
+                    <Settings2Icon className="mr-2 size-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:text-red-400 dark:focus:bg-red-950/20"
+                >
+                  <LogOut className="mr-2 size-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <p className="text-xs text-muted-foreground px-2 group-data-[collapsible=icon]:hidden">
             Ctrl/Cmd + B to collapse
