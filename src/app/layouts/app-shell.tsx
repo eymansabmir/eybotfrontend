@@ -11,6 +11,7 @@ import {
   SunIcon,
   UsersIcon,
   ChevronRight,
+  SearchIcon,
 } from "lucide-react"
 import { Link, useRouterState } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
@@ -20,6 +21,9 @@ import { ENV } from "@/config/env"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { CommandMenu } from "./components/command-menu"
+// import { NotificationsMenu } from "./components/notifications-menu"
+import { useNavigate } from "@tanstack/react-router"
 import {
   Sidebar,
   SidebarContent,
@@ -79,6 +83,7 @@ const footerNav = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
+  const [commandOpen, setCommandOpen] = useState(false)
 
   const isEditor = pathname.startsWith("/bot/")
 
@@ -91,8 +96,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex min-w-0 items-center gap-3 px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200/80 bg-white/95 shadow-sm ring-1 ring-black/5 backdrop-blur">
-              <EYLogo className="h-5 shrink-0" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-background shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
+              <EYLogo className="h-5 shrink-0 text-foreground" />
             </div>
             <div className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
               <p className="text-sm font-semibold">Ernst & Young</p>
@@ -129,7 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                               isActive={isActive}
                               className={cn(
                                 "transition-all duration-200 h-10 rounded-none",
-                                isActive && "bg-slate-50 text-foreground border-l-[3px] border-yellow-400 font-bold"
+                                isActive && "bg-accent/50 text-foreground border-l-[3px] border-yellow-400 font-bold"
                               )}
                             >
                               <item.icon className={cn("size-4", isActive ? "text-primary" : "text-muted-foreground")} />
@@ -163,7 +168,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                         isActive={isActive}
                         className={cn(
                           "transition-all duration-200 h-10 rounded-none",
-                          isActive && "bg-slate-50 text-foreground border-l-[3px] border-yellow-400 font-bold"
+                          isActive && "bg-accent/50 text-foreground border-l-[3px] border-yellow-400 font-bold"
                         )}
                       >
                         <Link to={item.to}>
@@ -213,20 +218,22 @@ export function AppShell({ children }: { children: ReactNode }) {
       </Sidebar>
 
       <SidebarInset>
-        <Header />
+        <Header onSearchClick={() => setCommandOpen(true)} />
         <main className="flex-1 min-w-0 overflow-x-hidden bg-background px-4 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-6">
           <div className="mx-auto min-w-0 w-full max-w-6xl">
             {children}
           </div>
         </main>
+        <CommandMenu open={commandOpen} setOpen={setCommandOpen} />
       </SidebarInset>
     </SidebarProvider>
   )
 }
 
-function Header() {
+function Header({ onSearchClick }: { onSearchClick: () => void }) {
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     setMounted(true)
@@ -237,19 +244,29 @@ function Header() {
       <div className="mx-auto flex w-full max-w-6xl items-center gap-4">
         <SidebarTrigger />
         <Separator orientation="vertical" className="h-6" />
-        {/* Removed duplicate EY text as requested to keep only one EY icon in the navbar/sidebar */}
         <div className="ml-auto flex min-w-0 items-center gap-3">
-          <Input className="hidden w-40 lg:w-56 md:block h-9 bg-slate-50/50 border-slate-200 text-xs rounded-lg" placeholder="Quick search..." />
-          <Button size="sm" className="bg-primary text-primary-foreground hover:opacity-90 transition-all shadow-sm h-9 px-5 rounded-lg text-xs font-bold">
+          <button
+            onClick={onSearchClick}
+            className="group hidden md:flex items-center gap-2 px-3 h-9 w-40 lg:w-56 bg-muted/50 border border-input text-muted-foreground text-[10px] rounded-lg hover:bg-accent/50 transition-all text-left"
+          >
+            <SearchIcon className="size-3.5" />
+            <span className="flex-1">Quick search...</span>
+            <kbd className="pointer-events-none hidden lg:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[8px] font-medium opacity-100">
+              <span className="text-[10px]">⌘</span>K
+            </kbd>
+          </button>
+          <Button 
+            size="sm" 
+            className="bg-primary text-primary-foreground hover:opacity-90 transition-all shadow-sm h-9 px-5 rounded-lg text-xs font-bold"
+            onClick={() => navigate({ to: "/create-bot" })}
+          >
             New flow
           </Button>
-          <Button variant="ghost" size="icon">
-            <BellIcon className="size-4" />
-          </Button>
+          {/* <NotificationsMenu /> */}
           <Button
             variant="outline"
             size="icon"
-            className="rounded-full border-slate-200 bg-white/60 backdrop-blur-sm transition-all hover:bg-white dark:border-slate-800 dark:bg-slate-950/50 dark:hover:bg-slate-900"
+            className="rounded-full border-input bg-background/60 backdrop-blur-sm transition-all hover:bg-accent dark:border-border dark:bg-slate-950/50 dark:hover:bg-slate-900"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
           >
