@@ -69,7 +69,8 @@ const isValidUrlOrVariable = (val: unknown) => {
         new URL(str);
         return true;
     } catch {
-        return false;
+        // Allow relative storage paths (e.g. "uploads/abc.pdf")
+        return str.includes("/") && !str.includes(" ");
     }
 };
 
