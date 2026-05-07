@@ -13,10 +13,12 @@ export function isDynamicVariable(val: unknown): boolean {
 export function isValidUrlOrVariable(val: unknown): boolean {
     if (isDynamicVariable(val)) return true;
     if (typeof val !== "string") return false;
+    const str = val.trim();
     try {
-        new URL(val.trim());
+        new URL(str);
         return true;
     } catch {
-        return false;
+        // Allow relative storage paths (e.g. "uploads/abc.pdf")
+        return str.includes("/") && !str.includes(" ");
     }
 }
