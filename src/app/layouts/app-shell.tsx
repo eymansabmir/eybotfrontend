@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
 import type { ReactNode } from "react"
 import {
-  BellIcon,
   BotIcon,
   LayoutDashboardIcon,
   MegaphoneIcon,
@@ -20,7 +19,6 @@ import { ENV } from "@/config/env"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { CommandMenu } from "./components/command-menu"
 // import { NotificationsMenu } from "./components/notifications-menu"
 import { useNavigate } from "@tanstack/react-router"

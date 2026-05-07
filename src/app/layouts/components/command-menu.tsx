@@ -1,13 +1,8 @@
 import * as React from "react"
 import {
-  Calculator,
-  Calendar,
-  CreditCard,
   Settings,
-  Smile,
   User,
   BotIcon,
-  SearchIcon,
 } from "lucide-react"
 
 import {
@@ -36,13 +31,13 @@ export function CommandMenu({ open, setOpen }: CommandMenuProps) {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        setOpen((open) => !open)
+        setOpen(!open)
       }
     }
 
     document.addEventListener("keydown", down)
     return () => document.removeEventListener("keydown", down)
-  }, [setOpen])
+  }, [setOpen, open])
 
   const runCommand = React.useCallback(
     (command: () => unknown) => {
