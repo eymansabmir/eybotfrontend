@@ -76,8 +76,8 @@ export function BotEditorNavbar({
     return (
         <header className="flex items-center justify-between border-b px-6 py-3 bg-background/80 backdrop-blur-xl sticky top-0 z-40 shadow-sm border-border">
             <div className="flex items-center gap-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200/80 bg-white/95 shadow-sm ring-1 ring-black/5 backdrop-blur">
-                    <EYLogo className="h-5" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
+                    <EYLogo className="h-5 shrink-0 text-foreground" />
                 </div>
                 {onNavigateToBots ? (
                     <Button
