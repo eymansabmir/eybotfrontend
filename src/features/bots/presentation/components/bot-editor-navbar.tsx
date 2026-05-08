@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Save, Play, Loader2, Rocket, Archive, Globe } from "lucide-react";
+import { ArrowLeft, Save, Play, Loader2, Rocket, Archive, Globe, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
@@ -30,12 +30,16 @@ interface BotEditorNavbarProps {
     onCancelRename: () => void;
     onUpdateTempName: (name: string) => void;
     onSave: () => void;
+    onExport?: () => void;
     onPublish?: () => void;
     onUnpublish?: () => void;
     isSaving?: boolean;
     isPublishing?: boolean;
     isUnpublishing?: boolean;
     isTranslationMode?: boolean;
+    onNavigateToBots?: () => void;
+    onNavigateToFlow?: () => void;
+    onNavigateToSettings?: () => void;
     liveLanguages?: string[];
 }
 
@@ -54,12 +58,16 @@ export function BotEditorNavbar({
     onCancelRename,
     onUpdateTempName,
     onSave,
+    onExport,
     onPublish,
     onUnpublish,
     isSaving,
     isPublishing,
     isUnpublishing,
     isTranslationMode,
+    onNavigateToBots,
+    onNavigateToFlow,
+    onNavigateToSettings,
     liveLanguages
 }: BotEditorNavbarProps) {
     const localization = bot?.settings?.localization;
@@ -68,14 +76,25 @@ export function BotEditorNavbar({
     return (
         <header className="flex items-center justify-between border-b px-6 py-3 bg-background/80 backdrop-blur-xl sticky top-0 z-40 shadow-sm border-border">
             <div className="flex items-center gap-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200/80 bg-white/95 shadow-sm ring-1 ring-black/5 backdrop-blur">
-                    <EYLogo className="h-5" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-background shadow-sm ring-1 ring-black/5 backdrop-blur-sm">
+                    <EYLogo className="h-5 shrink-0 text-foreground" />
                 </div>
-                <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-muted/50 transition-colors">
-                    <Link to="/bots">
+                {onNavigateToBots ? (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full hover:bg-muted/50 transition-colors"
+                        onClick={onNavigateToBots}
+                    >
                         <ArrowLeft className="size-4" />
-                    </Link>
-                </Button>
+                    </Button>
+                ) : (
+                    <Button variant="ghost" size="icon" asChild className="rounded-full hover:bg-muted/50 transition-colors">
+                        <Link to="/bots">
+                            <ArrowLeft className="size-4" />
+                        </Link>
+                    </Button>
+                )}
                 <div className="flex flex-col">
                     <div className="flex items-center gap-2 h-6">
                         {isEditingName && !isPublished ? (
@@ -137,20 +156,28 @@ export function BotEditorNavbar({
                         <Button 
                             variant="ghost" 
                             size="sm" 
-                            asChild={activeTab !== "flow"} 
+                            asChild={activeTab !== "flow" && !onNavigateToFlow}
                             className={`h-8 px-5 rounded-full font-bold text-xs transition-all ${activeTab === "flow" ? "bg-white shadow-sm border border-black/5 text-black cursor-default hover:bg-white" : "text-muted-foreground hover:text-foreground hover:bg-transparent"}`}
-                            onClick={activeTab === "flow" ? (e) => e.preventDefault() : undefined}
+                            onClick={activeTab === "flow" ? (e) => e.preventDefault() : onNavigateToFlow}
                         >
-                            {activeTab === "flow" ? "Flow" : <Link to="/bot/$id" params={{ id }}>Flow</Link>}
+                            {activeTab === "flow"
+                                ? "Flow"
+                                : onNavigateToFlow
+                                    ? "Flow"
+                                    : <Link to="/bot/$id" params={{ id }}>Flow</Link>}
                         </Button>
                         <Button 
                             variant="ghost" 
                             size="sm" 
-                            asChild={activeTab !== "settings"} 
+                            asChild={activeTab !== "settings" && !onNavigateToSettings}
                             className={`h-8 px-5 rounded-full font-bold text-xs transition-all ${activeTab === "settings" ? "bg-white shadow-sm border border-black/5 text-black cursor-default hover:bg-white" : "text-muted-foreground hover:text-foreground hover:bg-transparent"}`}
-                            onClick={activeTab === "settings" ? (e) => e.preventDefault() : undefined}
+                            onClick={activeTab === "settings" ? (e) => e.preventDefault() : onNavigateToSettings}
                         >
-                             {activeTab === "settings" ? "Settings" : <Link to="/bot/$id/settings" params={{ id }}>Settings</Link>}
+                             {activeTab === "settings"
+                                ? "Settings"
+                                : onNavigateToSettings
+                                    ? "Settings"
+                                    : <Link to="/bot/$id/settings" params={{ id }}>Settings</Link>}
                         </Button>
                     </div>
                 )}
@@ -190,6 +217,18 @@ export function BotEditorNavbar({
                     </Button>
                 )}
                 
+                {!isNew && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 h-8 rounded-full font-bold text-xs px-4 hover:bg-muted"
+                        onClick={onExport}
+                    >
+                        <Download className="size-3" />
+                        Export
+                    </Button>
+                )}
+
                 <Button 
                     variant="default" 
                     size="sm" 

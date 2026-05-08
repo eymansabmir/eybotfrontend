@@ -7,6 +7,7 @@ export const MediaConditionalNodeConfig: NodeConfig = {
   type: NodeType.MEDIA_CONDITIONAL,
   label: "Media Condition",
   category: "logic",
+  description: "Branch the flow based on the type of media received (image, video, etc.) and save the media URL.",
   icon: React.createElement(FileSpreadsheet, { size: 16 }),
 };
 

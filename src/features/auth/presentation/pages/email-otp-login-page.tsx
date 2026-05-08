@@ -114,8 +114,8 @@ export function EmailOtpLoginPage() {
 
       {/* ── Header Branding ─────────────────────────────────────────────────── */}
       <div className="absolute top-8 left-8 z-20 flex items-center gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white/95 shadow-lg ring-1 ring-black/5 backdrop-blur-sm">
-          <EYLogo className="h-6" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-background shadow-lg ring-1 ring-black/5 backdrop-blur-sm">
+          <EYLogo className="h-6 shrink-0 text-foreground" />
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">WHATSAPP BOT</span>

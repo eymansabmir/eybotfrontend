@@ -6,6 +6,14 @@ import type { ConditionNodeData, ConditionExpression, Comparator } from "./schem
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+import { conditionNode } from "./index";
 
 const COMPARATORS: { value: Comparator; label: string }[] = [
     { value: "eq", label: "=" },
@@ -121,17 +129,26 @@ function GroupEditor({
     return (
         <div className={cn("rounded-lg border p-2 space-y-1 my-1.5", depth === 0 ? "border-[var(--border-dim)] bg-muted/5" : "border-[var(--border-dim)] bg-muted/10 ml-3")}>
             <div className="flex items-center gap-2 mb-1.5">
-                <button
-                    onClick={toggleOperator}
-                    className={cn(
-                        "rounded px-2 py-0.5 text-[9px] font-bold transition-colors select-none",
-                        isAnd
-                            ? "bg-zinc-500/10 text-zinc-600 dark:text-zinc-300 hover:bg-blue-500/20"
-                            : "bg-zinc-500/10 text-zinc-600 dark:text-zinc-300 hover:bg-amber-500/20"
-                    )}
-                >
-                    {expr.operator}
-                </button>
+                <TooltipProvider>
+                    <Tooltip delayDuration={300}>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={toggleOperator}
+                                className={cn(
+                                    "rounded px-2 py-0.5 text-[9px] font-bold transition-colors select-none",
+                                    isAnd
+                                        ? "bg-zinc-500/10 text-zinc-600 dark:text-zinc-300 hover:bg-blue-500/20"
+                                        : "bg-zinc-500/10 text-zinc-600 dark:text-zinc-300 hover:bg-amber-500/20"
+                                )}
+                            >
+                                {expr.operator}
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-[10px]">
+                            {isAnd ? "All rules must be true" : "At least one rule must be true"}
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
                 <span className="text-[9px] text-muted-foreground italic">
                     {isAnd ? "all must match" : "any can match"}
                 </span>
@@ -209,6 +226,7 @@ export function ConditionNodeRenderer({ id, data, selected }: NodeProps & { data
             icon={<GitBranch size={16} />}
             title="Condition Logic"
             popoverTitle="Configure Condition"
+            description={conditionNode.config.description}
             summary={expr ? "Condition rules configured" : "No condition configured"}
             showPopover={selected}
             showBottomHandle={false}

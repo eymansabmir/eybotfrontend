@@ -3,9 +3,11 @@ import type { NodeProps } from "@xyflow/react";
 import { Shuffle as ShuffleIcon, Plus, Trash2 } from "lucide-react";
 
 import type { RandomSplitNodeData, SplitBranch } from "./schema";
+import { randomSplitNode } from "./index";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { SortableList } from "@/components/ui/sortable-list";
 
 export function RandomSplitNodeRenderer({ id, data, selected }: NodeProps & { data: RandomSplitNodeData }) {
     const { setNodes } = useReactFlow();
@@ -48,6 +50,7 @@ export function RandomSplitNodeRenderer({ id, data, selected }: NodeProps & { da
             icon={<ShuffleIcon size={16} />}
             title="Random Split"
             popoverTitle="Configure Split"
+            description={randomSplitNode.config.description}
             summary={`${(data.branches?.length || 0)} branches configured`}
             showPopover={selected}
             showBottomHandle={false}
@@ -70,34 +73,39 @@ export function RandomSplitNodeRenderer({ id, data, selected }: NodeProps & { da
                     </div>
 
                     <div className="space-y-2">
-                        {(data.branches ?? []).map((branch, i) => (
-                            <div key={branch.key} className="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    className="flex-1 bg-background rounded-md border border-[var(--border-dim)] px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                                    value={branch.label}
-                                    placeholder="Branch name"
-                                    onChange={(e) => updateBranch(i, "label", e.target.value)}
-                                />
-                                <div className="flex items-center gap-0.5 rounded-md border border-[var(--border-dim)] bg-background px-2 py-1.5">
+                        <SortableList
+                            items={data.branches ?? []}
+                            onReorder={(newBranches: any[]) => updateBranches(newBranches)}
+                            keyExtractor={(branch: any) => branch.key}
+                            renderItem={(branch: any, i: number) => (
+                                <div className="flex items-center gap-2 flex-1">
                                     <input
-                                        type="number"
-                                        min={0}
-                                        max={100}
-                                        className="w-10 bg-transparent text-xs font-medium focus:outline-none text-right"
-                                        value={branch.percentage}
-                                        onChange={(e) => updateBranch(i, "percentage", parseFloat(e.target.value) || 0)}
+                                        type="text"
+                                        className="flex-1 bg-background rounded-md border border-[var(--border-dim)] px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                        value={branch.label}
+                                        placeholder="Branch name"
+                                        onChange={(e) => updateBranch(i, "label", e.target.value)}
                                     />
-                                    <span className="text-[10px] text-muted-foreground">%</span>
+                                    <div className="flex items-center gap-0.5 rounded-md border border-[var(--border-dim)] bg-background px-2 py-1.5">
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={100}
+                                            className="w-10 bg-transparent text-xs font-medium focus:outline-none text-right"
+                                            value={branch.percentage}
+                                            onChange={(e) => updateBranch(i, "percentage", parseFloat(e.target.value) || 0)}
+                                        />
+                                        <span className="text-[10px] text-muted-foreground">%</span>
+                                    </div>
+                                    <button
+                                        onClick={() => removeBranch(i)}
+                                        className="text-muted-foreground hover:text-destructive transition-colors shrink-0 px-1"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => removeBranch(i)}
-                                    className="text-muted-foreground hover:text-destructive transition-colors shrink-0 px-1"
-                                >
-                                    <Trash2 size={14} />
-                                </button>
-                            </div>
-                        ))}
+                            )}
+                        />
 
                         {(data.branches ?? []).length === 0 && (
                             <div className="flex items-center justify-center rounded-lg border border-dashed border-[var(--border-dim)] py-6 text-xs text-muted-foreground italic bg-muted/10">

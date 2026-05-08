@@ -1,10 +1,19 @@
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { Layout, X, Type, Image as ImageIcon, Video, Plus, ChevronLeft, ChevronRight, MessageSquare, AlertCircle } from "lucide-react";
+import { Layout, X, Type, Image as ImageIcon, Video, Plus, ChevronLeft, ChevronRight, MessageSquare, AlertCircle, Info } from "lucide-react";
 import type { CarouselNodeData } from "./schema";
+import { carouselNode } from "./index";
 import { cn } from "@/lib/utils";
 import { useReactFlow } from "@xyflow/react";
 import { useState } from "react";
+import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data: CarouselNodeData }) {
     const { setNodes } = useReactFlow();
@@ -108,34 +117,20 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
     const activeCard = data.cards?.[activeCardIndex];
 
     return (
-        <div className="relative">
-            {/* 1) Condensed Block Face */}
-            <div
-                className={cn(
-                    "flex flex-col justify-center relative w-[220px] min-h-[85px] rounded-xl border p-3.5 select-none transition-all cursor-pointer",
-                    "bg-[var(--node-bg)] border-[var(--border-dim)] hover:shadow-md",
-                    selected && "border-2 border-[var(--ey-yellow)] shadow-[0_0_10px_rgba(255,230,0,0.15)] -m-[1px]"
-                )}
-            >
-                <Handle
-                    type="target"
-                    position={Position.Top}
-                    className="h-3 w-3 border-2 border-[var(--border-dim)] bg-background shadow-sm hover:scale-125 transition-transform"
-                />
-
-                <div className="flex items-center gap-2.5 mb-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300">
-                        <Layout size={16} />
-                    </div>
-                    <span className="text-sm font-semibold truncate text-foreground leading-none">Carousel</span>
-                </div>
-                
-                {/* Branches Preview */}
-                <div className="flex flex-col gap-1 w-full">
-                    <div className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-tight mb-0.5">{(data.cards || []).length} Cards attached</div>
-                    
+        <NodeFrame
+            selected={selected}
+            icon={<Layout size={16} />}
+            title="Carousel"
+            popoverTitle="Configure Carousel"
+            description={carouselNode.config.description}
+            summary={`${(data.cards || []).length} Cards attached`}
+            showPopover={selected}
+            showBottomHandle={false}
+            popoverClassName="w-[360px]"
+            compactBody={
+                <div className="flex flex-col gap-1 w-full mt-1">
                     {/* Render branches dynamically from the first card's quick replies, if applicable */}
-                    {((data.cards || [])[0]?.buttonType === 'quick_reply') && (data.cards || [])[0]?.quickReplyButtons?.slice(0,3).map((btn: any) => (
+                    {((data.cards || [])[0]?.buttonType === 'quick_reply') && (data.cards || [])[0]?.quickReplyButtons?.slice(0, 3).map((btn: any) => (
                         <div key={btn.id} className="relative bg-background rounded px-2 py-1 text-[10px] font-medium text-foreground border border-[var(--border-dim)] shadow-sm truncate">
                             <span className="pr-2">{btn.title}</span>
                             <Handle 
@@ -176,304 +171,347 @@ export function CarouselNodeRenderer({ id, data, selected }: NodeProps & { data:
                         </div>
                     )}
                 </div>
-            </div>
-
-            {/* 2) Popover Configuration Panel */}
-            {selected && (
-                <div 
-                    className="absolute top-0 left-[230px] w-[360px] bg-[var(--node-bg)] border border-[var(--border-dim)] rounded-xl shadow-2xl z-[100] cursor-auto nodrag nopan flex flex-col overflow-hidden"
-                >
-                    <div className="flex items-center justify-between border-b border-[var(--border-dim)] px-4 py-3 bg-muted/20">
-                        <div className="flex items-center gap-2">
-                            <Layout size={14} className="text-muted-foreground" />
-                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Configure Carousel</span>
+            }
+            popoverBody={
+                <div className="space-y-4">
+                    {/* Carousel Body Text (Optional) */}
+                    <div className="space-y-1.5 flex flex-col items-center">
+                        <div className="flex items-center gap-1.5 w-full mb-1">
+                            <Type size={10} className="text-muted-foreground" />
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Main Body Text (Optional)</label>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                        Text that appears above the carousel cards. Max 1024 characters.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
-                        <div className="flex items-center gap-1 text-[10px] font-medium text-[var(--ey-yellow)] bg-[var(--ey-yellow)]/10 px-2 py-0.5 rounded">
-                            <span>{activeCardIndex + 1} / {(data.cards || []).length}</span>
+                        <input
+                            type="text"
+                            className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                            value={data.bodyText || ""}
+                            maxLength={1024}
+                            placeholder="Choose an option below:"
+                            onChange={(e) => updateData({ bodyText: e.target.value })}
+                        />
+                    </div>
+
+                    {/* Validation Warning */}
+                    {(data.cards || []).length < 2 && (
+                        <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-md flex items-start gap-2">
+                            <AlertCircle size={14} className="text-yellow-600 dark:text-yellow-500 mt-0.5 stretch-0" />
+                            <div>
+                                <p className="text-[11px] font-medium text-yellow-800 dark:text-yellow-400">Minimum 2 cards required</p>
+                                <p className="text-[10px] text-yellow-800/70 dark:text-yellow-400/70">WhatsApp requires at least 2 cards.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Card Navigation & Management */}
+                    <div className="flex items-center justify-between gap-2 bg-muted/10 p-2 rounded-lg border border-[var(--border-dim)]">
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setActiveCardIndex(prev => Math.max(0, prev - 1))}
+                                disabled={activeCardIndex === 0}
+                                className="p-1 hover:bg-background rounded-md disabled:opacity-30 transition-colors text-muted-foreground hover:text-foreground"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <button
+                                onClick={() => setActiveCardIndex(prev => Math.min((data.cards?.length || 1) - 1, prev + 1))}
+                                disabled={activeCardIndex === (data.cards?.length || 1) - 1}
+                                className="p-1 hover:bg-background rounded-md disabled:opacity-30 transition-colors text-muted-foreground hover:text-foreground"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+
+                        <div className="flex gap-1 overflow-x-auto no-scrollbar py-1">
+                            {data.cards?.map((_, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setActiveCardIndex(i)}
+                                    className={cn(
+                                        "h-1.5 rounded-full transition-all",
+                                        activeCardIndex === i ? "bg-[var(--ey-yellow)] w-4" : "bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5"
+                                    )}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            {(data.cards || []).length > 2 && (
+                                <button
+                                    onClick={() => removeCard(activeCardIndex)}
+                                    className="p-1 text-destructive/80 hover:bg-destructive/10 hover:text-destructive rounded-md transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                            {(data.cards || []).length < 10 && (
+                                <button
+                                    onClick={addCard}
+                                    className="p-1 text-[var(--ey-yellow)] hover:bg-[var(--ey-yellow)]/10 rounded-md transition-colors"
+                                >
+                                    <Plus size={14} />
+                                </button>
+                            )}
                         </div>
                     </div>
-                    
-                    <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
-                        {/* Carousel Body Text (Optional) */}
-                        <div className="space-y-1.5 flex flex-col items-center">
-                            <div className="flex items-center gap-1.5 w-full mb-1">
-                                <Type size={10} className="text-muted-foreground" />
-                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Main Body Text (Optional)</label>
-                            </div>
-                            <input
-                                type="text"
-                                className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                                value={data.bodyText || ""}
-                                placeholder="Choose an option below:"
-                                onChange={(e) => updateData({ bodyText: e.target.value })}
-                            />
-                        </div>
 
-                        {/* Validation Warning */}
-                        {(data.cards || []).length < 2 && (
-                            <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-md flex items-start gap-2">
-                                <AlertCircle size={14} className="text-yellow-600 dark:text-yellow-500 mt-0.5 stretch-0" />
-                                <div>
-                                    <p className="text-[11px] font-medium text-yellow-800 dark:text-yellow-400">Minimum 2 cards required</p>
-                                    <p className="text-[10px] text-yellow-800/70 dark:text-yellow-400/70">WhatsApp requires at least 2 cards.</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Card Navigation & Management */}
-                        <div className="flex items-center justify-between gap-2 bg-muted/10 p-2 rounded-lg border border-[var(--border-dim)]">
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={() => setActiveCardIndex(prev => Math.max(0, prev - 1))}
-                                    disabled={activeCardIndex === 0}
-                                    className="p-1 hover:bg-background rounded-md disabled:opacity-30 transition-colors text-muted-foreground hover:text-foreground"
-                                >
-                                    <ChevronLeft size={16} />
-                                </button>
-                                <button
-                                    onClick={() => setActiveCardIndex(prev => Math.min((data.cards?.length || 1) - 1, prev + 1))}
-                                    disabled={activeCardIndex === (data.cards?.length || 1) - 1}
-                                    className="p-1 hover:bg-background rounded-md disabled:opacity-30 transition-colors text-muted-foreground hover:text-foreground"
-                                >
-                                    <ChevronRight size={16} />
-                                </button>
-                            </div>
-
-                            <div className="flex gap-1 overflow-x-auto no-scrollbar py-1">
-                                {data.cards?.map((_, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => setActiveCardIndex(i)}
-                                        className={cn(
-                                            "h-1.5 rounded-full transition-all",
-                                            activeCardIndex === i ? "bg-[var(--ey-yellow)] w-4" : "bg-muted-foreground/30 hover:bg-muted-foreground/50 w-1.5"
-                                        )}
-                                    />
-                                ))}
-                            </div>
-
-                            <div className="flex items-center gap-1">
-                                {(data.cards || []).length > 2 && (
-                                    <button
-                                        onClick={() => removeCard(activeCardIndex)}
-                                        className="p-1 text-destructive/80 hover:bg-destructive/10 hover:text-destructive rounded-md transition-colors"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                )}
-                                {(data.cards || []).length < 10 && (
-                                    <button
-                                        onClick={addCard}
-                                        className="p-1 text-[var(--ey-yellow)] hover:bg-[var(--ey-yellow)]/10 rounded-md transition-colors"
-                                    >
-                                        <Plus size={14} />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Active Card Editor */}
-                        {activeCard && (
-                            <div className="space-y-4 animate-in fade-in flex flex-col pt-2 border-t border-[var(--border-dim)]">
-                                <div className="text-[10px] font-bold text-foreground mb-1 uppercase tracking-wider">Card {activeCardIndex + 1}</div>
-                                {/* Header Type & URL */}
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Card Media URL</label>
-                                        <div className="flex bg-muted/30 rounded-md p-0.5 border border-[var(--border-dim)]">
-                                            <button
-                                                onClick={() => updateCard(activeCardIndex, { headerType: 'image' })}
-                                                className={cn(
-                                                    "flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium transition-all",
-                                                    activeCard.headerType === 'image' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-                                                )}
-                                            >
-                                                <ImageIcon size={10} /> Image
-                                            </button>
-                                            <button
-                                                onClick={() => updateCard(activeCardIndex, { headerType: 'video' })}
-                                                className={cn(
-                                                    "flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium transition-all",
-                                                    activeCard.headerType === 'video' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-                                                )}
-                                            >
-                                                <Video size={10} /> Video
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all font-mono"
-                                        value={activeCard.url || ""}
-                                        placeholder="https://..."
-                                        onChange={(e) => updateCard(activeCardIndex, { url: e.target.value })}
-                                    />
-                                </div>
-
-                                {/* Card Body */}
-                                <div className="space-y-1.5">
-                                    <div className="flex items-center gap-1.5 mb-1">
-                                        <Type size={10} className="text-muted-foreground" />
-                                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Body text (max 160)</label>
-                                    </div>
-                                    <textarea
-                                        className="w-full min-h-[60px] bg-background rounded-md border border-[var(--border-dim)] p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-none transition-all"
-                                        value={activeCard.bodyText || ""}
-                                        placeholder="Describe this option..."
-                                        maxLength={160}
-                                        onChange={(e) => updateCard(activeCardIndex, { bodyText: e.target.value })}
-                                    />
-                                </div>
-
-                                {/* Button Configuration */}
-                                <div className="space-y-2 mt-4">
-                                    <div className="flex items-center justify-between border-t border-[var(--border-dim)] pt-4">
-                                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Card Action</label>
-                                        <select
-                                            className="bg-background rounded-md px-2 py-1.5 text-[10px] border border-[var(--border-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
-                                            value={activeCard.buttonType || 'cta_url'}
-                                            onChange={(e) => {
-                                                const newType = e.target.value as any;
-                                                const newCards = (data.cards || []).map(card => ({
-                                                    ...card,
-                                                    buttonType: newType,
-                                                    // Sync quick replies across all cards if switching to quick_reply
-                                                    quickReplyButtons: newType === 'quick_reply' && (!card.quickReplyButtons || card.quickReplyButtons.length === 0)
-                                                        ? [{ id: `qr_${Date.now()}`, title: 'Quick Reply' }]
-                                                        : card.quickReplyButtons
-                                                }));
-                                                updateData({ cards: newCards });
-                                            }}
-                                        >
-                                            <option value="cta_url">Link / Call-to-Action</option>
-                                            <option value="quick_reply">Quick Reply Buttons</option>
-                                        </select>
-                                    </div>
-
-                                    {activeCard.buttonType === 'cta_url' ? (
-                                        <div className="flex flex-col gap-2 mt-2">
-                                            <input
-                                                type="text"
-                                                className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                                                value={activeCard.ctaUrlButton?.displayText || ""}
-                                                placeholder="Button Text"
-                                                onChange={(e) => updateCard(activeCardIndex, {
-                                                    ctaUrlButton: { ...activeCard.ctaUrlButton, displayText: e.target.value }
-                                                })}
-                                            />
-                                            <input
-                                                type="text"
-                                                className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all font-mono"
-                                                value={activeCard.ctaUrlButton?.url || ""}
-                                                placeholder="URL"
-                                                onChange={(e) => updateCard(activeCardIndex, {
-                                                    ctaUrlButton: { ...activeCard.ctaUrlButton, url: e.target.value }
-                                                })}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2 mt-2">
-                                            {(activeCard.quickReplyButtons || []).map((btn: any, btnIdx: number) => (
-                                                <div key={btn.id} className="relative">
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="text"
-                                                            className="flex-1 bg-muted/30 rounded-md border border-[var(--border-dim)] py-1.5 px-3 text-[11px] font-medium focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all text-center"
-                                                            value={btn.title || ""}
-                                                            onChange={(e) => {
-                                                                const newCards = (data.cards || []).map(card => ({
-                                                                    ...card,
-                                                                    quickReplyButtons: (card.quickReplyButtons || []).map((b: any, i: number) =>
-                                                                        i === btnIdx ? { ...b, title: e.target.value } : b
-                                                                    )
-                                                                }));
-                                                                updateData({ cards: newCards });
-                                                            }}
-                                                        />
-                                                        <button
-                                                            onClick={() => {
-                                                                const newCards = (data.cards || []).map(card => ({
-                                                                    ...card,
-                                                                    quickReplyButtons: (card.quickReplyButtons || []).filter((_: any, i: number) => i !== btnIdx)
-                                                                }));
-                                                                updateData({ cards: newCards });
-                                                            }}
-                                                            className="text-muted-foreground hover:text-destructive p-1 shrink-0"
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            {(activeCard.quickReplyButtons || []).length < 2 && (
-                                                <button
-                                                    onClick={() => {
-                                                        const timestamp = Date.now();
-                                                        const newCards = (data.cards || []).map((card) => ({
-                                                            ...card,
-                                                            quickReplyButtons: [
-                                                                ...(card.quickReplyButtons || []),
-                                                                { id: `qr_${timestamp}`, title: 'Quick Reply' }
-                                                            ]
-                                                        }));
-                                                        updateData({ cards: newCards });
-                                                    }}
-                                                    className="w-full py-1.5 border border-dashed border-[var(--border-dim)] rounded-md text-[10px] text-[var(--ey-yellow)] font-bold hover:bg-muted/10 transition-all text-center"
-                                                >
-                                                    + Add Quick Reply
-                                                </button>
+                    {/* Active Card Editor */}
+                    {activeCard && (
+                        <div className="space-y-4 animate-in fade-in flex flex-col pt-2 border-t border-[var(--border-dim)]">
+                            <div className="text-[10px] font-bold text-foreground mb-1 uppercase tracking-wider">Card {activeCardIndex + 1}</div>
+                            {/* Header Type & URL */}
+                                <div className="flex items-center gap-2">
+                                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Card Media URL or Variable</label>
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={300}>
+                                            <TooltipTrigger asChild>
+                                                <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                                The image or video to show at the top of this card.
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <div className="flex bg-muted/30 rounded-md p-0.5 border border-[var(--border-dim)]">
+                                        <button
+                                            onClick={() => updateCard(activeCardIndex, { headerType: 'image' })}
+                                            className={cn(
+                                                "flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium transition-all",
+                                                activeCard.headerType === 'image' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                                             )}
-                                        </div>
-                                    )}
+                                        >
+                                            <ImageIcon size={10} /> Image
+                                        </button>
+                                        <button
+                                            onClick={() => updateCard(activeCardIndex, { headerType: 'video' })}
+                                            className={cn(
+                                                "flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium transition-all",
+                                                activeCard.headerType === 'video' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            <Video size={10} /> Video
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                                <input
+                                    type="text"
+                                    className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all font-mono"
+                                    value={activeCard.url || ""}
+                                    placeholder="https://... or {{var}}"
+                                    onChange={(e) => updateCard(activeCardIndex, { url: e.target.value })}
+                                />
+                                {activeCard.url?.includes("{{") && (
+                                    <p className="text-[8px] text-primary italic">Supports dynamic variables</p>
+                                )}
 
-                        {/* Interaction Settings */}
-                        <div className="pt-4 border-t border-[var(--border-dim)] space-y-3">
+                            {/* Card Body */}
                             <div className="space-y-1.5">
                                 <div className="flex items-center gap-1.5 mb-1">
-                                    <MessageSquare size={10} className="text-muted-foreground" />
-                                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Capture selection to variable</label>
+                                    <Type size={10} className="text-muted-foreground" />
+                                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Body text (max 160)</label>
+                                    <TooltipProvider>
+                                        <Tooltip delayDuration={300}>
+                                            <TooltipTrigger asChild>
+                                                <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                                Brief description for this specific card. Max 160 characters.
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <input
-                                        type="text"
-                                        className="bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                                        placeholder="variable_name"
-                                        value={data.interaction?.input?.variableName || ""}
-                                        onChange={(e) => {
-                                            const interaction = data.interaction || { mode: 'input', input: { type: 'choice' as const, timeoutSeconds: 3600 } };
-                                            updateData({
-                                                interaction: {
-                                                    ...interaction,
-                                                    input: { ...interaction.input, type: 'choice' as const, variableName: e.target.value }
-                                                }
-                                            });
-                                        }}
-                                    />
+                                <AutosizeTextarea
+                                    className="w-full bg-background rounded-md border border-[var(--border-dim)] p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                    value={activeCard.bodyText || ""}
+                                    placeholder="Describe this option..."
+                                    maxLength={160}
+                                    onChange={(e) => updateCard(activeCardIndex, { bodyText: e.target.value })}
+                                />
+                            </div>
+
+                            {/* Button Configuration */}
+                            <div className="space-y-2 mt-4">
+                                <div className="flex items-center justify-between border-t border-[var(--border-dim)] pt-4">
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Card Action</label>
+                                        <TooltipProvider>
+                                            <Tooltip delayDuration={300}>
+                                                <TooltipTrigger asChild>
+                                                    <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                                </TooltipTrigger>
+                                                <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                                    Decide if this card opens a link or shows interactive reply buttons.
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
                                     <select
-                                        className="bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                                        value={data.interaction?.input?.variableScope || "session"}
+                                        className="bg-background rounded-md px-2 py-1.5 text-[10px] border border-[var(--border-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)]"
+                                        value={activeCard.buttonType || 'cta_url'}
                                         onChange={(e) => {
-                                            const interaction = data.interaction || { mode: 'input', input: { type: 'choice' as const, timeoutSeconds: 3600 } };
-                                            updateData({
-                                                interaction: {
-                                                    ...interaction,
-                                                    input: { ...interaction.input, type: 'choice' as const, variableScope: e.target.value as any }
-                                                }
-                                            });
+                                            const newType = e.target.value as any;
+                                            const newCards = (data.cards || []).map(card => ({
+                                                ...card,
+                                                buttonType: newType,
+                                                // Sync quick replies across all cards if switching to quick_reply
+                                                quickReplyButtons: newType === 'quick_reply' && (!card.quickReplyButtons || card.quickReplyButtons.length === 0)
+                                                    ? [{ id: `qr_${Date.now()}`, title: 'Quick Reply' }]
+                                                    : card.quickReplyButtons
+                                            }));
+                                            updateData({ cards: newCards });
                                         }}
                                     >
-                                        <option value="session">Session</option>
-                                        <option value="contact">Contact</option>
+                                        <option value="cta_url">Link / Call-to-Action</option>
+                                        <option value="quick_reply">Quick Reply Buttons</option>
                                     </select>
                                 </div>
+
+                                {activeCard.buttonType === 'cta_url' ? (
+                                    <div className="flex flex-col gap-2 mt-2">
+                                        <input
+                                            type="text"
+                                            className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                            value={activeCard.ctaUrlButton?.displayText || ""}
+                                            maxLength={20}
+                                            placeholder="Button Text"
+                                            onChange={(e) => updateCard(activeCardIndex, {
+                                                ctaUrlButton: { ...activeCard.ctaUrlButton, displayText: e.target.value }
+                                            })}
+                                        />
+                                        <input
+                                            type="text"
+                                            className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all font-mono"
+                                            value={activeCard.ctaUrlButton?.url || ""}
+                                            placeholder="URL or {{var}}"
+                                            onChange={(e) => updateCard(activeCardIndex, {
+                                                ctaUrlButton: { ...activeCard.ctaUrlButton, url: e.target.value }
+                                            })}
+                                        />
+                                        {activeCard.ctaUrlButton?.url?.includes("{{") && (
+                                            <p className="text-[8px] text-primary italic">Supports dynamic variables</p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 mt-2">
+                                        {(activeCard.quickReplyButtons || []).map((btn: any, btnIdx: number) => (
+                                            <div key={btn.id} className="relative">
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        className="flex-1 bg-muted/30 rounded-md border border-[var(--border-dim)] py-1.5 px-3 text-[11px] font-medium focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all text-center"
+                                                        value={btn.title || ""}
+                                                        onChange={(e) => {
+                                                            const newCards = (data.cards || []).map(card => ({
+                                                                ...card,
+                                                                quickReplyButtons: (card.quickReplyButtons || []).map((b: any, i: number) =>
+                                                                    i === btnIdx ? { ...b, title: e.target.value } : b
+                                                                )
+                                                            }));
+                                                            updateData({ cards: newCards });
+                                                        }}
+                                                        maxLength={20}
+                                                    />
+                                                    <button
+                                                        onClick={() => {
+                                                            const newCards = (data.cards || []).map(card => ({
+                                                                ...card,
+                                                                quickReplyButtons: (card.quickReplyButtons || []).filter((_: any, i: number) => i !== btnIdx)
+                                                            }));
+                                                            updateData({ cards: newCards });
+                                                        }}
+                                                        className="text-muted-foreground hover:text-destructive p-1 shrink-0"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {(activeCard.quickReplyButtons || []).length < 2 && (
+                                            <button
+                                                onClick={() => {
+                                                    const timestamp = Date.now();
+                                                    const newCards = (data.cards || []).map((card) => ({
+                                                        ...card,
+                                                        quickReplyButtons: [
+                                                            ...(card.quickReplyButtons || []),
+                                                            { id: `qr_${timestamp}`, title: 'Quick Reply' }
+                                                        ]
+                                                    }));
+                                                    updateData({ cards: newCards });
+                                                }}
+                                                className="w-full py-1.5 border border-dashed border-[var(--border-dim)] rounded-md text-[10px] text-ey-yellow-text font-bold hover:bg-muted/10 transition-all text-center"
+                                            >
+                                                + Add Quick Reply
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Interaction Settings */}
+                    <div className="pt-4 border-t border-[var(--border-dim)] space-y-3">
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <MessageSquare size={10} className="text-muted-foreground" />
+                                <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Capture selection to variable</label>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                            Save the title of the clicked button to a variable.
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <input
+                                    type="text"
+                                    className="bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                    placeholder="variable_name"
+                                    value={data.interaction?.input?.variableName || ""}
+                                    onChange={(e) => {
+                                        const interaction = data.interaction || { mode: 'input', input: { type: 'choice' as const, timeoutSeconds: 3600 } };
+                                        updateData({
+                                            interaction: {
+                                                ...interaction,
+                                                input: { ...interaction.input, type: 'choice' as const, variableName: e.target.value }
+                                            }
+                                        });
+                                    }}
+                                />
+                                <select
+                                    className="bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                    value={data.interaction?.input?.variableScope || "session"}
+                                    onChange={(e) => {
+                                        const interaction = data.interaction || { mode: 'input', input: { type: 'choice' as const, timeoutSeconds: 3600 } };
+                                        updateData({
+                                            interaction: {
+                                                ...interaction,
+                                                input: { ...interaction.input, type: 'choice' as const, variableScope: e.target.value as any }
+                                            }
+                                        });
+                                    }}
+                                >
+                                    <option value="session">Session</option>
+                                    <option value="contact">Contact</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            }
+        />
     );
 }

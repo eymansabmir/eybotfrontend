@@ -106,8 +106,8 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.23 0.02 250);
 
-  /* EY primary yellow */
-  --primary: oklch(0.93 0.19 98);
+  /* EY primary yellow - slightly more stable for light mode content */
+  --primary: oklch(0.85 0.15 98);
   --primary-foreground: oklch(0.23 0.02 250);
 
   --secondary: oklch(0.97 0.01 286);
@@ -145,9 +145,11 @@
 
   /* EY Revamp Custom Tokens (Light Mode) */
   --ey-yellow: #FFE600;
+  --ey-yellow-text: #B88A00; /* High contrast yellow for light mode text */
   --node-bg: #FFFFFF;
   --canvas-bg: #F9FAFB;
   --border-dim: #E5E7EB;
+  --canvas-dot: #D1D5DB;
 
   /* Voice Tech: WhatsApp setup panel */
   --vt-whatsapp-bg: oklch(0.97 0.02 160);
@@ -203,9 +205,11 @@
 
   /* EY Revamp Custom Tokens (Dark Mode) */
   --ey-yellow: #FFE600;
+  --ey-yellow-text: #FFE600; /* Bright yellow for dark mode text */
   --node-bg: #242424;
   --canvas-bg: #1A1A1A;
   --border-dim: #333333;
+  --canvas-dot: #4B5563;
 
   /* Voice Tech: WhatsApp setup panel */
   --vt-whatsapp-bg: oklch(0.32 0.03 160);
@@ -270,9 +274,11 @@ body {
 
   /* EY Revamp Custom Tokens */
   --color-ey-yellow: var(--ey-yellow);
+  --color-ey-yellow-text: var(--ey-yellow-text);
   --color-node-bg: var(--node-bg);
   --color-canvas-bg: var(--canvas-bg);
   --color-border-dim: var(--border-dim);
+  --color-canvas-dot: var(--canvas-dot);
 }
 
 @layer base {

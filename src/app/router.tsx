@@ -23,6 +23,7 @@ import { OrchestrationWizardPage } from "@/features/voice-tech/presentation/page
 import { DatasetFieldsPage } from "@/features/voice-tech/presentation/pages/dataset-fields-page"
 import { CreateVendorPage } from "@/features/voice-tech/presentation/pages/create-vendor-page"
 import { CreateAgentPage } from "@/features/voice-tech/presentation/pages/create-agent-page"
+import { CreateBotPage } from "../features/bots/presentation/pages/create-bot-page"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -134,6 +135,18 @@ const settingsRoute = createRoute({
   component: SettingsPage,
 })
 
+const settingsCredentialsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "settings/credentials",
+  component: SettingsPage,
+})
+
+const settingsCredentialsCreateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "settings/credentials/create",
+  component: SettingsPage,
+})
+
 const botEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "bot/$id",
@@ -150,6 +163,12 @@ const botTestRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "bot/$id/test",
   component: BotTestPage,
+})
+
+const createBotRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "create-bot",
+  component: CreateBotPage,
 })
 
 const loginRoute = createRoute({
@@ -171,6 +190,8 @@ const routeTree = rootRoute.addChildren([
 
   usersRoute,
   settingsRoute,
+  settingsCredentialsRoute,
+  settingsCredentialsCreateRoute,
   botEditorRoute,
   botSettingsRoute,
   botTestRoute,
@@ -181,6 +202,7 @@ const routeTree = rootRoute.addChildren([
   voiceTechDatasetFieldsRoute,
   voiceTechCreateVendorRoute,
   voiceTechCreateAgentRoute,
+  createBotRoute,
 ])
 
 const router = createRouter({

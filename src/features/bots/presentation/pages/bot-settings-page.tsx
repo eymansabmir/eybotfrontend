@@ -13,15 +13,13 @@ import { WhatsAppCredentialsDialog } from "@/features/integrations/whatsapp/pres
 import { useWhatsAppCredentials, useDeleteWhatsAppCredential } from "@/features/integrations/whatsapp/hooks/use-whatsapp-credentials";
 import { LocalizationForm } from "@/features/settings/presentation/components/localization-form";
 import { BotEditorNavbar } from "../components/bot-editor-navbar";
-
-type ApiLikeError = {
-    response?: {
-        data?: {
-            message?: string;
-        };
-    };
-    message?: string;
-};
+import { getErrorMessage } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type LocalizationSettings = {
     isEnabled: boolean;
@@ -29,10 +27,6 @@ type LocalizationSettings = {
     defaultLanguage?: string;
 };
 
-const getErrorMessage = (error: unknown, fallback: string): string => {
-    const candidate = error as ApiLikeError;
-    return candidate?.response?.data?.message || candidate?.message || fallback;
-};
 
 export function BotSettingsPage() {
     const { id } = useParams({ from: "/bot/$id/settings" });
@@ -63,6 +57,14 @@ export function BotSettingsPage() {
     const startConditionEnabledRef = useRef<boolean>(false);
     const comparisonsRef = useRef([{ operator: "CONTAINS", value: "" }]);
     const logicalOperatorRef = useRef("AND");
+    
+    const [fallbackMessage, setFallbackMessage] = useState("");
+    const [invalidInputMessage, setInvalidInputMessage] = useState("");
+    const [finishedJourneyMessage, setFinishedJourneyMessage] = useState("");
+
+    const fallbackMessageRef = useRef("");
+    const invalidInputMessageRef = useRef("");
+    const finishedJourneyMessageRef = useRef("");
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [tempName, setTempName] = useState("");
@@ -104,6 +106,21 @@ export function BotSettingsPage() {
         setLogicalOperator(value);
     };
 
+    const setFallbackMessageSync = (value: string) => {
+        fallbackMessageRef.current = value;
+        setFallbackMessage(value);
+    };
+
+    const setInvalidInputMessageSync = (value: string) => {
+        invalidInputMessageRef.current = value;
+        setInvalidInputMessage(value);
+    };
+
+    const setFinishedJourneyMessageSync = (value: string) => {
+        finishedJourneyMessageRef.current = value;
+        setFinishedJourneyMessage(value);
+    };
+
     // Initialize local state from Bot on load
     useEffect(() => {
         if (bot) {
@@ -137,6 +154,10 @@ export function BotSettingsPage() {
             } else {
                 setSelectedCredentialIdSync(getCachedCredentialId(bot.id) || "");
             }
+
+            setFallbackMessageSync(bot.settings?.fallbackMessage || "");
+            setInvalidInputMessageSync(bot.settings?.invalidInputMessage || "");
+            setFinishedJourneyMessageSync(bot.settings?.finishedJourneyMessage || "");
         }
     }, [bot]);
 
@@ -188,7 +209,7 @@ export function BotSettingsPage() {
             toast.success("Bot renamed successfully!");
             setIsEditingName(false);
         } catch (error) {
-            toast.error("Failed to rename bot.");
+            toast.error(getErrorMessage(error, "Failed to rename bot."));
             setTempName(bot?.name || "");
             setIsEditingName(false);
         }
@@ -208,6 +229,9 @@ export function BotSettingsPage() {
                     maxSteps: bot?.settings?.maxSteps || 100,
                     timeoutSeconds: timeout * 3600,
                     credentialId,
+                    fallbackMessage: fallbackMessageRef.current,
+                    invalidInputMessage: invalidInputMessageRef.current,
+                    finishedJourneyMessage: finishedJourneyMessageRef.current,
                 },
                 triggerConfig: isStartConditionEnabled
                     ? {
@@ -233,7 +257,7 @@ export function BotSettingsPage() {
                 }
             });
         } catch (error) {
-            toast.error("Failed to save and publish.");
+            toast.error(getErrorMessage(error, "Failed to save and publish."));
         }
     };
 
@@ -268,7 +292,7 @@ export function BotSettingsPage() {
              });
              toast.success("Localization settings saved.");
         } catch (err) {
-             toast.error("Failed to save localization settings.");
+             toast.error(getErrorMessage(err, "Failed to save localization settings."));
         }
     };
 
@@ -313,7 +337,7 @@ export function BotSettingsPage() {
                 }}
                 onUnpublish={() => archiveBotMutation.mutate(id, {
                     onSuccess: () => toast.success("Bot archived. You can now edit it."),
-                    onError: () => toast.error("Failed to archive bot"),
+                    onError: (err) => toast.error(getErrorMessage(err, "Failed to archive bot")),
                 })}
                 isSaving={updateBotMutation.isPending}
                 isPublishing={publishBotMutation.isPending}
@@ -379,13 +403,67 @@ export function BotSettingsPage() {
                     )}
 
                     {activeTab === "fallback" && (
-                           <div className="bg-white dark:bg-card p-10 rounded-[32px] border border-black/5 dark:border-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.03)] space-y-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
+                           <div className="bg-white dark:bg-card p-10 rounded-[32px] border border-black/5 dark:border-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.03)] space-y-10 animate-in slide-in-from-bottom-4 fade-in duration-500">
                               <div>
-                                  <h2 className="text-xl font-bold tracking-tight">Fallback Defaults</h2>
-                                  <p className="text-sm text-muted-foreground mt-1">What happens when things go wrong.</p>
+                                  <h2 className="text-2xl font-black tracking-tight">Fallback Configuration</h2>
+                                  <p className="text-sm text-muted-foreground mt-1 font-medium">Customize how your bot responds to errors and unexpected inputs.</p>
                               </div>
-                              <div className="p-12 border-2 border-dashed rounded-3xl flex items-center justify-center text-muted-foreground text-sm bg-muted/5">
-                                   Fallback configurations coming soon...
+                              
+                              <div className="grid gap-8 max-w-2xl">
+                                  <div className="space-y-4">
+                                      <div className="flex flex-col gap-1.5">
+                                          <Label className="text-base font-bold">General Fallback Message</Label>
+                                          <p className="text-xs text-muted-foreground">Sent when an unexpected system error occurs during execution.</p>
+                                      </div>
+                                      <div className="p-1 rounded-2xl bg-muted/20 border border-black/5 dark:border-white/5 shadow-inner">
+                                          <textarea 
+                                              className="w-full min-h-[100px] p-4 bg-transparent border-none focus:ring-0 text-sm resize-none custom-scrollbar"
+                                              placeholder="Sorry, something went wrong. Please try again later."
+                                              value={fallbackMessage}
+                                              onChange={(e) => setFallbackMessageSync(e.target.value)}
+                                          />
+                                      </div>
+                                  </div>
+
+                                  <div className="space-y-4">
+                                      <div className="flex flex-col gap-1.5">
+                                          <Label className="text-base font-bold">Invalid Input Message</Label>
+                                          <p className="text-xs text-muted-foreground">Sent when a user provides the wrong type of message (e.g., text instead of a button click).</p>
+                                      </div>
+                                      <div className="p-1 rounded-2xl bg-muted/20 border border-black/5 dark:border-white/5 shadow-inner">
+                                          <textarea 
+                                              className="w-full min-h-[100px] p-4 bg-transparent border-none focus:ring-0 text-sm resize-none custom-scrollbar"
+                                              placeholder="Invalid input. Please use the options provided above."
+                                              value={invalidInputMessage}
+                                              onChange={(e) => setInvalidInputMessageSync(e.target.value)}
+                                          />
+                                      </div>
+                                  </div>
+
+                                  <div className="space-y-4">
+                                      <div className="flex flex-col gap-1.5">
+                                          <Label className="text-base font-bold">Finished Journey Message</Label>
+                                          <p className="text-xs text-muted-foreground">Sent when a user interacts with a button or list from a completed session.</p>
+                                      </div>
+                                      <div className="p-1 rounded-2xl bg-muted/20 border border-black/5 dark:border-white/5 shadow-inner">
+                                          <textarea 
+                                              className="w-full min-h-[100px] p-4 bg-transparent border-none focus:ring-0 text-sm resize-none custom-scrollbar"
+                                              placeholder="You already finished this flow. To start again, please send the trigger keyword."
+                                              value={finishedJourneyMessage}
+                                              onChange={(e) => setFinishedJourneyMessageSync(e.target.value)}
+                                          />
+                                      </div>
+                                  </div>
+                              </div>
+
+                              <div className="p-6 bg-[#FFE600]/5 rounded-2xl border border-[#FFE600]/20 flex gap-4">
+                                  <Info className="size-5 text-[#FFE600]-text shrink-0 mt-0.5" />
+                                  <div className="space-y-1">
+                                      <p className="text-sm font-bold">Priority Note</p>
+                                      <p className="text-xs text-muted-foreground leading-relaxed">
+                                          These messages will override system defaults. For the "Invalid Input" case, specific node-level invalid messages (if configured) will still take priority over this global setting.
+                                      </p>
+                                  </div>
                               </div>
                          </div>
                     )}
@@ -529,9 +607,43 @@ export function BotSettingsPage() {
                                                                                 <SelectValue />
                                                                             </SelectTrigger>
                                                                             <SelectContent>
-                                                                                <SelectItem value="EQUALS">Equals</SelectItem>
-                                                                                <SelectItem value="CONTAINS">Contains</SelectItem>
-                                                                                <SelectItem value="STARTS_WITH">Starts with</SelectItem>
+                                                                                <TooltipProvider>
+                                                                                    <Tooltip delayDuration={300}>
+                                                                                        <TooltipTrigger asChild>
+                                                                                            <div className="w-full">
+                                                                                                <SelectItem value="EQUALS">Equals</SelectItem>
+                                                                                            </div>
+                                                                                        </TooltipTrigger>
+                                                                                        <TooltipContent side="right" className="max-w-xs p-3">
+                                                                                            <p className="font-bold mb-1">Exact Match</p>
+                                                                                            <p className="text-xs text-muted-foreground">The bot triggers only if the message matches your keyword exactly (e.g., "Help" matches "help").</p>
+                                                                                        </TooltipContent>
+                                                                                    </Tooltip>
+
+                                                                                    <Tooltip delayDuration={300}>
+                                                                                        <TooltipTrigger asChild>
+                                                                                            <div className="w-full">
+                                                                                                <SelectItem value="CONTAINS">Contains</SelectItem>
+                                                                                            </div>
+                                                                                        </TooltipTrigger>
+                                                                                        <TooltipContent side="right" className="max-w-xs p-3">
+                                                                                            <p className="font-bold mb-1">Flexible Match</p>
+                                                                                            <p className="text-xs text-muted-foreground">The bot triggers if the keyword appears anywhere in the user's message (e.g., "I need help" matches "help").</p>
+                                                                                        </TooltipContent>
+                                                                                    </Tooltip>
+
+                                                                                    <Tooltip delayDuration={300}>
+                                                                                        <TooltipTrigger asChild>
+                                                                                            <div className="w-full">
+                                                                                                <SelectItem value="STARTS_WITH">Starts with</SelectItem>
+                                                                                            </div>
+                                                                                        </TooltipTrigger>
+                                                                                        <TooltipContent side="right" className="max-w-xs p-3">
+                                                                                            <p className="font-bold mb-1">Prefix Match</p>
+                                                                                            <p className="text-xs text-muted-foreground">The bot triggers if the message begins with your keyword (e.g., "Help me please" matches "help").</p>
+                                                                                        </TooltipContent>
+                                                                                    </Tooltip>
+                                                                                </TooltipProvider>
                                                                             </SelectContent>
                                                                         </Select>
                                                                         <Input 

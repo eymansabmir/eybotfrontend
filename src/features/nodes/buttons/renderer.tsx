@@ -1,9 +1,19 @@
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
-import { ListChecks, X, Type, Footprints } from "lucide-react";
+import { ListChecks, X, Type, Footprints, Info } from "lucide-react";
 import type { ButtonsNodeData } from "./schema";
+import { buttonsNode } from "./index";
 import { useReactFlow } from "@xyflow/react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
+import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
+import { SortableList } from "@/components/ui/sortable-list";
+import { VariableSelect } from "@/features/variables/components/variable-select";
 
 type Interaction = NonNullable<ButtonsNodeData["interaction"]>;
 
@@ -117,6 +127,7 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
             icon={<ListChecks size={16} />}
             title="Interactive Buttons"
             popoverTitle="Configure Buttons"
+            description={buttonsNode.config.description}
             summary={data.body ? data.body : "Configure button message"}
             showPopover={selected}
             showBottomHandle={false}
@@ -148,11 +159,23 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
             popoverBody={
                 <>
                     <div className="space-y-1.5">
-                        <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-                            <Type size={10} /> Body Message
-                        </label>
-                        <textarea
-                            className="w-full min-h-[80px] bg-background rounded-lg border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] resize-y transition-all"
+                        <div className="flex items-center gap-1.5">
+                            <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                <Type size={10} /> Body Message
+                            </label>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                        The main content of the message. Max 1024 characters. You can use {"{{variable}}"} to personalize it.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                        <AutosizeTextarea
+                            className="w-full bg-background rounded-lg border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                             value={data.body}
                             placeholder="Type your message..."
                             onChange={(e) => updateData({ body: e.target.value })}
@@ -160,9 +183,21 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-                            <Footprints size={10} /> Footer (Optional)
-                        </label>
+                        <div className="flex items-center gap-1.5">
+                            <label className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                <Footprints size={10} /> Footer (Optional)
+                            </label>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                        Small grey text that appears below the body message. Max 60 characters.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                         <input
                             type="text"
                             className="w-full bg-background rounded-lg border border-[var(--border-dim)] px-3 py-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
@@ -174,24 +209,40 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
 
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Buttons ({(data.buttons || []).length}/3)</label>
+                            <div className="flex items-center gap-1.5">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Buttons ({(data.buttons || []).length}/3)</label>
+                                <TooltipProvider>
+                                    <Tooltip delayDuration={300}>
+                                        <TooltipTrigger asChild>
+                                            <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                            Add up to 3 interactive buttons. Each button creates a new branch in your flow. Max 20 characters per button title.
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
                             {(data.buttons || []).length < 3 && (
                                 <button
                                     onClick={addButton}
-                                    className="text-[10px] text-[var(--ey-yellow)] hover:underline font-bold"
+                                    className="text-[10px] text-ey-yellow-text hover:underline font-bold"
                                 >
                                     + Add Button
                                 </button>
                             )}
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                            {data.buttons?.map((button) => (
-                                <div key={button.id} className="relative flex items-center gap-2 group/btn">
+                        <SortableList
+                            items={data.buttons || []}
+                            onReorder={(newButtons: any[]) => updateData({ buttons: newButtons })}
+                            keyExtractor={(b: any) => b.id}
+                            renderItem={(button: any) => (
+                                <div className="flex items-center gap-2 flex-1">
                                     <input
                                         type="text"
                                         className="flex-1 bg-background rounded-md border border-[var(--border-dim)] py-1.5 px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all text-center"
                                         value={button.title}
+                                        maxLength={20}
                                         onChange={(e) => updateButtonTitle(button.id, e.target.value)}
                                     />
                                     <button
@@ -201,22 +252,34 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
                                         <X size={14} />
                                     </button>
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                        />
                     </div>
 
                     <div className="rounded-lg bg-muted/20 border border-[var(--border-dim)] p-3 space-y-2">
-                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Capture Response</label>
+                        <div className="flex items-center gap-1.5">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Capture Response</label>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right" className="max-w-[200px] text-[10px]">
+                                        Choose where to save the text of the button that the user clicks.
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                         <div className="flex gap-2">
-                            <input
-                                type="text"
-                                className="flex-1 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                                value={data.interaction?.input?.variableName || ""}
-                                placeholder="Variable Name"
-                                onChange={(e) => updateVariableSettings({ variableName: e.target.value })}
-                            />
+                            <div className="flex-1">
+                                <VariableSelect
+                                    value={data.interaction?.input?.variableName || ""}
+                                    onValueChange={(val) => updateVariableSettings({ variableName: val })}
+                                    placeholder="Save to variable..."
+                                />
+                            </div>
                             <select
-                                className="w-24 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                className="w-24 bg-background rounded-md border border-[var(--border-dim)] px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] cursor-pointer h-8 transition-all"
                                 value={data.interaction?.input?.variableScope || 'session'}
                                 onChange={(e) => updateVariableSettings({ variableScope: e.target.value as 'session' | 'contact' })}
                             >

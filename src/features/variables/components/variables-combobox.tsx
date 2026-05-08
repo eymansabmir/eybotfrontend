@@ -60,15 +60,15 @@ export function VariablesCombobox({ value, onChange, placeholder = "Select varia
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className={cn("w-full justify-between overflow-hidden bg-primary/10 border-primary/30 hover:bg-primary/20 text-foreground font-semibold text-xs", className)}
+                    className={cn("w-full justify-between overflow-hidden bg-primary/5 border-primary/20 hover:bg-primary/10 text-ey-yellow-text font-medium text-xs", className)}
                 >
                     <div className="flex items-center gap-1.5 truncate">
-                        <span className="text-[10px] font-bold text-primary/40">@</span>
+                        <span className="text-[10px] font-bold text-ey-yellow-text/40">@</span>
                         <span className="truncate">
                             {value ? <span className="text-foreground">{value}</span> : <span className="text-muted-foreground/60">{placeholder}</span>}
                         </span>
                     </div>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-muted-foreground" />
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-ey-yellow-text" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[220px] p-0" align="start">
@@ -114,7 +114,7 @@ export function VariablesCombobox({ value, onChange, placeholder = "Select varia
                             <div className="p-1 border-t">
                                 <button
                                     onClick={handleCreate}
-                                    className="flex w-full items-center gap-2 px-2 py-1.5 text-sm bg-primary/10 text-primary hover:bg-primary/20 rounded-sm transition-colors text-left font-medium"
+                                    className="flex w-full items-center gap-2 px-2 py-1.5 text-sm bg-primary/10 text-ey-yellow-text hover:bg-primary/20 rounded-sm transition-colors text-left font-medium"
                                 >
                                     <Plus size={14} className="shrink-0" />
                                     <span className="truncate">Create "{inputValue.trim()}"</span>

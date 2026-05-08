@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { useVariablesStore } from "@/features/variables/store";
 import type { VariableManagerNodeData } from "./schema";
+import { variableManagerNode } from "./index";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
 export function VariableManagerNodeRenderer({ selected }: NodeProps & { data: VariableManagerNodeData }) {
@@ -26,6 +27,7 @@ export function VariableManagerNodeRenderer({ selected }: NodeProps & { data: Va
             icon={<Variable size={16} />}
             title="Variable Manager"
             popoverTitle="Manage Variables"
+            description={variableManagerNode.config.description}
             summary={`${variables.length} global variables`}
             showPopover={selected}
             showTargetHandle={false}
