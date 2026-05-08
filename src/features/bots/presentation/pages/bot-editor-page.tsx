@@ -330,82 +330,7 @@ export function BotEditorPage() {
         targetNodeId: e.target,
     });
 
-    const initialNodes = useMemo(() => {
-        const baseNodes = (bot?.nodes as any[]) || [];
-        const translatedSource = translationData?.translatedData as any[] | undefined;
 
-        const sourceNodes = isTranslationMode && translatedSource
-            ? baseNodes.map((base: any) => {
-                const translation = translatedSource.find(t => t.id === base.id);
-                if (!translation) return base;
-                const tData = translation.data || {};
-                return {
-                    ...base,
-                    data: {
-                        ...base.data,
-                        ...tData,
-                    }
-                };
-            })
-            : (baseNodes.length > 0 ? baseNodes : (isNew ? DEFAULT_NODES : []));
-
-        return sourceNodes.map((n: any) => {
-            let frontendData = { ...n.data };
-            if (n.type === "ask_question") {
-                frontendData = {
-                    ...frontendData,
-                    question: n.data.message || "",
-                    variable: n.data.variableName || "var",
-                    validationType: n.data.inputType || "text",
-                    timeoutSeconds: n.data.timeoutSeconds || 3600
-                };
-            } else if (n.type === "nps") {
-                frontendData = {
-                    ...frontendData,
-                    message: n.data.message || "",
-                    variable: n.data.variableName || "nps_score",
-                    variableScope: n.data.variableScope || "session",
-                    length: n.data.length ?? 10,
-                    startsAt: n.data.startsAt ?? 1,
-                    leftLabel: n.data.leftLabel,
-                    rightLabel: n.data.rightLabel,
-                    buttonLabel: n.data.buttonLabel || "Rate",
-                    timeoutSeconds: n.data.timeoutSeconds || 3600
-                };
-            } else if (n.type === "language") {
-                const settingsLocalization = bot?.settings?.localization;
-                const languageList = Array.isArray(n.data.languages) && n.data.languages.length > 0
-                    ? (n.data.languages as string[]).slice(0, MAX_LANGUAGE_NODE_LANGUAGES)
-                    : (settingsLocalization?.languages || []);
-                const localizationEnabled = typeof n.data.localizationEnabled === "boolean"
-                    ? n.data.localizationEnabled
-                    : (settingsLocalization?.isEnabled ?? languageList.length > 0);
-
-                frontendData = {
-                    ...frontendData,
-                    message: n.data.message || "Please select your language",
-                    variableName: n.data.variableName || n.data.variable || "selected_language",
-                    variable: n.data.variableName || n.data.variable || "selected_language",
-                    variableScope: n.data.variableScope || "session",
-                    timeoutSeconds: n.data.timeoutSeconds || 3600,
-                    localizationEnabled,
-                    languages: languageList,
-                    defaultLanguage: n.data.defaultLanguage || settingsLocalization?.defaultLanguage || languageList[0],
-                    skipIfAlreadySelected: !!n.data.skipIfAlreadySelected,
-                };
-            }
-            return {
-                id: n.id,
-                type: n.type,
-                position: n.position,
-                data: { 
-                    ...frontendData,
-                    isTranslationMode,
-                    branches: n.branches || []
-                }
-            };
-        }) || [];
-    }, [bot?.nodes, bot?.settings?.localization, translationData, isTranslationMode]);
 
     const initialEdges = useMemo(() => {
         const baseEdges = bot?.edges || [];
@@ -597,7 +522,7 @@ export function BotEditorPage() {
                     }
                 };
             })
-            : baseNodes;
+            : (baseNodes.length > 0 ? baseNodes : (isNew ? DEFAULT_NODES : []));
 
         return sourceNodes.map((n: any) => {
             let frontendData = { ...n.data };
