@@ -24,7 +24,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { CommandMenu } from "./components/command-menu"
 // import { NotificationsMenu } from "./components/notifications-menu"
-import { useNavigate } from "@tanstack/react-router"
 import {
   Sidebar,
   SidebarContent,
