@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import type { LanguageNodeData } from "./schema";
 import { cn } from "@/lib/utils";
-import { useBot, useUpdateBot } from "@/features/bots/data/queries/use-bots";
+
 import { apiClient } from "@/lib/api-client";
 import { SUPPORTED_LANGUAGES, COMMON_LANGUAGES } from "@/features/i18n/languages";
 import { languageNode } from "./index";
@@ -32,13 +32,13 @@ import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { AutosizeTextarea } from "@/components/ui/autosize-textarea";
 
 export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data: LanguageNodeData }) {
-    const { setNodes } = useReactFlow();
+    const { setNodes, getNodes } = useReactFlow();
+
     const editorMatch = useMatch({ from: "/bot/$id", shouldThrow: false });
     const testMatch = useMatch({ from: "/bot/$id/test", shouldThrow: false });
     const botId = editorMatch?.params?.id ?? testMatch?.params?.id;
 
-    const { data: bot } = useBot(botId ?? "");
-    const { mutate: updateBot } = useUpdateBot(botId ?? "");
+
 
     const [open, setOpen] = React.useState(false);
     const [isSyncing, setIsSyncing] = React.useState(false);
@@ -74,20 +74,7 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
     };
 
     const handleToggleLocalization = (checked: boolean) => {
-
-        if (!botId || !bot || botId === "new") return;
-
-        updateBot({
-            settings: {
-                ...bot.settings,
-                localization: {
-                    ...bot.settings?.localization,
-                    isEnabled: checked,
-                    languages: bot.settings?.localization?.languages ?? [],
-                },
-            },
-        });
-        handleUpdateData({ localizationEnabled: checked });
+        updateData({ localizationEnabled: checked });
     };
 
     const handleAddLanguage = (langCode: string) => {
@@ -100,56 +87,13 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
         }
 
         const newLangs = [...currentLangs, langCode];
-
-        if (!botId || !bot || botId === "new") return;
-
-        // Keep global languages as a union of all language nodes
-        const allNodes = (bot as any).nodes || [];
-        const otherNodesLangs = allNodes
-            .filter((n: any) => n.id !== id && n.type === 'language')
-            .flatMap((n: any) => n.data?.languages || []);
-
-        const unionLangs = Array.from(new Set([...otherNodesLangs, ...newLangs]));
-
-        updateBot({
-            settings: {
-                ...bot.settings,
-                localization: {
-                    ...bot.settings?.localization,
-                    isEnabled: true,
-                    languages: unionLangs,
-                },
-            },
-        });
-        handleUpdateData({ languages: newLangs, localizationEnabled: true });
+        updateData({ languages: newLangs, localizationEnabled: true });
     };
 
     const handleRemoveLanguage = (langCode: string) => {
         const currentLangs = Array.isArray(data.languages) ? data.languages : [];
         const newLangs = currentLangs.filter((l) => l !== langCode);
-
-
-        if (!botId || !bot || botId === "new") return;
-
-        // Update global union
-        const allNodes = (bot as any).nodes || [];
-        const otherNodesLangs = allNodes
-            .filter((n: any) => n.id !== id && n.type === 'language')
-            .flatMap((n: any) => n.data?.languages || []);
-
-        const unionLangs = Array.from(new Set([...otherNodesLangs, ...newLangs]));
-
-        updateBot({
-            settings: {
-                ...bot.settings,
-                localization: {
-                    ...bot.settings?.localization,
-                    isEnabled: bot.settings?.localization?.isEnabled ?? false,
-                    languages: unionLangs,
-                },
-            },
-        });
-        handleUpdateData({ languages: newLangs });
+        updateData({ languages: newLangs });
     };
 
     const handleSync = async () => {
@@ -160,7 +104,8 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
 
         setIsSyncing(true);
         try {
-            await apiClient.post(`/flows/${botId}/sync-translations`);
+            const currentNodes = getNodes();
+            await apiClient.post(`/flows/${botId}/sync-translations`, { nodes: currentNodes });
             toast.success("Translations synced successfully.");
         } catch (error) {
             toast.error((error as Error)?.message || "Failed to sync translations");
@@ -191,76 +136,121 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                             onCheckedChange={handleToggleLocalization}
                         />
                     </div>
+                </div>
 
-                    {isEnabled && (
-                        <div className="space-y-3 pt-1">
-                            <div className="space-y-2">
-                                <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Enabled Languages</label>
+                <Handle
+                    type="source"
+                    position={Position.Bottom}
+                    className="h-3 w-3 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
+                />
+            </div>
 
-                                <Popover open={open} onOpenChange={setOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            aria-expanded={open}
-                                            className="w-full justify-between h-8 bg-primary/5 border-primary/20 hover:bg-primary/10 text-ey-yellow-text font-medium text-[11px]"
-                                        >
-                                            Add language...
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-ey-yellow-text" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[240px] p-0" align="start" side="bottom">
-                                        <Command>
-                                            <CommandInput placeholder="Search language..." className="h-8 text-[11px]" />
-                                            <CommandList>
-                                                <CommandEmpty>No language found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {COMMON_LANGUAGES
-                                                        .filter((name) => !enabledLanguages.includes(SUPPORTED_LANGUAGES[name]))
-                                                        .map((name) => (
-                                                            <CommandItem
-                                                                key={name}
-                                                                value={name}
-                                                                onSelect={() => {
-                                                                    handleAddLanguage(SUPPORTED_LANGUAGES[name]);
-                                                                    setOpen(false);
-                                                                }}
-                                                                className="text-[11px] cursor-pointer"
-                                                            >
-                                                                <Check
-                                                                    className={cn(
-                                                                        "mr-2 h-3 w-3",
-                                                                        enabledLanguages.includes(SUPPORTED_LANGUAGES[name]) ? "opacity-100" : "opacity-0"
-                                                                    )}
-                                                                />
-                                                                {name}
-                                                            </CommandItem>
-                                                        ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
+            {selected && (
+                <div className="absolute top-0 left-[230px] w-[340px] bg-[var(--node-bg)] border border-[var(--border-dim)] rounded-xl shadow-2xl z-[100] cursor-auto nodrag nopan flex flex-col overflow-hidden">
+                    <div className="flex items-center justify-between border-b border-[var(--border-dim)] px-4 py-3 bg-muted/20">
+                        <div className="flex items-center gap-2">
+                            <Languages size={14} className="text-muted-foreground" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Configure Language</span>
+                        </div>
+                    </div>
 
-                                <div className="flex flex-wrap gap-1.5 max-w-[280px] pt-1">
-                                    {enabledLanguages.map((code) => (
-                                        <Badge
-                                            key={code}
-                                            variant="secondary"
-                                            className="h-5 px-1.5 py-0 text-[9px] font-medium bg-primary/5 hover:bg-primary/10 text-ey-yellow-text border-primary/20 flex items-center gap-1"
-                                        >
-                                            {getLanguageName(code)}
-                                            <button
-                                                onClick={() => handleRemoveLanguage(code)}
-                                                className="hover:text-destructive transition-colors"
+                    <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
+                        <div className="flex items-center justify-between bg-muted/20 p-2 rounded-xl border border-[var(--border-dim)]">
+                            <div className="flex flex-col gap-0.5">
+                                <label className="text-[9px] font-bold text-foreground/70 uppercase tracking-tight">Localization</label>
+                                <p className="text-[8px] text-muted-foreground leading-none">Enable multi-language</p>
+                            </div>
+                            <Switch
+                                checked={isEnabled}
+                                size="sm"
+                                onCheckedChange={handleToggleLocalization}
+                                disabled={data.isTranslationMode}
+                            />
+                        </div>
+
+                        {isEnabled && (
+                            <div className="space-y-3 pt-1">
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Enabled Languages</label>
+
+                                    <Popover open={open} onOpenChange={setOpen}>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                role="combobox"
+                                                aria-expanded={open}
+                                                disabled={data.isTranslationMode}
+                                                className={cn(
+                                                    "w-full justify-between h-8 bg-primary/10 border-primary/30 hover:bg-primary/20 text-foreground font-medium text-[11px]",
+                                                    data.isTranslationMode && "opacity-50 grayscale-[0.5] cursor-not-allowed"
+                                                )}
+                                                title={data.isTranslationMode ? "Structural changes must be made in Default (English) view" : undefined}
                                             >
-                                                <X size={10} />
-                                            </button>
-                                        </Badge>
-                                    ))}
-                                    {enabledLanguages.length === 0 && (
-                                        <span className="text-[10px] text-muted-foreground italic px-1">No languages added yet.</span>
-                                    )}
+                                                <span className="opacity-70">Add language...</span>
+                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-[240px] p-0" align="start" side="bottom">
+                                            <Command>
+                                                <CommandInput placeholder="Search language..." className="h-8 text-[11px]" />
+                                                <CommandList>
+                                                    <CommandEmpty>No language found.</CommandEmpty>
+                                                    <CommandGroup>
+                                                        {COMMON_LANGUAGES
+                                                            .filter((name) => !enabledLanguages.includes(SUPPORTED_LANGUAGES[name]))
+                                                            .map((name) => (
+                                                                <CommandItem
+                                                                    key={name}
+                                                                    value={name}
+                                                                    onSelect={() => {
+                                                                        handleAddLanguage(SUPPORTED_LANGUAGES[name]);
+                                                                        setOpen(false);
+                                                                    }}
+                                                                    className="text-[11px] cursor-pointer"
+                                                                >
+                                                                    <Check
+                                                                        className={cn(
+                                                                            "mr-2 h-3 w-3",
+                                                                            enabledLanguages.includes(SUPPORTED_LANGUAGES[name]) ? "opacity-100" : "opacity-0"
+                                                                        )}
+                                                                    />
+                                                                    {name}
+                                                                </CommandItem>
+                                                            ))}
+                                                    </CommandGroup>
+                                                </CommandList>
+                                            </Command>
+                                        </PopoverContent>
+                                    </Popover>
+
+                                    <div className="flex flex-wrap gap-1.5 max-w-[280px] pt-1">
+                                        {enabledLanguages.map((code) => (
+                                            <Badge
+                                                key={code}
+                                                variant="secondary"
+                                                className={cn(
+                                                    "h-5 px-2 py-0 text-[10px] font-bold bg-primary text-primary-foreground border-primary/20 flex items-center gap-1.5 shadow-sm transition-all cursor-default",
+                                                    !data.isTranslationMode && "hover:bg-primary/90"
+                                                )}
+                                            >
+                                                {getLanguageName(code)}
+                                                {!data.isTranslationMode && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRemoveLanguage(code);
+                                                        }}
+                                                        className="hover:bg-black/10 rounded-full p-0.5 transition-colors"
+                                                    >
+                                                        <X size={10} strokeWidth={3} />
+                                                    </button>
+                                                )}
+                                            </Badge>
+                                        ))}
+                                        {enabledLanguages.length === 0 && (
+                                            <span className="text-[10px] text-muted-foreground italic px-1">No languages added yet.</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

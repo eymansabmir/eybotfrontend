@@ -141,7 +141,13 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
                 e.preventDefault();
                 duplicateSelectedNodes();
             }
-        };
+        });
+
+        // Notify parent of ALL node data changes (including direct setNodes calls from renderers).
+        // onNodesChange only fires for ReactFlow structural events (move/select/delete),
+        // NOT for programmatic setNodes calls. This effect bridges that gap.
+        onNodesChangeProp?.(nodes);
+    }, [nodes, onNodesChangeProp]);
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);

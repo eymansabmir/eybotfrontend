@@ -69,10 +69,15 @@ export function BotEditorPage() {
     const [liveLanguages, setLiveLanguages] = useState<string[]>([]);
 
     const handleNodesChange = useCallback((nodes: Node[]) => {
-        const langNode = nodes.find(n => n.type === NodeType.LANGUAGE);
-        if (langNode) {
-            const langs = (langNode.data as any).languages || [];
-            setLiveLanguages(langs);
+        // Collect the union of languages from ALL language nodes so that
+        // adding/removing a language on any node is immediately reflected
+        // in the navbar dropdown without requiring a save.
+        const langNodes = nodes.filter(n => n.type === NodeType.LANGUAGE);
+        if (langNodes.length > 0) {
+            const unionLangs = Array.from(
+                new Set(langNodes.flatMap(n => (n.data as any).languages || []))
+            ).filter(Boolean) as string[];
+            setLiveLanguages(unionLangs);
         } else {
             setLiveLanguages([]);
         }
@@ -566,10 +571,108 @@ export function BotEditorPage() {
         });
     };
 
+    const initialNodes = useMemo(() => {
+        const baseNodes = (bot?.nodes as any[]) || [];
+        const translatedSource = translationData?.translatedData as any[] | undefined;
+
+        // --- MERGE STRATEGY ---
+        // If in translation mode, we use baseNodes as the primary structure (to keep technical settings)
+        // and only override specific content fields from the translations.
+        const sourceNodes = isTranslationMode && translatedSource
+            ? baseNodes.map((base: any) => {
+                const translation = translatedSource.find(t => t.id === base.id);
+                if (!translation) return base;
+
+                // Merge rule: Keep the MASTER flow structure and logic
+                // only override text fields for the translation view.
+                const tData = translation.data || {};
+
+                return {
+                    ...base,
+                    data: {
+                        ...base.data,
+                        ...tData, // Overwrites labels/messages
+                        // STICKY - But only take from Master if NOT already in translation? 
+                        // Actually, just take EVERYTHING from base.data except what tData overrides
+                    }
+                };
+            })
+            : baseNodes;
+
+        return sourceNodes.map((n: any) => {
+            let frontendData = { ...n.data };
+            if (n.type === "ask_question") {
+                frontendData = {
+                    ...frontendData,
+                    question: n.data.message || "",
+                    variable: n.data.variableName || "var",
+                    validationType: n.data.inputType || "text",
+                    timeoutSeconds: n.data.timeoutSeconds || 3600
+                };
+            } else if (n.type === "nps") {
+                frontendData = {
+                    ...frontendData,
+                    message: n.data.message || "",
+                    variable: n.data.variableName || "nps_score",
+                    variableScope: n.data.variableScope || "session",
+                    length: n.data.length ?? 10,
+                    startsAt: n.data.startsAt ?? 1,
+                    leftLabel: n.data.leftLabel,
+                    rightLabel: n.data.rightLabel,
+                    buttonLabel: n.data.buttonLabel || "Rate",
+                    timeoutSeconds: n.data.timeoutSeconds || 3600
+                };
+            } else if (n.type === "language") {
+                const settingsLocalization = bot?.settings?.localization;
+                const nodeLangs = Array.isArray(n.data.languages) ? n.data.languages : [];
+                
+                // If the node has no languages, fallback to global settings.
+                // Otherwise, use the node's specific list.
+                const languageList = nodeLangs.length > 0
+                    ? nodeLangs.slice(0, MAX_LANGUAGE_NODE_LANGUAGES)
+                    : (settingsLocalization?.languages || []);
+
+                const localizationEnabled = typeof n.data.localizationEnabled === "boolean"
+                    ? n.data.localizationEnabled
+                    : (settingsLocalization?.isEnabled ?? languageList.length > 0);
+
+                frontendData = {
+                    ...frontendData,
+                    message: n.data.message || "Please select your language",
+                    variableName: n.data.variableName || n.data.variable || "selected_language",
+                    variable: n.data.variableName || n.data.variable || "selected_language",
+                    variableScope: n.data.variableScope || "session",
+                    timeoutSeconds: n.data.timeoutSeconds || 3600,
+                    localizationEnabled,
+                    languages: languageList,
+                    defaultLanguage: n.data.defaultLanguage || settingsLocalization?.defaultLanguage || languageList[0],
+                    skipIfAlreadySelected: !!n.data.skipIfAlreadySelected,
+                };
+            }
+            return {
+                id: n.id,
+                type: n.type,
+                position: n.position,
+                data: { 
+                    ...frontendData,
+                    isTranslationMode,
+                    branches: n.branches || []
+                }
+            };
+        }) || [];
+    }, [bot?.nodes, bot?.settings?.localization, translationData, isTranslationMode]);
+
     useEffect(() => {
-        if (isLoading) return;
-        resetDirtyState(initialNodes, initialEdges);
-    }, [initialNodes, initialEdges, isLoading]);
+        const langNodes = initialNodes.filter(n => n.type === NodeType.LANGUAGE);
+        if (langNodes.length > 0) {
+            const unionLangs = Array.from(
+                new Set(langNodes.flatMap(n => (n.data as any).languages || []))
+            ).filter(Boolean) as string[];
+            setLiveLanguages(unionLangs);
+        } else {
+            setLiveLanguages([]);
+        }
+    }, [initialNodes]);
 
     useEffect(() => {
         if (!isDirty) return;
