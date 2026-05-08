@@ -16,7 +16,6 @@ export const npsNode: NodeDefinition<NpsNodeData> = {
         variableScope: "session",
         length: 10,
         startsAt: 1,
-        buttonLabel: "Rate",
         timeoutSeconds: 3600,
     },
     defaultBranches: [{ key: "default", label: "Default" }],
