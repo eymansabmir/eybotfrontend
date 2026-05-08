@@ -38,8 +38,6 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
     const testMatch = useMatch({ from: "/bot/$id/test", shouldThrow: false });
     const botId = editorMatch?.params?.id ?? testMatch?.params?.id;
 
-
-
     const [open, setOpen] = React.useState(false);
     const [isSyncing, setIsSyncing] = React.useState(false);
 
@@ -48,7 +46,6 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
             nds.map((node) => node.id === id ? { ...node, data: { ...node.data, ...newData } } : node)
         );
     };
-
 
     const nodeLanguages = Array.isArray(data.languages) ? data.languages : [];
     const nodeLocalizationEnabled = typeof data.localizationEnabled === "boolean" ? data.localizationEnabled : undefined;
@@ -74,7 +71,7 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
     };
 
     const handleToggleLocalization = (checked: boolean) => {
-        updateData({ localizationEnabled: checked });
+        handleUpdateData({ localizationEnabled: checked });
     };
 
     const handleAddLanguage = (langCode: string) => {
@@ -87,13 +84,13 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
         }
 
         const newLangs = [...currentLangs, langCode];
-        updateData({ languages: newLangs, localizationEnabled: true });
+        handleUpdateData({ languages: newLangs, localizationEnabled: true });
     };
 
     const handleRemoveLanguage = (langCode: string) => {
         const currentLangs = Array.isArray(data.languages) ? data.languages : [];
         const newLangs = currentLangs.filter((l) => l !== langCode);
-        updateData({ languages: newLangs });
+        handleUpdateData({ languages: newLangs });
     };
 
     const handleSync = async () => {
@@ -134,123 +131,92 @@ export function LanguageNodeRenderer({ id, data, selected }: NodeProps & { data:
                             checked={isEnabled}
                             size="sm"
                             onCheckedChange={handleToggleLocalization}
+                            disabled={data.isTranslationMode}
                         />
                     </div>
-                </div>
 
-                <Handle
-                    type="source"
-                    position={Position.Bottom}
-                    className="h-3 w-3 border-2 border-background bg-muted-foreground shadow-sm hover:scale-125 transition-transform"
-                />
-            </div>
+                    {isEnabled && (
+                        <div className="space-y-3 pt-1">
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Enabled Languages</label>
 
-            {selected && (
-                <div className="absolute top-0 left-[230px] w-[340px] bg-[var(--node-bg)] border border-[var(--border-dim)] rounded-xl shadow-2xl z-[100] cursor-auto nodrag nopan flex flex-col overflow-hidden">
-                    <div className="flex items-center justify-between border-b border-[var(--border-dim)] px-4 py-3 bg-muted/20">
-                        <div className="flex items-center gap-2">
-                            <Languages size={14} className="text-muted-foreground" />
-                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Configure Language</span>
-                        </div>
-                    </div>
+                                <Popover open={open} onOpenChange={setOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            aria-expanded={open}
+                                            disabled={data.isTranslationMode}
+                                            className={cn(
+                                                "w-full justify-between h-8 bg-primary/10 border-primary/30 hover:bg-primary/20 text-foreground font-medium text-[11px]",
+                                                data.isTranslationMode && "opacity-50 grayscale-[0.5] cursor-not-allowed"
+                                            )}
+                                            title={data.isTranslationMode ? "Structural changes must be made in Default (English) view" : undefined}
+                                        >
+                                            <span className="opacity-70">Add language...</span>
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[240px] p-0" align="start" side="bottom">
+                                        <Command>
+                                            <CommandInput placeholder="Search language..." className="h-8 text-[11px]" />
+                                            <CommandList>
+                                                <CommandEmpty>No language found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {COMMON_LANGUAGES
+                                                        .filter((name) => !enabledLanguages.includes(SUPPORTED_LANGUAGES[name]))
+                                                        .map((name) => (
+                                                            <CommandItem
+                                                                key={name}
+                                                                value={name}
+                                                                onSelect={() => {
+                                                                    handleAddLanguage(SUPPORTED_LANGUAGES[name]);
+                                                                    setOpen(false);
+                                                                }}
+                                                                className="text-[11px] cursor-pointer"
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-3 w-3",
+                                                                        enabledLanguages.includes(SUPPORTED_LANGUAGES[name]) ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {name}
+                                                            </CommandItem>
+                                                        ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
 
-                    <div className="p-4 space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar">
-                        <div className="flex items-center justify-between bg-muted/20 p-2 rounded-xl border border-[var(--border-dim)]">
-                            <div className="flex flex-col gap-0.5">
-                                <label className="text-[9px] font-bold text-foreground/70 uppercase tracking-tight">Localization</label>
-                                <p className="text-[8px] text-muted-foreground leading-none">Enable multi-language</p>
-                            </div>
-                            <Switch
-                                checked={isEnabled}
-                                size="sm"
-                                onCheckedChange={handleToggleLocalization}
-                                disabled={data.isTranslationMode}
-                            />
-                        </div>
-
-                        {isEnabled && (
-                            <div className="space-y-3 pt-1">
-                                <div className="space-y-2">
-                                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Enabled Languages</label>
-
-                                    <Popover open={open} onOpenChange={setOpen}>
-                                        <PopoverTrigger asChild>
-                                            <Button
-                                                variant="outline"
-                                                role="combobox"
-                                                aria-expanded={open}
-                                                disabled={data.isTranslationMode}
-                                                className={cn(
-                                                    "w-full justify-between h-8 bg-primary/10 border-primary/30 hover:bg-primary/20 text-foreground font-medium text-[11px]",
-                                                    data.isTranslationMode && "opacity-50 grayscale-[0.5] cursor-not-allowed"
-                                                )}
-                                                title={data.isTranslationMode ? "Structural changes must be made in Default (English) view" : undefined}
-                                            >
-                                                <span className="opacity-70">Add language...</span>
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-[240px] p-0" align="start" side="bottom">
-                                            <Command>
-                                                <CommandInput placeholder="Search language..." className="h-8 text-[11px]" />
-                                                <CommandList>
-                                                    <CommandEmpty>No language found.</CommandEmpty>
-                                                    <CommandGroup>
-                                                        {COMMON_LANGUAGES
-                                                            .filter((name) => !enabledLanguages.includes(SUPPORTED_LANGUAGES[name]))
-                                                            .map((name) => (
-                                                                <CommandItem
-                                                                    key={name}
-                                                                    value={name}
-                                                                    onSelect={() => {
-                                                                        handleAddLanguage(SUPPORTED_LANGUAGES[name]);
-                                                                        setOpen(false);
-                                                                    }}
-                                                                    className="text-[11px] cursor-pointer"
-                                                                >
-                                                                    <Check
-                                                                        className={cn(
-                                                                            "mr-2 h-3 w-3",
-                                                                            enabledLanguages.includes(SUPPORTED_LANGUAGES[name]) ? "opacity-100" : "opacity-0"
-                                                                        )}
-                                                                    />
-                                                                    {name}
-                                                                </CommandItem>
-                                                            ))}
-                                                    </CommandGroup>
-                                                </CommandList>
-                                            </Command>
-                                        </PopoverContent>
-                                    </Popover>
-
-                                    <div className="flex flex-wrap gap-1.5 max-w-[280px] pt-1">
-                                        {enabledLanguages.map((code) => (
-                                            <Badge
-                                                key={code}
-                                                variant="secondary"
-                                                className={cn(
-                                                    "h-5 px-2 py-0 text-[10px] font-bold bg-primary text-primary-foreground border-primary/20 flex items-center gap-1.5 shadow-sm transition-all cursor-default",
-                                                    !data.isTranslationMode && "hover:bg-primary/90"
-                                                )}
-                                            >
-                                                {getLanguageName(code)}
-                                                {!data.isTranslationMode && (
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleRemoveLanguage(code);
-                                                        }}
-                                                        className="hover:bg-black/10 rounded-full p-0.5 transition-colors"
-                                                    >
-                                                        <X size={10} strokeWidth={3} />
-                                                    </button>
-                                                )}
-                                            </Badge>
-                                        ))}
-                                        {enabledLanguages.length === 0 && (
-                                            <span className="text-[10px] text-muted-foreground italic px-1">No languages added yet.</span>
-                                        )}
-                                    </div>
+                                <div className="flex flex-wrap gap-1.5 max-w-[280px] pt-1">
+                                    {enabledLanguages.map((code) => (
+                                        <Badge
+                                            key={code}
+                                            variant="secondary"
+                                            className={cn(
+                                                "h-5 px-2 py-0 text-[10px] font-bold bg-primary text-primary-foreground border-primary/20 flex items-center gap-1.5 shadow-sm transition-all cursor-default",
+                                                !data.isTranslationMode && "hover:bg-primary/90"
+                                            )}
+                                        >
+                                            {getLanguageName(code)}
+                                            {!data.isTranslationMode && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleRemoveLanguage(code);
+                                                    }}
+                                                    className="hover:bg-black/10 rounded-full p-0.5 transition-colors"
+                                                >
+                                                    <X size={10} strokeWidth={3} />
+                                                </button>
+                                            )}
+                                        </Badge>
+                                    ))}
+                                    {enabledLanguages.length === 0 && (
+                                        <span className="text-[10px] text-muted-foreground italic px-1">No languages added yet.</span>
+                                    )}
                                 </div>
                             </div>
                         </div>
