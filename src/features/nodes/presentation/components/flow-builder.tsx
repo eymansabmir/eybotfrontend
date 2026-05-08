@@ -12,7 +12,10 @@ import {
     BackgroundVariant,
     MarkerType,
     ConnectionLineType,
+    ControlButton,
 } from "@xyflow/react";
+import { Braces } from "lucide-react";
+import { VariablesDrawer } from "@/features/variables/components/variables-drawer";
 import type {
     Connection,
     Edge,
@@ -58,8 +61,43 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
     const [edges, setEdges] = React.useState<Edge[]>(initialEdges && initialEdges.length > 0 ? initialEdges : DEFAULT_EDGES);
     const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
     const hasMountedRef = useRef(false);
+    const [variablesDrawerOpen, setVariablesDrawerOpen] = React.useState(false);
 
     const { undo, redo, takeSnapshot } = useFlowHistory(nodes, edges, setNodes, setEdges);
+    
+    const handleVariableDelete = useCallback((variableName: string) => {
+        takeSnapshot();
+        
+        const escaped = variableName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const templateRegex = new RegExp(`\\{\\{\\s*(?:(?:session|contact)\\.)?${escaped}\\s*\\}\\}`, 'g');
+
+        const cleanObj = (obj: any): any => {
+            if (!obj) return obj;
+            if (typeof obj === 'string') {
+                return obj.replace(templateRegex, '');
+            }
+            if (Array.isArray(obj)) {
+                return obj.map(cleanObj);
+            }
+            if (typeof obj === 'object') {
+                const next = { ...obj };
+                Object.keys(next).forEach(key => {
+                    if ((key === 'variable' || key === 'variableName') && next[key] === variableName) {
+                        next[key] = "";
+                    } else {
+                        next[key] = cleanObj(next[key]);
+                    }
+                });
+                return next;
+            }
+            return obj;
+        };
+
+        setNodes((nds) => nds.map((node) => ({
+            ...node,
+            data: cleanObj(node.data)
+        })));
+    }, [setNodes, takeSnapshot]);
 
     const duplicateSelectedNodes = useCallback(() => {
         const selectedNodes = getNodes().filter((n) => n.selected);
@@ -301,13 +339,26 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
                 fitViewOptions={{ maxZoom: 0.8, padding: 0.5 }}
             >
                 <Background color="var(--canvas-dot)" gap={20} size={2} variant={BackgroundVariant.Dots} />
-                <Controls position="top-right" className="mr-4 mt-4" />
+                <Controls position="top-right" className="mr-4 mt-4">
+                    <ControlButton 
+                        onClick={() => setVariablesDrawerOpen(true)}
+                        title="Variable Manager"
+                    >
+                        <Braces className="size-4" />
+                    </ControlButton>
+                </Controls>
                 {!isTranslationMode && (
                     <Panel position="top-left" className="ml-4 mt-4">
                         <NodePalette />
                     </Panel>
                 )}
             </ReactFlow>
+
+            <VariablesDrawer 
+                open={variablesDrawerOpen} 
+                onOpenChange={setVariablesDrawerOpen} 
+                onDelete={handleVariableDelete}
+            />
         </div>
     );
 });

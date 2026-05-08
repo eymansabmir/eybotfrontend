@@ -27,7 +27,6 @@ import { googleSheetsNode } from "./google-sheets";
 import { nocodbNode } from "./nocodb";
 import { anthropicNode } from "./anthropic";
 import { deepseekNode } from "./deepseek";
-import { variableManagerNode } from "./variable-manager";
 import { MediaConditionalNode } from "./media-conditional";
 import type { NodeDefinition } from "./types";
 import { withUniversalDelete } from "./with-universal-delete";
@@ -62,7 +61,6 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [nocodbNode.config.type]: nocodbNode,
     [anthropicNode.config.type]: anthropicNode,
     [deepseekNode.config.type]: deepseekNode,
-    [variableManagerNode.config.type]: variableManagerNode,
     [MediaConditionalNode.config.type]: MediaConditionalNode,
 };
 

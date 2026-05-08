@@ -86,10 +86,10 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                             {isTranslationMode && <LockedBadge />}
                         </div>
                         <div className="relative">
-                            <VariableSelect 
-                                value={data.variable || ""} 
-                                onValueChange={(val: string) => updateData({ variable: val })} 
-                                placeholder="e.g. user_age" 
+                            <VariableSelect
+                                value={data.variable || ""}
+                                onValueChange={(val: string) => updateData({ variable: val })}
+                                placeholder="e.g. user_age"
                                 className={isTranslationMode ? "opacity-50 pointer-events-none" : ""}
                             />
                         </div>
