@@ -150,7 +150,7 @@ export function BotSettingsPage() {
     // Initialize local state from Bot on load
     useEffect(() => {
         if (bot) {
-            const hours = (bot.settings?.timeoutSeconds || 14400) / 3600;
+            const hours = (bot.settings?.timeoutSeconds || 86400) / 3600;
             setTimeoutSecondsSync(Math.max(1, hours));
             setTempName(bot.name || "");
 
@@ -315,9 +315,9 @@ export function BotSettingsPage() {
         try {
              await updateBotMutation.mutateAsync({
                 settings: {
-                     timeoutSeconds: 14400,
-                     maxSteps: 100,
                      ...bot?.settings,
+                     timeoutSeconds: bot?.settings?.timeoutSeconds ?? 86400,
+                     maxSteps: bot?.settings?.maxSteps ?? 100,
                      localization,
                 },
              });
