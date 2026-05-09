@@ -215,6 +215,35 @@ export function BotSettingsPage() {
         }
     };
 
+    const handleExport = () => {
+        if (!bot) return;
+        const exportData = {
+            name: bot.name,
+            description: bot.description,
+            triggerType: bot.triggerType,
+            // Strip trigger config to prevent duplicate trigger errors on import
+            triggerConfig: {
+                enabled: false,
+                logicalOperator: "OR",
+                comparisons: [],
+                keywords: [],
+            },
+            nodes: bot.nodes,
+            edges: bot.edges,
+            settings: { ...bot.settings },
+        };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${bot.name.toLowerCase().replace(/\s+/g, "-")}-config.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success("Bot configuration exported (Triggers cleared)");
+    };
+
     const handleSaveAndPublish = async () => {
         try {
             const credentialId = selectedCredentialIdRef.current;
@@ -330,6 +359,7 @@ export function BotSettingsPage() {
                 }}
                 onRename={handleInlineRename}
                 onSave={handleSaveAndPublish}
+                onExport={handleExport}
                 onPublish={async () => {
                     try {
                         await handleSaveAndPublish();
