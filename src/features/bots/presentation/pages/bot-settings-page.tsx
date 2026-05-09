@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Textarea } from "@/components/ui/textarea";
 import { WhatsAppCredentialsDialog } from "@/features/integrations/whatsapp/presentation/whatsapp-credentials-dialog";
 import { useWhatsAppCredentials, useDeleteWhatsAppCredential } from "@/features/integrations/whatsapp/hooks/use-whatsapp-credentials";
 import { LocalizationForm } from "@/features/settings/presentation/components/localization-form";
@@ -61,10 +62,30 @@ export function BotSettingsPage() {
     const [fallbackMessage, setFallbackMessage] = useState("");
     const [invalidInputMessage, setInvalidInputMessage] = useState("");
     const [finishedJourneyMessage, setFinishedJourneyMessage] = useState("");
+    const [renudgeConfig, setRenudgeConfig] = useState({
+        enabled: false,
+        durationMinutes: 30,
+        maxAttempts: 1,
+        message: "Are you still there? Would you like to continue?",
+        buttons: [
+            { id: "continue", title: "Continue" },
+            { id: "stop", title: "Stop" }
+        ]
+    });
 
     const fallbackMessageRef = useRef("");
     const invalidInputMessageRef = useRef("");
     const finishedJourneyMessageRef = useRef("");
+    const renudgeConfigRef = useRef({
+        enabled: false,
+        durationMinutes: 30,
+        maxAttempts: 1,
+        message: "Are you still there? Would you like to continue?",
+        buttons: [
+            { id: "continue", title: "Continue" },
+            { id: "stop", title: "Stop" }
+        ]
+    });
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [tempName, setTempName] = useState("");
@@ -121,6 +142,11 @@ export function BotSettingsPage() {
         setFinishedJourneyMessage(value);
     };
 
+    const setRenudgeConfigSync = (value: any) => {
+        renudgeConfigRef.current = value;
+        setRenudgeConfig(value);
+    };
+
     // Initialize local state from Bot on load
     useEffect(() => {
         if (bot) {
@@ -158,6 +184,10 @@ export function BotSettingsPage() {
             setFallbackMessageSync(bot.settings?.fallbackMessage || "");
             setInvalidInputMessageSync(bot.settings?.invalidInputMessage || "");
             setFinishedJourneyMessageSync(bot.settings?.finishedJourneyMessage || "");
+            
+            if (bot.renudgeConfig) {
+                setRenudgeConfigSync(bot.renudgeConfig);
+            }
         }
     }, [bot]);
 
@@ -233,6 +263,7 @@ export function BotSettingsPage() {
                     invalidInputMessage: invalidInputMessageRef.current,
                     finishedJourneyMessage: finishedJourneyMessageRef.current,
                 },
+                renudgeConfig: renudgeConfigRef.current,
                 triggerConfig: isStartConditionEnabled
                     ? {
                                                 enabled: true,
@@ -383,8 +414,111 @@ export function BotSettingsPage() {
                                   <h2 className="text-xl font-bold tracking-tight">General Settings</h2>
                                   <p className="text-sm text-muted-foreground mt-1">Manage your bot's basic info.</p>
                               </div>
-                              <div className="p-12 border-2 border-dashed rounded-3xl flex items-center justify-center text-muted-foreground text-sm bg-muted/5">
-                                   General settings fields coming soon...
+                              <div className="space-y-6">
+                                   <div className="flex items-center justify-between p-6 border rounded-[24px] bg-muted/5">
+                                        <div className="space-y-1">
+                                             <Label htmlFor="renudge-enabled" className="text-base font-bold cursor-pointer">Recovery Nudges (Renudge)</Label>
+                                             <p className="text-xs text-muted-foreground">Automatically nudge inactive users to continue their journey.</p>
+                                        </div>
+                                        <Switch 
+                                             id="renudge-enabled"
+                                             checked={renudgeConfig.enabled}
+                                             onCheckedChange={(val) => setRenudgeConfigSync({ ...renudgeConfig, enabled: val })}
+                                             className="data-[state=checked]:bg-[#FFE600] dark:data-[state=checked]:bg-[#FFE600]"
+                                        />
+                                   </div>
+
+                                   {renudgeConfig.enabled && (
+                                        <div className="space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                                             <div className="grid grid-cols-2 gap-6">
+                                                  <div className="space-y-3">
+                                                       <div className="flex items-center gap-1.5">
+                                                            <Label className="text-sm font-bold">Inactivity Duration</Label>
+                                                            <TooltipProvider>
+                                                                 <Tooltip>
+                                                                      <TooltipTrigger asChild>
+                                                                           <Info className="size-3.5 text-muted-foreground cursor-help" />
+                                                                      </TooltipTrigger>
+                                                                      <TooltipContent>How long to wait before sending the first nudge.</TooltipContent>
+                                                                 </Tooltip>
+                                                            </TooltipProvider>
+                                                       </div>
+                                                       <div className="flex items-center gap-3">
+                                                            <Input 
+                                                                 type="number" 
+                                                                 value={renudgeConfig.durationMinutes}
+                                                                 onChange={(e) => setRenudgeConfigSync({ ...renudgeConfig, durationMinutes: parseInt(e.target.value) || 30 })}
+                                                                 className="w-24 bg-background"
+                                                            />
+                                                            <span className="text-sm text-muted-foreground font-medium">minutes</span>
+                                                       </div>
+                                                  </div>
+
+                                                  <div className="space-y-3">
+                                                       <div className="flex items-center gap-1.5">
+                                                            <Label className="text-sm font-bold">Max Nudge Attempts</Label>
+                                                            <TooltipProvider>
+                                                                 <Tooltip>
+                                                                      <TooltipTrigger asChild>
+                                                                           <Info className="size-3.5 text-muted-foreground cursor-help" />
+                                                                      </TooltipTrigger>
+                                                                      <TooltipContent>Maximum number of nudges to send for a single inactive session.</TooltipContent>
+                                                                 </Tooltip>
+                                                            </TooltipProvider>
+                                                       </div>
+                                                       <div className="flex items-center gap-3">
+                                                            <Input 
+                                                                 type="number" 
+                                                                 value={renudgeConfig.maxAttempts}
+                                                                 onChange={(e) => setRenudgeConfigSync({ ...renudgeConfig, maxAttempts: parseInt(e.target.value) || 1 })}
+                                                                 className="w-24 bg-background"
+                                                            />
+                                                            <span className="text-sm text-muted-foreground font-medium">attempts</span>
+                                                       </div>
+                                                  </div>
+                                             </div>
+
+                                             <div className="space-y-3">
+                                                  <Label className="text-sm font-bold">Nudge Message</Label>
+                                                  <div className="p-1.5 bg-muted/20 rounded-2xl border focus-within:border-[#FFE600]/50 transition-all">
+                                                       <Textarea 
+                                                            className="w-full min-h-[100px] p-4 bg-transparent border-none focus:ring-0 text-sm resize-none custom-scrollbar"
+                                                            placeholder="Are you still there? Would you like to continue?"
+                                                            value={renudgeConfig.message}
+                                                            onChange={(e) => setRenudgeConfigSync({ ...renudgeConfig, message: e.target.value })}
+                                                       />
+                                                  </div>
+                                             </div>
+
+                                             <div className="space-y-4">
+                                                  <div className="flex items-center justify-between">
+                                                       <Label className="text-sm font-bold">Interaction Buttons</Label>
+                                                       <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Interactive Response</p>
+                                                  </div>
+                                                  <div className="grid grid-cols-2 gap-4">
+                                                       {renudgeConfig.buttons.map((btn, idx) => (
+                                                            <div key={idx} className="p-4 bg-muted/30 rounded-2xl border border-black/5 flex items-center gap-3 group transition-all hover:bg-muted/40">
+                                                                 <div className="size-8 rounded-lg bg-background flex items-center justify-center border text-[10px] font-bold text-muted-foreground group-hover:text-foreground transition-colors">
+                                                                      {idx + 1}
+                                                                 </div>
+                                                                 <Input 
+                                                                      value={btn.title}
+                                                                      onChange={(e) => {
+                                                                           const newButtons = [...renudgeConfig.buttons];
+                                                                           newButtons[idx] = { ...btn, title: e.target.value };
+                                                                           setRenudgeConfigSync({ ...renudgeConfig, buttons: newButtons });
+                                                                      }}
+                                                                      className="bg-transparent border-none focus-visible:ring-0 h-8 p-0 text-sm font-medium"
+                                                                 />
+                                                            </div>
+                                                       ))}
+                                                  </div>
+                                                  <p className="text-[11px] text-muted-foreground leading-relaxed italic">
+                                                       Note: Buttons will automatically trigger the same logic as if the user typed the text.
+                                                  </p>
+                                             </div>
+                                        </div>
+                                   )}
                               </div>
                          </div>
                     )}
