@@ -356,10 +356,10 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
                         </div>
                         <div className="flex gap-2">
                             <div className="flex-1">
-                                <VariableSelect 
-                                    value={data.interaction?.input?.variableName || ""} 
-                                    onValueChange={(val: string) => updateVariableSettings({ variableName: val })} 
-                                    placeholder="Select variable..." 
+                                <VariableSelect
+                                    value={data.interaction?.input?.variableName || ""}
+                                    onValueChange={(val: string) => updateVariableSettings({ variableName: val })}
+                                    placeholder="Select variable..."
                                 />
                             </div>
                             <select
