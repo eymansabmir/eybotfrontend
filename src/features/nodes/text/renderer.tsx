@@ -30,19 +30,6 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
         );
     };
 
-    const addVariable = (newVarName: string) => {
-        if (!newVarName.trim()) return;
-        const currentVars = data.variables || [];
-        if (!currentVars.includes(newVarName.trim())) {
-            updateData({ variables: [...currentVars, newVarName.trim()] });
-        }
-    };
-
-    const removeVariable = (varName: string) => {
-        updateData({
-            variables: (data.variables || []).filter((v) => v !== varName),
-        });
-    };
 
     return (
         <NodeFrame
@@ -101,36 +88,35 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
                         />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 pt-4 border-t border-border/50">
                         <div className="flex items-center gap-2">
-                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Variables</label>
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Save Message To Variable</label>
                             {isTranslationMode && <LockedBadge />}
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
-                            {(data.variables || []).map((v) => (
-                                <span key={v} className="flex items-center gap-1 px-2 py-1 rounded-md bg-[var(--ey-yellow)]/20 border border-[var(--ey-yellow)]/40 text-[10px] font-medium text-foreground group/var">
-                                    {v}
-                                    {!isTranslationMode && (
-                                        <button
-                                            onClick={() => removeVariable(v)}
-                                            className="hover:text-destructive opacity-70 hover:opacity-100 transition-all"
-                                        >
-                                            <X size={10} />
-                                        </button>
-                                    )}
-                                </span>
-                            ))}
-
-                            {!isTranslationMode && (
-                                <div className="w-full">
-                                    <VariableSelect
-                                        value=""
-                                        onValueChange={(val: string) => addVariable(val)}
-                                        placeholder="Add variable..."
-                                    />
-                                </div>
-                            )}
+                        <div className="flex items-center gap-2">
+                            <div className="flex-1 min-w-0">
+                                <VariableSelect
+                                    value={data.variableName || ""}
+                                    onValueChange={(val: string) => updateData({ variableName: val })}
+                                    placeholder="Select variable..."
+                                    className={isTranslationMode ? "opacity-50 pointer-events-none" : ""}
+                                />
+                            </div>
+                            <div className="w-24 shrink-0">
+                                <select
+                                    className="w-full bg-background rounded-lg border border-[var(--border-dim)] px-2 h-8 text-[10px] font-medium focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all cursor-pointer disabled:opacity-50 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:8px_auto] bg-[position:right_8px_center] bg-no-repeat pr-6"
+                                    value={data.variableScope || "session"}
+                                    onChange={(e) => updateData({ variableScope: e.target.value as any })}
+                                    disabled={isTranslationMode}
+                                >
+                                    <option value="session">Session</option>
+                                    <option value="contact">Contact</option>
+                                </select>
+                            </div>
                         </div>
+                        <p className="text-[9px] text-muted-foreground leading-relaxed italic">
+                            If selected, the sent message will be stored in this variable for use in later steps.
+                        </p>
                     </div>
                 </>
             }
