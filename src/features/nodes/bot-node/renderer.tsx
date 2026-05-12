@@ -43,8 +43,9 @@ export function BotNodeRenderer({
   return (
     <NodeFrame
       selected={selected}
+      id={id}
       icon={<BotLogo size={14} className="text-primary" />}
-      title="Bot Node"
+      title={data.label || "Bot Node"}
       popoverTitle="Select Target Bot"
       description={botNodeConfig.description}
       summary={selectedBot?.name || "No bot selected"}
@@ -106,7 +107,7 @@ export function BotNodeRenderer({
                         <SelectItem key={node.id} value={node.id}>
                           <div className="flex items-center gap-2">
                             {NodeIcon && <div className="text-muted-foreground/60">{NodeIcon}</div>}
-                            <span>{node.data?.label || node.data?.name || node.type}</span>
+                            <span>{node.data?.label || node.label || node.data?.name || node.type}</span>
                           </div>
                         </SelectItem>
                        );

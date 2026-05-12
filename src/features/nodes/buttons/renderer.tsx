@@ -124,8 +124,9 @@ export function ButtonsNodeRenderer({ id, data, selected }: NodeProps & { data: 
     return (
         <NodeFrame
             selected={selected}
+            id={id}
             icon={<ListChecks size={16} />}
-            title="Interactive Buttons"
+            title={data.label || "Interactive Buttons"}
             popoverTitle="Configure Buttons"
             description={buttonsNode.config.description}
             summary={data.body ? data.body : "Configure button message"}

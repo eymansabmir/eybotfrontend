@@ -370,7 +370,7 @@ export function BotEditorPage() {
         return {
             id: n.id,
             type: n.type,
-            label: n.type,
+            label: (n.data as any).label || n.type,
             position: n.position,
             data: backendData,
             branches: branches

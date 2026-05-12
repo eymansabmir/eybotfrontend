@@ -32,8 +32,9 @@ export function WaitNodeRenderer({
   return (
     <NodeFrame
       selected={selected}
+      id={id}
       icon={<Timer size={14} className="text-primary" />}
-      title="Wait"
+      title={data.label || "Wait"}
       popoverTitle="Configure Wait Duration"
       description="Pause the flow for a specific amount of time before continuing."
       summary={`Wait for ${data.duration} ${data.unit}`}
