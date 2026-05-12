@@ -39,6 +39,7 @@ export const NodeType = {
   VARIABLE_MANAGER: 'variable_manager',
   MEDIA_CONDITIONAL: 'media_conditional',
   BOT_NODE: 'bot_node',
+  WAIT: 'wait',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];

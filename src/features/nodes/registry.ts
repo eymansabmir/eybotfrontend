@@ -29,6 +29,7 @@ import { anthropicNode } from "./anthropic";
 import { deepseekNode } from "./deepseek";
 import { MediaConditionalNode } from "./media-conditional";
 import { botNode } from "./bot-node";
+import { waitNode } from "./wait-node";
 import type { NodeDefinition } from "./types";
 import { withUniversalDelete } from "./with-universal-delete";
 
@@ -64,6 +65,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [deepseekNode.config.type]: deepseekNode,
     [MediaConditionalNode.config.type]: MediaConditionalNode,
     [botNode.config.type]: botNode,
+    [waitNode.config.type]: waitNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(
