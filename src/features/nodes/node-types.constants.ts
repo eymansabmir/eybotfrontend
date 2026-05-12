@@ -38,6 +38,7 @@ export const NodeType = {
   DEEPSEEK: 'deepseek',
   VARIABLE_MANAGER: 'variable_manager',
   MEDIA_CONDITIONAL: 'media_conditional',
+  BOT_NODE: 'bot_node',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];

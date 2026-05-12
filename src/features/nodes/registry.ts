@@ -28,6 +28,7 @@ import { nocodbNode } from "./nocodb";
 import { anthropicNode } from "./anthropic";
 import { deepseekNode } from "./deepseek";
 import { MediaConditionalNode } from "./media-conditional";
+import { botNode } from "./bot-node";
 import type { NodeDefinition } from "./types";
 import { withUniversalDelete } from "./with-universal-delete";
 
@@ -62,6 +63,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [anthropicNode.config.type]: anthropicNode,
     [deepseekNode.config.type]: deepseekNode,
     [MediaConditionalNode.config.type]: MediaConditionalNode,
+    [botNode.config.type]: botNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(
