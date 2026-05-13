@@ -33,8 +33,9 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
     return (
         <NodeFrame
             selected={selected}
+            id={id}
             icon={<ImageIcon size={16} />}
-            title="Image"
+            title={data.label || "Image"}
             popoverTitle="Configure Image"
             description={imageNode.config.description}
             summary={getSummary()}

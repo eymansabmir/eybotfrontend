@@ -25,6 +25,7 @@ const NodeInteractionSchema = z.object({
 });
 
 export const ButtonsNodeSchema = z.object({
+  label: z.string().optional(),
   body: z.string().min(1, "Body text is required"),
   footer: z.string().optional(),
   buttons: z

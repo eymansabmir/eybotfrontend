@@ -47,8 +47,9 @@ export function TextNodeRenderer({ id, data, selected }: NodeProps & { data: Tex
     return (
         <NodeFrame
             selected={selected}
+            id={id}
             icon={<MessageSquare size={16} />}
-            title="Text Message"
+            title={data.label || "Text Message"}
             popoverTitle="Configure Text"
             description={textNode.config.description}
             summary={data.message ? data.message : "Click to configure message..."}

@@ -123,8 +123,9 @@ export function ListNodeRenderer({ id, data, selected }: NodeProps & { data: Lis
     return (
         <NodeFrame
             selected={selected}
+            id={id}
             icon={<ListIcon size={16} />}
-            title="List Message"
+            title={data.label || "List Message"}
             popoverTitle="Configure List"
             description={listNode.config.description}
             summary={data.body || "Click to configure list message..."}
