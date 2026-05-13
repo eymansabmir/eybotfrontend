@@ -361,6 +361,8 @@ export function BotEditorPage() {
             } else {
                 branches = [{ key: "default", label: "Default" }];
             }
+        } else if (n.type === NodeType.JUMP) {
+            branches = [{ key: "next", label: "Next" }];
         } else {
             if (!branches.length) {
                 branches = [{ key: "default", label: "Default" }];
