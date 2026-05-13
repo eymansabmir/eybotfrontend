@@ -40,6 +40,10 @@ export const NodeType = {
   MEDIA_CONDITIONAL: 'media_conditional',
   BOT_NODE: 'bot_node',
   WAIT: 'wait',
+  REDIRECT: 'redirect',
+  SCRIPT: 'script',
+  JUMP: 'jump',
+  RETURN: 'return',
 } as const;
 
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];
