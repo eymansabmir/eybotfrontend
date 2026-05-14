@@ -23,7 +23,13 @@ COPY package*.json ./
 RUN npm install
 
 # Copy source and build
-COPY . .
+COPY src ./src
+COPY public ./public
+COPY index.html ./
+COPY tsconfig*.json ./
+COPY components.json ./
+COPY vite.config.ts ./
+COPY postcss.config.js ./
 RUN npm run build
 
 # Production Stage
