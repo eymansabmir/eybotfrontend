@@ -43,6 +43,8 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
         setTitle("");
         setBotId("");
         setFilePath("");
+        setHeaders([]);
+        setFieldMapping({});
         setExecutionMode("NOW");
         setExecuteAt("");
     }, []);
@@ -81,7 +83,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="max-w-[95vw] sm:max-w-[700px] md:max-w-[800px] lg:max-w-[950px] p-0 gap-0 overflow-hidden h-[600px] md:h-[650px]">
+            <DialogContent className="max-w-[95vw] sm:max-w-[700px] md:max-w-[800px] lg:max-w-[950px] p-0 gap-0 overflow-hidden h-[650px] md:h-[700px]">
                 <div className="grid grid-cols-[auto_1fr] h-full">
                     {/* Left: Stepper Sidebar */}
                     <StepperSidebar steps={STEPS} currentStep={step} />
@@ -109,6 +111,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                                         <AudienceStep
                                             filePath={filePath}
                                             onFileUploaded={setFilePath}
+                                            botId={botId}
                                         />
                                     )}
                                     {step === 2 && (

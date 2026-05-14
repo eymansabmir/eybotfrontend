@@ -23,6 +23,7 @@ export interface CreateCampaignInput {
   name: string;
   flowId: string;
   filePath: string;
+  fieldMapping?: Record<string, string>;
   scheduleTime?: string;
 }
 
