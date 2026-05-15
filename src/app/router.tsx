@@ -24,6 +24,7 @@ import { DatasetFieldsPage } from "@/features/voice-tech/presentation/pages/data
 import { CreateVendorPage } from "@/features/voice-tech/presentation/pages/create-vendor-page"
 import { CreateAgentPage } from "@/features/voice-tech/presentation/pages/create-agent-page"
 import { CreateBotPage } from "../features/bots/presentation/pages/create-bot-page"
+import { ConnectorsPage } from "@/features/integrations/presentation/pages/connectors-page"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -177,6 +178,12 @@ const loginRoute = createRoute({
   component: EmailOtpLoginPage,
 })
 
+const connectorsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "connectors",
+  component: ConnectorsPage,
+})
+
 const routeTree = rootRoute.addChildren([
   dashboardRoute,
   botsRoute,
@@ -203,6 +210,7 @@ const routeTree = rootRoute.addChildren([
   voiceTechCreateVendorRoute,
   voiceTechCreateAgentRoute,
   createBotRoute,
+  connectorsRoute,
 ])
 
 const router = createRouter({
