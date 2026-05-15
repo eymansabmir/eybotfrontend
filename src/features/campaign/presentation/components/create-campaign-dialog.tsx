@@ -33,8 +33,12 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
     const [title, setTitle] = useState("");
     const [botId, setBotId] = useState("");
     const [filePath, setFilePath] = useState("");
+    const [sourceType, setSourceType] = useState<'CSV' | 'DB2DB'>('CSV');
+    const [selectedDataSourceId, setSelectedDataSourceId] = useState<string | undefined>();
+    const [selectedView, setSelectedView] = useState<string | undefined>();
     const [executionMode, setExecutionMode] = useState<ExecutionMode>("NOW");
     const [executeAt, setExecuteAt] = useState("");
+    const [isAudienceValid, setIsAudienceValid] = useState(false);
 
     const createMutation = useCreateCampaign();
 
@@ -43,8 +47,12 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
         setTitle("");
         setBotId("");
         setFilePath("");
+        setSourceType('CSV');
+        setSelectedDataSourceId(undefined);
+        setSelectedView(undefined);
         setExecutionMode("NOW");
         setExecuteAt("");
+        setIsAudienceValid(false);
     }, []);
 
     const handleClose = useCallback(() => {
@@ -56,7 +64,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
     // Per-step validation
     const canContinue = (() => {
         if (step === 0) return title.trim().length > 0 && botId.trim().length > 0;
-        if (step === 1) return filePath.length > 0;
+        if (step === 1) return isAudienceValid;
         if (step === 2) {
             if (executionMode === "SCHEDULED") return executeAt.length > 0;
             return true;
@@ -69,7 +77,9 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
             await createMutation.mutateAsync({
                 name: title.trim(),
                 flowId: botId.trim(),
-                filePath,
+                filePath: sourceType === 'CSV' ? filePath : undefined,
+                dataSourceId: sourceType === 'DB2DB' ? selectedDataSourceId : undefined,
+                tableName: sourceType === 'DB2DB' ? selectedView : undefined,
                 scheduleTime: executionMode === "SCHEDULED" ? new Date(executeAt).toISOString() : undefined,
             });
         } catch {
@@ -87,8 +97,8 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                     <StepperSidebar steps={STEPS} currentStep={step} />
 
                     {/* Right: Step Content */}
-                    <div className="flex flex-col h-full">
-                        <div className="flex-1 overflow-y-auto p-8">
+                    <div className="flex flex-col h-full overflow-hidden">
+                        <div className="flex-1 flex flex-col p-8 overflow-hidden">
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={step}
@@ -96,6 +106,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ duration: 0.2 }}
+                                    className="flex-1 flex flex-col overflow-hidden"
                                 >
                                     {step === 0 && (
                                         <CampaignDetailsStep
@@ -110,6 +121,13 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                                             filePath={filePath}
                                             onFileUploaded={setFilePath}
                                             botId={botId}
+                                            sourceType={sourceType}
+                                            onSourceTypeChange={setSourceType}
+                                            selectedDataSourceId={selectedDataSourceId}
+                                            onDataSourceChange={setSelectedDataSourceId}
+                                            selectedView={selectedView}
+                                            onViewChange={setSelectedView}
+                                            onValidityChange={setIsAudienceValid}
                                         />
                                     )}
                                     {step === 2 && (

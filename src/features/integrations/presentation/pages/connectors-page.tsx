@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Database, RefreshCw, Plus, Trash2, Play, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Database, RefreshCw, Plus, Trash2, Play, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateDataSourceDialog } from "../components/create-data-source-dialog";
 import { CreateSyncJobDialog } from "../components/create-sync-job-dialog";

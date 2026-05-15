@@ -50,3 +50,19 @@ export const useDeleteDataSource = () => {
     },
   });
 };
+
+export const useDiscover = (id?: string) => {
+  return useQuery({
+    queryKey: ["discover-tables", id],
+    queryFn: () => connectorsApi.discoverTables(id!),
+    enabled: !!id,
+  });
+};
+
+export const useDiscoverColumns = (id?: string, tableName?: string) => {
+  return useQuery({
+    queryKey: ["discover-columns", id, tableName],
+    queryFn: () => connectorsApi.discoverColumns(id!, tableName!),
+    enabled: !!id && !!tableName,
+  });
+};

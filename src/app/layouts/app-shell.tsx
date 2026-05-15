@@ -5,7 +5,6 @@ import {
   LayoutDashboardIcon,
   MegaphoneIcon,
   MoonIcon,
-  Database,
   PhoneCallIcon,
   Settings2Icon,
   SunIcon,
@@ -83,11 +82,6 @@ const mainNav = [
     to: "/users", 
     icon: UsersIcon,
     featureFlag: "USERS" as const
-  },
-  { 
-    label: "Connectors", 
-    to: "/connectors", 
-    icon: Database 
   },
 ]
 

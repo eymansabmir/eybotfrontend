@@ -10,6 +10,14 @@ export const connectorsApi = {
     const { data } = await apiClient.post("/v1/connectors/data-sources", payload);
     return data;
   },
+  discoverTables: async (id: string) => {
+    const { data } = await apiClient.get(`/v1/connectors/data-sources/${id}/discover`);
+    return data;
+  },
+  discoverColumns: async (id: string, tableName: string) => {
+    const { data } = await apiClient.get(`/v1/connectors/data-sources/${id}/discover/${tableName}/columns`);
+    return data;
+  },
   deleteDataSource: async (id: string) => {
     await apiClient.delete(`/v1/connectors/data-sources/${id}`);
   },
