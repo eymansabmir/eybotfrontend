@@ -43,8 +43,6 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
         setTitle("");
         setBotId("");
         setFilePath("");
-        setHeaders([]);
-        setFieldMapping({});
         setExecutionMode("NOW");
         setExecuteAt("");
     }, []);
