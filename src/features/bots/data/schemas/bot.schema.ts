@@ -46,6 +46,16 @@ export const BotSchema = z.object({
             isSessionVariable: z.boolean().default(true),
         })).optional(),
     }),
+    renudgeConfig: z.object({
+        enabled: z.boolean().default(false),
+        durationMinutes: z.number().default(30),
+        maxAttempts: z.number().default(1),
+        message: z.string().optional(),
+        buttons: z.array(z.object({
+            id: z.string(),
+            title: z.string(),
+        })).optional(),
+    }).optional(),
     createdAt: z.string(),
     updatedAt: z.string(),
     updatedBy: z.string().optional(), // Adding for UI metadata
