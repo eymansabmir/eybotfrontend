@@ -59,6 +59,10 @@ export const BotSchema = z.object({
     createdAt: z.string(),
     updatedAt: z.string(),
     updatedBy: z.string().optional(), // Adding for UI metadata
+    creator: z.object({
+        name: z.string(),
+        email: z.string(),
+    }).optional(),
     executions: z.number().default(0), // Adding for UI metadata
     successfulExecutions: z.number().default(0), // Adding for UI metadata
     isConfigured: z.boolean().default(false),
