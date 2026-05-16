@@ -145,6 +145,8 @@ export function BotEditorPage() {
                 // Check common variable fields directly
                 if (typeof obj.variable === 'string' && obj.variable) foundVariables.add(obj.variable);
                 if (typeof obj.variableName === 'string' && obj.variableName) foundVariables.add(obj.variableName);
+                if (typeof obj.parentKey === 'string' && obj.parentKey) foundVariables.add(obj.parentKey);
+                if (typeof obj.childKey === 'string' && obj.childKey) foundVariables.add(obj.childKey);
                 
                 Object.values(obj).forEach(extractFromObj);
             }
@@ -367,6 +369,8 @@ export function BotEditorPage() {
             } else {
                 branches = [{ key: "default", label: "Default" }];
             }
+        } else if (n.type === NodeType.JUMP) {
+            branches = [{ key: "next", label: "Next" }];
         } else {
             if (!branches.length) {
                 branches = [{ key: "default", label: "Default" }];
@@ -376,7 +380,7 @@ export function BotEditorPage() {
         return {
             id: n.id,
             type: n.type,
-            label: n.type,
+            label: (n.data as any).label || n.type,
             position: n.position,
             data: backendData,
             branches: branches

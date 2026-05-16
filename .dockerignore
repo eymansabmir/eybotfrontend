@@ -6,3 +6,9 @@ dist
 README.md
 Dockerfile
 .dockerignore
+*.log
+.vscode
+.idea
+.DS_Store
+memory-bank
+architecture.md

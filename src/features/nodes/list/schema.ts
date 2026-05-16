@@ -12,6 +12,7 @@ export const ListSectionSchema = z.object({
 });
 
 export const ListNodeSchema = z.object({
+    label: z.string().optional(),
     body: z.string().min(1, "Body text is required"),
     buttonTitle: z.string().min(1, "Button title is required"),
     sections: z.array(ListSectionSchema).min(1, "At least one section required"),
