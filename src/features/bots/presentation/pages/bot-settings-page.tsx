@@ -417,7 +417,7 @@ export function BotSettingsPage() {
                               <div className="space-y-6">
                                    <div className="flex items-center justify-between p-6 border rounded-[24px] bg-muted/5">
                                         <div className="space-y-1">
-                                             <Label htmlFor="renudge-enabled" className="text-base font-bold cursor-pointer">Recovery Nudges (Renudge)</Label>
+                                             <Label htmlFor="renudge-enabled" className="text-base font-bold cursor-pointer">Recovery Nudges (Renudge Integration)</Label>
                                              <p className="text-xs text-muted-foreground">Automatically nudge inactive users to continue their journey.</p>
                                         </div>
                                         <Switch 
