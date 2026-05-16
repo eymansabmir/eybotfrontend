@@ -12,7 +12,7 @@ import { authClient } from "@/lib/auth-client"
 import { EYLogo } from "@/components/branding/ey-logo"
 
 type Stage = "request" | "verify"
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_REGEX = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\.[A-Za-z]{2,24}$/
 
 export function EmailOtpLoginPage() {
   const navigate = useNavigate()

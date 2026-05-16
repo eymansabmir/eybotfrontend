@@ -22,7 +22,10 @@ export interface CreateCampaignResponse {
 export interface CreateCampaignInput {
   name: string;
   flowId: string;
-  filePath: string;
+  filePath?: string;
+  dataSourceId?: string;
+  tableName?: string;
+  fieldMapping?: Record<string, string>;
   scheduleTime?: string;
 }
 

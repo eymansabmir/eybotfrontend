@@ -25,6 +25,7 @@ import { CreateVendorPage } from "@/features/voice-tech/presentation/pages/creat
 import { CreateAgentPage } from "@/features/voice-tech/presentation/pages/create-agent-page"
 import { CreateBotPage } from "../features/bots/presentation/pages/create-bot-page"
 import { ActivityLogPage } from "@/features/activity-log/presentation/pages/activity-log-page"
+import { ConnectorsPage } from "@/features/integrations/presentation/pages/connectors-page"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -148,6 +149,12 @@ const settingsCredentialsCreateRoute = createRoute({
   component: SettingsPage,
 })
 
+const settingsApiKeysRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "settings/api-keys",
+  component: SettingsPage,
+})
+
 const botEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "bot/$id",
@@ -182,6 +189,10 @@ const activityLogsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "activity-logs",
   component: ActivityLogPage,
+const connectorsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "connectors",
+  component: ConnectorsPage,
 })
 
 const routeTree = rootRoute.addChildren([
@@ -199,6 +210,7 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
   settingsCredentialsRoute,
   settingsCredentialsCreateRoute,
+  settingsApiKeysRoute,
   botEditorRoute,
   botSettingsRoute,
   botTestRoute,
@@ -211,6 +223,7 @@ const routeTree = rootRoute.addChildren([
   voiceTechCreateAgentRoute,
   createBotRoute,
   activityLogsRoute,
+  connectorsRoute,
 ])
 
 const router = createRouter({
