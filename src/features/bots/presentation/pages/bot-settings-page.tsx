@@ -1,5 +1,5 @@
 import { useParams } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useBot, useUpdateBot, usePublishBot, useArchiveBot } from "../../data/queries/use-bots";
 import { toast } from "sonner";
 import { Loader2, Settings, Languages, MessageSquare, Bot, Trash2, Info, Plus, ExternalLink, Trash } from "lucide-react";
@@ -39,7 +39,8 @@ export function BotSettingsPage() {
     const [activeTab, setActiveTab] = useState("whatsapp");
 
     // Data Hooks
-    const { data: credentials = [] } = useWhatsAppCredentials(bot?.orgId || "");
+    const { data: rawCredentials } = useWhatsAppCredentials(bot?.orgId || "");
+    const credentials = useMemo(() => rawCredentials || [], [rawCredentials]);
 
     // Setup Modals & States
     const [isCredentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
@@ -103,41 +104,49 @@ export function BotSettingsPage() {
     };
 
     const setSelectedCredentialIdSync = (value: string) => {
+        if (selectedCredentialIdRef.current === value) return;
         selectedCredentialIdRef.current = value;
         setSelectedCredentialId(value);
     };
 
     const setTimeoutSecondsSync = (value: number) => {
+        if (timeoutSecondsRef.current === value) return;
         timeoutSecondsRef.current = value;
         setTimeoutSeconds(value);
     };
 
     const setStartConditionEnabledSync = (value: boolean) => {
+        if (startConditionEnabledRef.current === value) return;
         startConditionEnabledRef.current = value;
         setStartConditionEnabled(value);
     };
 
     const setComparisonsSync = (value: Array<{ operator: string; value: string }>) => {
+        if (JSON.stringify(comparisonsRef.current) === JSON.stringify(value)) return;
         comparisonsRef.current = value;
         setComparisons(value);
     };
 
     const setLogicalOperatorSync = (value: string) => {
+        if (logicalOperatorRef.current === value) return;
         logicalOperatorRef.current = value;
         setLogicalOperator(value);
     };
 
     const setFallbackMessageSync = (value: string) => {
+        if (fallbackMessageRef.current === value) return;
         fallbackMessageRef.current = value;
         setFallbackMessage(value);
     };
 
     const setInvalidInputMessageSync = (value: string) => {
+        if (invalidInputMessageRef.current === value) return;
         invalidInputMessageRef.current = value;
         setInvalidInputMessage(value);
     };
 
     const setFinishedJourneyMessageSync = (value: string) => {
+        if (finishedJourneyMessageRef.current === value) return;
         finishedJourneyMessageRef.current = value;
         setFinishedJourneyMessage(value);
     };
@@ -148,6 +157,7 @@ export function BotSettingsPage() {
     };
 
     // Initialize local state from Bot on load
+    const hasInitializedRef = useRef(false);
     useEffect(() => {
         if (bot) {
             const hours = (bot.settings?.timeoutSeconds || 86400) / 3600;
@@ -156,7 +166,6 @@ export function BotSettingsPage() {
 
             const triggerDisabled = bot.triggerConfig?.enabled === false;
 
-            // Always rehydrate toggle and conditions from persisted triggerConfig.
             if (triggerDisabled) {
                 setStartConditionEnabledSync(false);
                 setComparisonsSync([{ operator: "CONTAINS", value: "" }]);
@@ -190,34 +199,41 @@ export function BotSettingsPage() {
             }
         }
     }, [bot]);
+    
+    // Reset initialization when bot ID changes
+    useEffect(() => {
+        hasInitializedRef.current = false;
+    }, [id]);
 
     // Reconcile selected account with available credentials so previous configuration
     // is auto-selected after refresh/navigation without requiring manual re-selection.
+    const lastCredentialSyncRef = useRef<string>("");
     useEffect(() => {
-        if (!bot) return;
-        if (credentials.length === 0) return;
+        if (!bot || credentials.length === 0) return;
 
         const configuredCredentialId = bot.settings?.credentialId;
         const cachedCredentialId = getCachedCredentialId(bot.id);
+        const syncKey = `${bot.id}-${configuredCredentialId}-${selectedCredentialId}-${credentials.length}`;
+        
+        if (syncKey === lastCredentialSyncRef.current) return;
+        lastCredentialSyncRef.current = syncKey;
 
         const hasCredential = (id: string | undefined) =>
-            Boolean(id) && credentials.some((c) => c.id === id);
+            Boolean(id) && credentials.some((c: any) => c.id === id);
 
-        if (hasCredential(configuredCredentialId) && selectedCredentialId !== configuredCredentialId) {
-            setSelectedCredentialIdSync(configuredCredentialId!);
-            return;
-        }
-
+        // If current selection is valid and matches our intent, stop here
         if (selectedCredentialId && hasCredential(selectedCredentialId)) {
+            if (configuredCredentialId && hasCredential(configuredCredentialId) && selectedCredentialId !== configuredCredentialId) {
+                setSelectedCredentialIdSync(configuredCredentialId);
+            }
             return;
         }
 
-        if (hasCredential(cachedCredentialId || undefined)) {
+        if (hasCredential(configuredCredentialId)) {
+            setSelectedCredentialIdSync(configuredCredentialId!);
+        } else if (hasCredential(cachedCredentialId || undefined)) {
             setSelectedCredentialIdSync(cachedCredentialId!);
-            return;
-        }
-
-        if (credentials.length === 1) {
+        } else if (credentials.length === 1) {
             setSelectedCredentialIdSync(credentials[0]!.id);
         }
     }, [bot, credentials, selectedCredentialId]);
@@ -635,7 +651,7 @@ export function BotSettingsPage() {
                                                     <SelectValue placeholder="Choose account" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {credentials.map(c => (
+                                                    {credentials.map((c: any) => (
                                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                                     ))}
                                                     <div className="h-px bg-border my-1" />
@@ -859,7 +875,7 @@ export function BotSettingsPage() {
                                                 href="#" 
                                                 onClick={(e) => {
                                                     e.preventDefault();
-                                                    const credential = credentials.find(c => c.id === selectedCredentialId);
+                                                    const credential = credentials.find((c: any) => c.id === selectedCredentialId);
                                                     if(credential) {
                                                         const displayNumber = credential.metadata?.displayPhoneNumber;
                                                         let message = "hi";

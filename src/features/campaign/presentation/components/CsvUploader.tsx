@@ -3,6 +3,8 @@ import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X } from "
 import { useFileUpload, useUploadPolicy } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import Papa from "papaparse";
+import * as XLSX from "xlsx";
 
 const ALLOWED_EXTENSIONS = [".csv", ".xls", ".xlsx"];
 const ALLOWED_MIME_TYPES = new Set([
@@ -16,11 +18,11 @@ function isValidCampaignFile(file: File): boolean {
     return ALLOWED_EXTENSIONS.includes(ext) || ALLOWED_MIME_TYPES.has(file.type);
 }
 
-
-
 interface CsvUploaderProps {
     /** Called with the uploaded file URL on success */
     onUploadSuccess: (url: string) => void;
+    /** Called with extracted headers on success */
+    onHeadersExtracted?: (headers: string[]) => void;
     /** Optional label */
     label?: string;
 }
@@ -31,6 +33,7 @@ interface CsvUploaderProps {
  */
 export function CsvUploader({
     onUploadSuccess,
+    onHeadersExtracted,
     label = "Upload CSV or Excel file",
 }: CsvUploaderProps) {
     const inputRef = useRef<HTMLInputElement>(null);
@@ -44,6 +47,43 @@ export function CsvUploader({
         onSuccess: (url) => onUploadSuccess(url),
     });
 
+    const extractHeaders = useCallback((file: File) => {
+        const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+        
+        if (ext === ".csv") {
+            Papa.parse(file, {
+                preview: 1,
+                complete: (results) => {
+                    const rawHeaders = results.data[0] 
+                        ? (results.data[0] as any[]).map(h => String(h || "").trim()).filter(Boolean)
+                        : [];
+                    const headers = Array.from(new Set(rawHeaders)) as string[];
+                    if (headers.length > 0) onHeadersExtracted?.(headers);
+                },
+            });
+        } else if (ext === ".xlsx" || ext === ".xls") {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                    const workbook = XLSX.read(data, { type: "array" });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
+                    
+                    const rawHeaders = rows[0] || [];
+                    const headers = rawHeaders.map(h => String(h || "").trim()).filter(Boolean);
+                    const uniqueHeaders = Array.from(new Set(headers));
+                    
+                    if (uniqueHeaders.length > 0) onHeadersExtracted?.(uniqueHeaders);
+                } catch (err) {
+                    console.error("Excel parse error:", err);
+                    toast.error("Failed to parse Excel file");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    }, [onHeadersExtracted]);
+
     const handleFile = useCallback(
         (file: File | undefined) => {
             if (!file) return;
@@ -54,9 +94,10 @@ export function CsvUploader({
             }
 
             setFileName(file.name);
+            extractHeaders(file);
             upload(file);
         },
-        [upload],
+        [upload, extractHeaders],
     );
 
     const onDrop = useCallback(

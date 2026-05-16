@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Globe } from "lucide-react";
+import { Globe, Database } from "lucide-react";
 
 export const OpenAILogo = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -108,6 +108,9 @@ export function ProviderLogo({ type, className }: { type: string, className?: st
       return <ElevenLabsLogo {...props} />;
     case "NOCODB":
       return <NocoDBLogo {...props} />;
+    case "DB2DB":
+    case "DATABASE":
+      return <Database {...props} className={cn(props.className, "text-primary")} />;
     case "WHATSAPP":
     case "WHATSAPP_CLOUD":
       return <WhatsAppLogo {...props} className={cn(props.className, "text-[#25D366]")} />;

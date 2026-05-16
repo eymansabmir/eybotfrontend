@@ -78,9 +78,13 @@ export function BotEditorPage() {
             const unionLangs = Array.from(
                 new Set(langNodes.flatMap(n => (n.data as any).languages || []))
             ).filter(Boolean) as string[];
-            setLiveLanguages(unionLangs);
+            
+            setLiveLanguages(prev => {
+                if (JSON.stringify(prev) === JSON.stringify(unionLangs)) return prev;
+                return unionLangs;
+            });
         } else {
-            setLiveLanguages([]);
+            setLiveLanguages(prev => prev.length === 0 ? prev : []);
         }
     }, []);
 
@@ -162,13 +166,15 @@ export function BotEditorPage() {
             }
         });
 
-        // 2. Prune variables that are no longer used in any node
-        // IMPORTANT: We only prune if the store actually has variables that aren't in nodes.
+        // Pruning variables automatically is dangerous as it can cause infinite loops
+        // and data loss if a user is mid-edit. We only add new ones.
+        /*
         const unusedVariables = currentVariables.filter(v => !foundVariables.has(v.name));
         if (unusedVariables.length > 0) {
             const remainingVariables = currentVariables.filter(v => foundVariables.has(v.name));
             setVariables(remainingVariables);
         }
+        */
     }, [addVariable, setVariables]);
 
     const handleFlowChange = useCallback((payload: { nodes: Node[]; edges: Edge[] }) => {
@@ -645,23 +651,28 @@ export function BotEditorPage() {
         }) || [];
     }, [bot?.nodes, bot?.settings?.localization, translationData, isTranslationMode]);
 
+    const lastSyncedNodesRef = useRef<string>("");
     useEffect(() => {
-        const langNodes = initialNodes.filter(n => n.type === NodeType.LANGUAGE);
-        if (langNodes.length > 0) {
-            const unionLangs = Array.from(
-                new Set(langNodes.flatMap(n => (n.data as any).languages || []))
-            ).filter(Boolean) as string[];
-            setLiveLanguages(unionLangs);
-        } else {
-            setLiveLanguages([]);
-        }
-    }, [initialNodes]);
+        if (initialNodes.length === 0) return;
+        
+        const nodesHash = JSON.stringify(initialNodes.map(n => ({ id: n.id, type: n.type, data: n.data })));
+        if (nodesHash === lastSyncedNodesRef.current) return;
+        
+        lastSyncedNodesRef.current = nodesHash;
+        syncVariablesFromNodes(initialNodes);
+    }, [initialNodes, syncVariablesFromNodes]);
 
     useEffect(() => {
-        if (initialNodes.length > 0) {
-            syncVariablesFromNodes(initialNodes);
-        }
-    }, [initialNodes, syncVariablesFromNodes]);
+        const langNodes = initialNodes.filter(n => n.type === NodeType.LANGUAGE);
+        const unionLangs = Array.from(
+            new Set(langNodes.flatMap(n => (n.data as any).languages || []))
+        ).filter(Boolean) as string[];
+        
+        setLiveLanguages(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(unionLangs)) return prev;
+            return unionLangs;
+        });
+    }, [initialNodes]);
 
     useEffect(() => {
         if (!isDirty) return;
