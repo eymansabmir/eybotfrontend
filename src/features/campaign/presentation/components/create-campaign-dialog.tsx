@@ -33,7 +33,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
     const [title, setTitle] = useState("");
     const [botId, setBotId] = useState("");
     const [filePath, setFilePath] = useState("");
-    const [sourceType, setSourceType] = useState<'CSV' | 'DB2DB'>('CSV');
+    const [sourceType, setSourceType] = useState<'CSV' | 'DB2DB' | 'API'>('CSV');
     const [selectedDataSourceId, setSelectedDataSourceId] = useState<string | undefined>();
     const [selectedView, setSelectedView] = useState<string | undefined>();
     const [executionMode, setExecutionMode] = useState<ExecutionMode>("NOW");
@@ -64,7 +64,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
     // Per-step validation
     const canContinue = (() => {
         if (step === 0) return title.trim().length > 0 && botId.trim().length > 0;
-        if (step === 1) return isAudienceValid;
+        if (step === 1) return isAudienceValid || sourceType === 'API';
         if (step === 2) {
             if (executionMode === "SCHEDULED") return executeAt.length > 0;
             return true;
@@ -80,6 +80,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                 filePath: sourceType === 'CSV' ? filePath : undefined,
                 dataSourceId: sourceType === 'DB2DB' ? selectedDataSourceId : undefined,
                 tableName: sourceType === 'DB2DB' ? selectedView : undefined,
+                // If API, we don't send file or DB info, backend will create a 'WAITING_FOR_API' style campaign
                 scheduleTime: executionMode === "SCHEDULED" ? new Date(executeAt).toISOString() : undefined,
             });
         } catch {
@@ -91,14 +92,14 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="max-w-[95vw] sm:max-w-[700px] md:max-w-[800px] lg:max-w-[950px] p-0 gap-0 overflow-hidden h-[650px] md:h-[700px]">
-                <div className="grid grid-cols-[auto_1fr] h-full">
+            <DialogContent className="sm:max-w-[90vw] p-0 overflow-hidden border-none shadow-2xl rounded-3xl h-[750px] max-h-[90vh]">
+                <div className="flex h-full w-full bg-background overflow-hidden">
                     {/* Left: Stepper Sidebar */}
                     <StepperSidebar steps={STEPS} currentStep={step} />
 
-                    {/* Right: Step Content */}
-                    <div className="flex flex-col h-full overflow-hidden">
-                        <div className="flex-1 flex flex-col p-8 overflow-hidden">
+                    <div className="flex flex-col h-full overflow-hidden flex-1">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            <div className="p-8 pb-20">
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={step}
@@ -143,6 +144,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                                     )}
                                 </motion.div>
                             </AnimatePresence>
+                            </div>
                         </div>
 
                         {/* Footer */}
