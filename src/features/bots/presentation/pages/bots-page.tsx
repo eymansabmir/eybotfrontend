@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Plus, ArrowRight, Bot, Clock, User2, MessageSquare, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, ArrowRight, Bot, Clock, User2, Loader2, MoreVertical, Pencil, Trash2, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -283,11 +283,11 @@ export function BotsPage() {
                 <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   <Bot className="size-5" />
                 </div>
-                <CardTitle className="text-lg group-hover:text-primary transition-colors truncate pr-24">{bot.name}</CardTitle>
+                <CardTitle className="text-lg group-hover:text-primary transition-colors pr-8">
+                  {bot.name}
+                </CardTitle>
                 <CardDescription className="flex items-center gap-1.5 pt-1">
-                  <Badge variant="outline" className="text-[10px] uppercase tracking-wider h-5 font-bold">
-                    {bot.triggerType}
-                  </Badge>
+                  {/* Removed INBOUND badge as per request */}
                 </CardDescription>
               </CardHeader>
 
@@ -299,10 +299,10 @@ export function BotsPage() {
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <User2 className="size-3.5" />
-                    <span>By {bot.updatedBy || "System"}</span>
+                    <span>By {bot.creator?.name || bot.creator?.email?.split('@')[0] || "System"}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <MessageSquare className="size-3.5" />
+                    <Megaphone className="size-3.5" />
                     <span>{bot.executions?.toLocaleString() || 0} executions</span>
                   </div>
                 </div>

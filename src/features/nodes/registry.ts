@@ -28,6 +28,12 @@ import { nocodbNode } from "./nocodb";
 import { anthropicNode } from "./anthropic";
 import { deepseekNode } from "./deepseek";
 import { MediaConditionalNode } from "./media-conditional";
+import { botNode } from "./bot-node";
+import { waitNode } from "./wait-node";
+import { redirectNode } from "./redirect";
+import { scriptNode } from "./script";
+import { jumpNode } from "./jump";
+import { returnNode } from "./return";
 import type { NodeDefinition } from "./types";
 import { withUniversalDelete } from "./with-universal-delete";
 
@@ -62,6 +68,12 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [anthropicNode.config.type]: anthropicNode,
     [deepseekNode.config.type]: deepseekNode,
     [MediaConditionalNode.config.type]: MediaConditionalNode,
+    [botNode.config.type]: botNode,
+    [waitNode.config.type]: waitNode,
+    [redirectNode.config.type]: redirectNode,
+    [scriptNode.config.type]: scriptNode,
+    [jumpNode.config.type]: jumpNode,
+    [returnNode.config.type]: returnNode,
 };
 
 export const nodeTypes = Object.entries(nodeRegistry).reduce(

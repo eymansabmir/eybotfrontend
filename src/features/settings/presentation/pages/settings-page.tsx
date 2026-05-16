@@ -3,6 +3,7 @@ import { SettingsLayout } from "../components/settings-layout";
 import { ProfileSettings } from "../components/profile-settings";
 import { CredentialsSettings } from "../components/credentials-settings";
 import { AddCredentialSection } from "../components/add-credential-section";
+import { ApiKeySection } from "../components/api-key-section";
 
 export function SettingsPage() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -13,6 +14,8 @@ export function SettingsPage() {
         return <AddCredentialSection />;
       case "/settings/credentials":
         return <CredentialsSettings />;
+      case "/settings/api-keys":
+        return <ApiKeySection />;
       case "/settings":
       default:
         return <ProfileSettings />;

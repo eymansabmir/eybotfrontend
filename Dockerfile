@@ -23,11 +23,17 @@ COPY package*.json ./
 RUN npm install
 
 # Copy source and build
-COPY . .
+COPY src ./src
+COPY public ./public
+COPY index.html ./
+COPY tsconfig*.json ./
+COPY components.json ./
+COPY vite.config.ts ./
+COPY postcss.config.js ./
 RUN npm run build
 
 # Production Stage
-FROM nginx:alpine AS runner
+FROM nginxinc/nginx-unprivileged:alpine AS runner
 
 # Copy static files
 COPY --from=builder /app/dist /usr/share/nginx/html
@@ -35,6 +41,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy nginx config for SPA routing
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]

@@ -1,5 +1,5 @@
 import React, { type ReactNode } from "react";
-import { Handle, Position } from "@xyflow/react";
+import { Handle, Position, useReactFlow } from "@xyflow/react";
 import { Info } from "lucide-react";
 
 import {
@@ -34,7 +34,10 @@ interface NodeFrameProps {
     extraContent?: ReactNode;
     description?: string;
     error?: string | boolean;
+    id?: string; // If provided, NodeFrame handles renaming automatically
 }
+
+import { useNodeContext } from "../../with-universal-delete";
 
 export function NodeFrame({
     selected,
@@ -59,7 +62,56 @@ export function NodeFrame({
     extraContent,
     description,
     error,
+    id: propId,
 }: NodeFrameProps) {
+    const nodeCtx = useNodeContext();
+    const id = propId || nodeCtx?.id;
+    
+    // Prioritize the custom label from data over the hardcoded prop
+    const displayTitle = nodeCtx?.data?.label || title;
+
+    const { setNodes } = useReactFlow();
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [tempTitle, setTempTitle] = React.useState(displayTitle);
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    React.useEffect(() => {
+        setTempTitle(displayTitle);
+    }, [displayTitle]);
+
+    const handleStartEdit = () => {
+        setIsEditing(true);
+        setTimeout(() => {
+            if (inputRef.current) {
+                inputRef.current.focus();
+                inputRef.current.select();
+            }
+        }, 0);
+    };
+
+    const handleSave = () => {
+        if (tempTitle.trim() && tempTitle !== title && id) {
+            setNodes((nds: any[]) =>
+                nds.map((node: any) =>
+                    node.id === id
+                        ? { ...node, data: { ...node.data, label: tempTitle.trim() } }
+                        : node
+                )
+            );
+        } else {
+            setTempTitle(title);
+        }
+        setIsEditing(false);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") handleSave();
+        if (e.key === "Escape") {
+            setTempTitle(title);
+            setIsEditing(false);
+        }
+    };
+
     return (
         <div className="relative">
             <div
@@ -102,8 +154,38 @@ export function NodeFrame({
                                     </span>
                                 )}
                             </div>
+                        <div className="flex items-center gap-2.5 overflow-hidden flex-1">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300">
+                                {icon}
+                            </div>
+                             {isEditing ? (
+                                 <div 
+                                     data-is-editing="true"
+                                     className="flex-1 px-2 py-0.5 rounded-md ring-1 ring-[var(--ey-yellow)] bg-[var(--ey-yellow)]/5 shadow-[0_0_8px_rgba(254,226,3,0.2)] mr-8"
+                                 >
+                                    <input
+                                        ref={inputRef}
+                                        value={tempTitle}
+                                        onChange={(e) => setTempTitle(e.target.value)}
+                                        onBlur={handleSave}
+                                        onKeyDown={handleKeyDown}
+                                        className="bg-transparent border-none outline-none text-sm font-semibold text-foreground w-full p-0 focus:ring-0"
+                                    />
+                                </div>
+                            ) : (
+                                <div 
+                                    className={cn(
+                                        "flex items-center gap-1.5 group/title truncate pr-1 cursor-text",
+                                        id && "hover:text-primary transition-colors"
+                                    )}
+                                    onDoubleClick={handleStartEdit}
+                                >
+                                    <span className="text-sm font-semibold text-foreground leading-none truncate">
+                                        {displayTitle}
+                                    </span>
+                                </div>
+                            )}
                         </div>
-                    </div>
 
                     {summary && (
                         <div className="bg-black/5 dark:bg-black/20 rounded-md p-2 border border-[var(--border-dim)] mt-0.5">

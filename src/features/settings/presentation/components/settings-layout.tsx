@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { UserIcon, KeyIcon } from "lucide-react";
+import { UserIcon, KeyIcon, ShieldCheck } from "lucide-react";
 
 interface SettingsLayoutProps {
   children: ReactNode;
@@ -19,6 +19,12 @@ const navItems = [
     href: "/settings/credentials",
     icon: KeyIcon,
     description: "Manage API keys and integration credentials"
+  },
+  {
+    label: "API Credentials",
+    href: "/settings/api-keys",
+    icon: ShieldCheck,
+    description: "Manage App ID and Secret for M2M access"
   },
 ];
 

@@ -1,5 +1,5 @@
 import { useParams } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useBot, useUpdateBot, usePublishBot, useArchiveBot } from "../../data/queries/use-bots";
 import { toast } from "sonner";
 import { Loader2, Settings, Languages, MessageSquare, Bot, Trash2, Info, Plus, ExternalLink, Trash } from "lucide-react";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Textarea } from "@/components/ui/textarea";
 import { WhatsAppCredentialsDialog } from "@/features/integrations/whatsapp/presentation/whatsapp-credentials-dialog";
 import { useWhatsAppCredentials, useDeleteWhatsAppCredential } from "@/features/integrations/whatsapp/hooks/use-whatsapp-credentials";
 import { LocalizationForm } from "@/features/settings/presentation/components/localization-form";
@@ -38,7 +39,8 @@ export function BotSettingsPage() {
     const [activeTab, setActiveTab] = useState("whatsapp");
 
     // Data Hooks
-    const { data: credentials = [] } = useWhatsAppCredentials(bot?.orgId || "");
+    const { data: rawCredentials } = useWhatsAppCredentials(bot?.orgId || "");
+    const credentials = useMemo(() => rawCredentials || [], [rawCredentials]);
 
     // Setup Modals & States
     const [isCredentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
@@ -61,10 +63,30 @@ export function BotSettingsPage() {
     const [fallbackMessage, setFallbackMessage] = useState("");
     const [invalidInputMessage, setInvalidInputMessage] = useState("");
     const [finishedJourneyMessage, setFinishedJourneyMessage] = useState("");
+    const [renudgeConfig, setRenudgeConfig] = useState({
+        enabled: false,
+        durationMinutes: 30,
+        maxAttempts: 1,
+        message: "Are you still there? Would you like to continue?",
+        buttons: [
+            { id: "continue", title: "Continue" },
+            { id: "stop", title: "Stop" }
+        ]
+    });
 
     const fallbackMessageRef = useRef("");
     const invalidInputMessageRef = useRef("");
     const finishedJourneyMessageRef = useRef("");
+    const renudgeConfigRef = useRef({
+        enabled: false,
+        durationMinutes: 30,
+        maxAttempts: 1,
+        message: "Are you still there? Would you like to continue?",
+        buttons: [
+            { id: "continue", title: "Continue" },
+            { id: "stop", title: "Stop" }
+        ]
+    });
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [tempName, setTempName] = useState("");
@@ -82,55 +104,68 @@ export function BotSettingsPage() {
     };
 
     const setSelectedCredentialIdSync = (value: string) => {
+        if (selectedCredentialIdRef.current === value) return;
         selectedCredentialIdRef.current = value;
         setSelectedCredentialId(value);
     };
 
     const setTimeoutSecondsSync = (value: number) => {
+        if (timeoutSecondsRef.current === value) return;
         timeoutSecondsRef.current = value;
         setTimeoutSeconds(value);
     };
 
     const setStartConditionEnabledSync = (value: boolean) => {
+        if (startConditionEnabledRef.current === value) return;
         startConditionEnabledRef.current = value;
         setStartConditionEnabled(value);
     };
 
     const setComparisonsSync = (value: Array<{ operator: string; value: string }>) => {
+        if (JSON.stringify(comparisonsRef.current) === JSON.stringify(value)) return;
         comparisonsRef.current = value;
         setComparisons(value);
     };
 
     const setLogicalOperatorSync = (value: string) => {
+        if (logicalOperatorRef.current === value) return;
         logicalOperatorRef.current = value;
         setLogicalOperator(value);
     };
 
     const setFallbackMessageSync = (value: string) => {
+        if (fallbackMessageRef.current === value) return;
         fallbackMessageRef.current = value;
         setFallbackMessage(value);
     };
 
     const setInvalidInputMessageSync = (value: string) => {
+        if (invalidInputMessageRef.current === value) return;
         invalidInputMessageRef.current = value;
         setInvalidInputMessage(value);
     };
 
     const setFinishedJourneyMessageSync = (value: string) => {
+        if (finishedJourneyMessageRef.current === value) return;
         finishedJourneyMessageRef.current = value;
         setFinishedJourneyMessage(value);
     };
 
+    const setRenudgeConfigSync = (value: any) => {
+        renudgeConfigRef.current = value;
+        setRenudgeConfig(value);
+    };
+
     // Initialize local state from Bot on load
+    const hasInitializedRef = useRef(false);
     useEffect(() => {
         if (bot) {
-            const hours = (bot.settings?.timeoutSeconds || 14400) / 3600;
+            const hours = (bot.settings?.timeoutSeconds || 86400) / 3600;
             setTimeoutSecondsSync(Math.max(1, hours));
             setTempName(bot.name || "");
 
             const triggerDisabled = bot.triggerConfig?.enabled === false;
 
-            // Always rehydrate toggle and conditions from persisted triggerConfig.
             if (triggerDisabled) {
                 setStartConditionEnabledSync(false);
                 setComparisonsSync([{ operator: "CONTAINS", value: "" }]);
@@ -158,36 +193,47 @@ export function BotSettingsPage() {
             setFallbackMessageSync(bot.settings?.fallbackMessage || "");
             setInvalidInputMessageSync(bot.settings?.invalidInputMessage || "");
             setFinishedJourneyMessageSync(bot.settings?.finishedJourneyMessage || "");
+            
+            if (bot.renudgeConfig) {
+                setRenudgeConfigSync(bot.renudgeConfig);
+            }
         }
     }, [bot]);
+    
+    // Reset initialization when bot ID changes
+    useEffect(() => {
+        hasInitializedRef.current = false;
+    }, [id]);
 
     // Reconcile selected account with available credentials so previous configuration
     // is auto-selected after refresh/navigation without requiring manual re-selection.
+    const lastCredentialSyncRef = useRef<string>("");
     useEffect(() => {
-        if (!bot) return;
-        if (credentials.length === 0) return;
+        if (!bot || credentials.length === 0) return;
 
         const configuredCredentialId = bot.settings?.credentialId;
         const cachedCredentialId = getCachedCredentialId(bot.id);
+        const syncKey = `${bot.id}-${configuredCredentialId}-${selectedCredentialId}-${credentials.length}`;
+        
+        if (syncKey === lastCredentialSyncRef.current) return;
+        lastCredentialSyncRef.current = syncKey;
 
         const hasCredential = (id: string | undefined) =>
-            Boolean(id) && credentials.some((c) => c.id === id);
+            Boolean(id) && credentials.some((c: any) => c.id === id);
 
-        if (hasCredential(configuredCredentialId) && selectedCredentialId !== configuredCredentialId) {
-            setSelectedCredentialIdSync(configuredCredentialId!);
-            return;
-        }
-
+        // If current selection is valid and matches our intent, stop here
         if (selectedCredentialId && hasCredential(selectedCredentialId)) {
+            if (configuredCredentialId && hasCredential(configuredCredentialId) && selectedCredentialId !== configuredCredentialId) {
+                setSelectedCredentialIdSync(configuredCredentialId);
+            }
             return;
         }
 
-        if (hasCredential(cachedCredentialId || undefined)) {
+        if (hasCredential(configuredCredentialId)) {
+            setSelectedCredentialIdSync(configuredCredentialId!);
+        } else if (hasCredential(cachedCredentialId || undefined)) {
             setSelectedCredentialIdSync(cachedCredentialId!);
-            return;
-        }
-
-        if (credentials.length === 1) {
+        } else if (credentials.length === 1) {
             setSelectedCredentialIdSync(credentials[0]!.id);
         }
     }, [bot, credentials, selectedCredentialId]);
@@ -215,6 +261,35 @@ export function BotSettingsPage() {
         }
     };
 
+    const handleExport = () => {
+        if (!bot) return;
+        const exportData = {
+            name: bot.name,
+            description: bot.description,
+            triggerType: bot.triggerType,
+            // Strip trigger config to prevent duplicate trigger errors on import
+            triggerConfig: {
+                enabled: false,
+                logicalOperator: "OR",
+                comparisons: [],
+                keywords: [],
+            },
+            nodes: bot.nodes,
+            edges: bot.edges,
+            settings: { ...bot.settings },
+        };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${bot.name.toLowerCase().replace(/\s+/g, "-")}-config.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success("Bot configuration exported (Triggers cleared)");
+    };
+
     const handleSaveAndPublish = async () => {
         try {
             const credentialId = selectedCredentialIdRef.current;
@@ -233,6 +308,7 @@ export function BotSettingsPage() {
                     invalidInputMessage: invalidInputMessageRef.current,
                     finishedJourneyMessage: finishedJourneyMessageRef.current,
                 },
+                renudgeConfig: renudgeConfigRef.current,
                 triggerConfig: isStartConditionEnabled
                     ? {
                                                 enabled: true,
@@ -284,9 +360,9 @@ export function BotSettingsPage() {
         try {
              await updateBotMutation.mutateAsync({
                 settings: {
-                     timeoutSeconds: 14400,
-                     maxSteps: 100,
                      ...bot?.settings,
+                     timeoutSeconds: bot?.settings?.timeoutSeconds ?? 86400,
+                     maxSteps: bot?.settings?.maxSteps ?? 100,
                      localization,
                 },
              });
@@ -330,6 +406,7 @@ export function BotSettingsPage() {
                 }}
                 onRename={handleInlineRename}
                 onSave={handleSaveAndPublish}
+                onExport={handleExport}
                 onPublish={async () => {
                     try {
                         await handleSaveAndPublish();
@@ -383,8 +460,111 @@ export function BotSettingsPage() {
                                   <h2 className="text-xl font-bold tracking-tight">General Settings</h2>
                                   <p className="text-sm text-muted-foreground mt-1">Manage your bot's basic info.</p>
                               </div>
-                              <div className="p-12 border-2 border-dashed rounded-3xl flex items-center justify-center text-muted-foreground text-sm bg-muted/5">
-                                   General settings fields coming soon...
+                              <div className="space-y-6">
+                                   <div className="flex items-center justify-between p-6 border rounded-[24px] bg-muted/5">
+                                        <div className="space-y-1">
+                                             <Label htmlFor="renudge-enabled" className="text-base font-bold cursor-pointer">Recovery Nudges (Renudge Integration)</Label>
+                                             <p className="text-xs text-muted-foreground">Automatically nudge inactive users to continue their journey.</p>
+                                        </div>
+                                        <Switch 
+                                             id="renudge-enabled"
+                                             checked={renudgeConfig.enabled}
+                                             onCheckedChange={(val) => setRenudgeConfigSync({ ...renudgeConfig, enabled: val })}
+                                             className="data-[state=checked]:bg-[#FFE600] dark:data-[state=checked]:bg-[#FFE600]"
+                                        />
+                                   </div>
+
+                                   {renudgeConfig.enabled && (
+                                        <div className="space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
+                                             <div className="grid grid-cols-2 gap-6">
+                                                  <div className="space-y-3">
+                                                       <div className="flex items-center gap-1.5">
+                                                            <Label className="text-sm font-bold">Inactivity Duration</Label>
+                                                            <TooltipProvider>
+                                                                 <Tooltip>
+                                                                      <TooltipTrigger asChild>
+                                                                           <Info className="size-3.5 text-muted-foreground cursor-help" />
+                                                                      </TooltipTrigger>
+                                                                      <TooltipContent>How long to wait before sending the first nudge.</TooltipContent>
+                                                                 </Tooltip>
+                                                            </TooltipProvider>
+                                                       </div>
+                                                       <div className="flex items-center gap-3">
+                                                            <Input 
+                                                                 type="number" 
+                                                                 value={renudgeConfig.durationMinutes}
+                                                                 onChange={(e) => setRenudgeConfigSync({ ...renudgeConfig, durationMinutes: parseInt(e.target.value) || 30 })}
+                                                                 className="w-24 bg-background"
+                                                            />
+                                                            <span className="text-sm text-muted-foreground font-medium">minutes</span>
+                                                       </div>
+                                                  </div>
+
+                                                  <div className="space-y-3">
+                                                       <div className="flex items-center gap-1.5">
+                                                            <Label className="text-sm font-bold">Max Nudge Attempts</Label>
+                                                            <TooltipProvider>
+                                                                 <Tooltip>
+                                                                      <TooltipTrigger asChild>
+                                                                           <Info className="size-3.5 text-muted-foreground cursor-help" />
+                                                                      </TooltipTrigger>
+                                                                      <TooltipContent>Maximum number of nudges to send for a single inactive session.</TooltipContent>
+                                                                 </Tooltip>
+                                                            </TooltipProvider>
+                                                       </div>
+                                                       <div className="flex items-center gap-3">
+                                                            <Input 
+                                                                 type="number" 
+                                                                 value={renudgeConfig.maxAttempts}
+                                                                 onChange={(e) => setRenudgeConfigSync({ ...renudgeConfig, maxAttempts: parseInt(e.target.value) || 1 })}
+                                                                 className="w-24 bg-background"
+                                                            />
+                                                            <span className="text-sm text-muted-foreground font-medium">attempts</span>
+                                                       </div>
+                                                  </div>
+                                             </div>
+
+                                             <div className="space-y-3">
+                                                  <Label className="text-sm font-bold">Nudge Message</Label>
+                                                  <div className="p-1.5 bg-muted/20 rounded-2xl border focus-within:border-[#FFE600]/50 transition-all">
+                                                       <Textarea 
+                                                            className="w-full min-h-[100px] p-4 bg-transparent border-none focus:ring-0 text-sm resize-none custom-scrollbar"
+                                                            placeholder="Are you still there? Would you like to continue?"
+                                                            value={renudgeConfig.message}
+                                                            onChange={(e) => setRenudgeConfigSync({ ...renudgeConfig, message: e.target.value })}
+                                                       />
+                                                  </div>
+                                             </div>
+
+                                             <div className="space-y-4">
+                                                  <div className="flex items-center justify-between">
+                                                       <Label className="text-sm font-bold">Interaction Buttons</Label>
+                                                       <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Interactive Response</p>
+                                                  </div>
+                                                  <div className="grid grid-cols-2 gap-4">
+                                                       {renudgeConfig.buttons.map((btn, idx) => (
+                                                            <div key={idx} className="p-4 bg-muted/30 rounded-2xl border border-black/5 flex items-center gap-3 group transition-all hover:bg-muted/40">
+                                                                 <div className="size-8 rounded-lg bg-background flex items-center justify-center border text-[10px] font-bold text-muted-foreground group-hover:text-foreground transition-colors">
+                                                                      {idx + 1}
+                                                                 </div>
+                                                                 <Input 
+                                                                      value={btn.title}
+                                                                      onChange={(e) => {
+                                                                           const newButtons = [...renudgeConfig.buttons];
+                                                                           newButtons[idx] = { ...btn, title: e.target.value };
+                                                                           setRenudgeConfigSync({ ...renudgeConfig, buttons: newButtons });
+                                                                      }}
+                                                                      className="bg-transparent border-none focus-visible:ring-0 h-8 p-0 text-sm font-medium"
+                                                                 />
+                                                            </div>
+                                                       ))}
+                                                  </div>
+                                                  <p className="text-[11px] text-muted-foreground leading-relaxed italic">
+                                                       Note: Buttons will automatically trigger the same logic as if the user typed the text.
+                                                  </p>
+                                             </div>
+                                        </div>
+                                   )}
                               </div>
                          </div>
                     )}
@@ -501,7 +681,7 @@ export function BotSettingsPage() {
                                                     <SelectValue placeholder="Choose account" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {credentials.map(c => (
+                                                    {credentials.map((c: any) => (
                                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                                     ))}
                                                     <div className="h-px bg-border my-1" />
@@ -725,7 +905,7 @@ export function BotSettingsPage() {
                                                 href="#" 
                                                 onClick={(e) => {
                                                     e.preventDefault();
-                                                    const credential = credentials.find(c => c.id === selectedCredentialId);
+                                                    const credential = credentials.find((c: any) => c.id === selectedCredentialId);
                                                     if(credential) {
                                                         const displayNumber = credential.metadata?.displayPhoneNumber;
                                                         let message = "hi";

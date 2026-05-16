@@ -36,12 +36,14 @@ import { googleSheetsApi } from "@/features/integrations/google-sheets/api/googl
 
 // Specialized Dialogs (for multi-step flows like WhatsApp)
 import { WhatsAppCredentialsDialog } from "@/features/integrations/whatsapp/presentation/whatsapp-credentials-dialog";
+import { DbConnectorSheet } from "./db-connector-sheet";
 
 import { DEFAULT_ORG_ID } from "@/features/integrations/openai/domain/openai.constants";
 import { ProviderLogo } from "@/components/brand-logos";
 
 const integrationTypes = [
   { id: "WHATSAPP", name: "WhatsApp (Meta)", description: "Connect your WhatsApp Business account", icon: MessageSquare },
+  { id: "DB2DB", name: "Database Sync", description: "Direct Postgres/MySQL CRM integration", icon: Database },
   { id: "OPENAI", name: "OpenAI", description: "Connect GPT-4, GPT-3.5 and DALL-E", icon: Brain },
   { id: "ANTHROPIC", name: "Anthropic", description: "Connect Claude 3 models", icon: Bot },
   { id: "DEEPSEEK", name: "DeepSeek", description: "Connect DeepSeek AI models", icon: BarChart },
@@ -55,6 +57,7 @@ export function AddCredentialSection() {
   const [selectedType, setSelectedType] = useState<string | undefined>();
   const [mode, setMode] = useState<"selecting" | "configuring">("selecting");
   const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
+  const [isDbSheetOpen, setIsDbSheetOpen] = useState(false);
   
   // Form States
   const [name, setName] = useState("My account");
@@ -75,6 +78,8 @@ export function AddCredentialSection() {
     if (selectedType) {
       if (selectedType === "WHATSAPP") {
         setIsWhatsAppOpen(true);
+      } else if (selectedType === "DB2DB") {
+        setIsDbSheetOpen(true);
       } else {
         setMode("configuring");
       }
@@ -149,6 +154,12 @@ export function AddCredentialSection() {
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, [expectedMessageOrigin, navigate]);
+
+  const handleDbSuccess = () => {
+    setIsDbSheetOpen(false);
+    toast.success("Database connection saved!");
+    void navigate({ to: "/settings/credentials" });
+  };
 
   const currentIntegration = integrationTypes.find(t => t.id === selectedType);
 
@@ -331,6 +342,12 @@ export function AddCredentialSection() {
             setIsWhatsAppOpen(false);
             void navigate({ to: "/settings/credentials" });
         }}
+      />
+
+      <DbConnectorSheet 
+        open={isDbSheetOpen}
+        onOpenChange={setIsDbSheetOpen}
+        onSuccess={handleDbSuccess}
       />
     </div>
   );
