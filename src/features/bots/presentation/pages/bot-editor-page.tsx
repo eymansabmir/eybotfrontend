@@ -508,7 +508,13 @@ export function BotEditorPage() {
             name: bot.name,
             description: bot.description,
             triggerType: bot.triggerType,
-            triggerConfig: bot.triggerConfig,
+            // Strip trigger config to prevent duplicate trigger errors on import
+            triggerConfig: {
+                enabled: false,
+                logicalOperator: "OR",
+                comparisons: [],
+                keywords: [],
+            },
             nodes: localNodes.map(mapNodeToBackend),
             edges: localEdges.map(mapEdgeToBackend),
             settings: { ...bot.settings, variables },
@@ -522,7 +528,7 @@ export function BotEditorPage() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        toast.success("Flow exported successfully!");
+        toast.success("Flow exported successfully (Triggers cleared for template use)");
     };
 
     const handleInlineRename = async (nextName = tempName) => {
