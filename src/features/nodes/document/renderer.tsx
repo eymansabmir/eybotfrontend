@@ -8,11 +8,27 @@ import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { isDynamicVariable } from "../utils";
 import { VariableSelect } from "@/features/variables/components/variable-select";
+import { validateMediaUrl, validateMediaUrlRemote } from "@/lib/storage/application/validation";
+import { useEffect } from "react";
 
 export function DocumentNodeRenderer({ id, data, selected }: NodeProps & { data: DocumentNodeData }) {
     const { setNodes } = useReactFlow();
 
     const isVariable = isDynamicVariable(data.url);
+    
+    // Remote validation for external URLs (checks size/availability)
+    useEffect(() => {
+        if (!data.url || data.validationError || !data.url.startsWith("http")) return;
+        
+        const timer = setTimeout(async () => {
+            const result = await validateMediaUrlRemote(data.url, "document");
+            if (!result.isValid) {
+                updateData({ validationError: result.error || "Size limit exceeded" });
+            }
+        }, 800);
+        
+        return () => clearTimeout(timer);
+    }, [data.url]);
 
     const updateData = (newData: Partial<DocumentNodeData>) => {
         setNodes((nds) =>
@@ -37,6 +53,7 @@ export function DocumentNodeRenderer({ id, data, selected }: NodeProps & { data:
             description={documentNode.config.description}
             summary={getSummary()}
             showPopover={selected}
+            error={data.validationError}
             popoverBody={
                 <div className="space-y-4">
                     <Tabs defaultValue={isVariable ? "url" : "upload"} className="w-full">
@@ -56,7 +73,7 @@ export function DocumentNodeRenderer({ id, data, selected }: NodeProps & { data:
                         </TabsList>
                         
                         <TabsContent value="upload" className="pt-4 mt-0 space-y-4 outline-none">
-                            <MediaUploader onUploadSuccess={(path) => updateData({ url: path })} purpose="document" />
+                            <MediaUploader onUploadSuccess={(path) => updateData({ url: path, validationError: undefined })} purpose="document" />
                         </TabsContent>
                         
                         <TabsContent value="url" className="pt-4 mt-0 space-y-3 outline-none">
@@ -69,8 +86,15 @@ export function DocumentNodeRenderer({ id, data, selected }: NodeProps & { data:
                                     type="text"
                                     className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                     value={data.url || ""}
-                                    placeholder="https://example.com/file.pdf or {{var}}"
-                                    onChange={(e) => updateData({ url: e.target.value })}
+                                    placeholder="https://example.com/doc.pdf or {{var}}"
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        const validation = validateMediaUrl(val, "document");
+                                        updateData({ 
+                                            url: val, 
+                                            validationError: validation.isValid ? undefined : (validation.error || "Invalid Document")
+                                        });
+                                    }}
                                 />
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mt-2 block self-start">Or pick a variable</label>
                                 <VariableSelect
