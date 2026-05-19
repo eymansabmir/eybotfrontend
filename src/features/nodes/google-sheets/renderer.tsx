@@ -53,10 +53,10 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
   const prevCredentialCount = useRef(credentialsQuery.data?.length ?? 0);
 
   useEffect(() => {
-    if (selected && !pickerOpen) {
+    if (selected) {
       dispatch({ type: "reset", payload: createGoogleSheetsConfigDraft(data) });
     }
-  }, [selected, data, pickerOpen]);
+  }, [selected, data]);
 
   useEffect(() => {
     const creds = credentialsQuery.data ?? [];
@@ -112,17 +112,45 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
     }
 
     let responseMapping;
-    try {
-      const parsed = JSON.parse(draft.responseMappingText);
-      responseMapping = ResponseMappingSchema.array().parse(parsed);
-    } catch {
-      toast.error("Invalid Response Mapping JSON structure");
-      return;
+    if (draft.action === "get_row" && draft.extractItems.length > 0) {
+      const isExtractAll = draft.totalRowsToExtract === "All";
+      responseMapping = draft.extractItems
+        .filter((item) => item.column && item.variableName)
+        .map((item) => ({
+          jsonPath: isExtractAll
+            ? `$.rows[*].values.${item.column}`
+            : `$.rows[0].values.${item.column}`,
+          variableName: item.variableName as string,
+          scope: "session" as const,
+        }));
+    } else {
+      try {
+        const parsed = JSON.parse(draft.responseMappingText);
+        responseMapping = ResponseMappingSchema.array().parse(parsed);
+      } catch {
+        toast.error("Invalid Response Mapping JSON structure");
+        return;
+      }
     }
 
     const selectedSheet = (sheetsQuery.data ?? []).find(
       (sheet) => sheet.id === draft.sheetId,
     );
+
+    const isGetRow = draft.action === "get_row";
+     const filter = isGetRow
+      ? {
+          totalRowsToExtract: draft.totalRowsToExtract,
+          limit: draft.totalRowsToExtract === "All" ? draft.limit : undefined,
+          comparisons: draft.comparisonItems
+            .filter((item) => item.column && item.comparisonOperator)
+            .map((item) => ({
+              column: item.column,
+              comparisonOperator: item.comparisonOperator,
+              value: item.value,
+            })),
+        }
+      : cellItemsToRecord(draft.filterItems);
 
     const newData: Partial<GoogleSheetsNodeData> = {
       action: draft.action,
@@ -133,7 +161,7 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
       sheetName: draft.sheetName || selectedSheet?.name,
       rowId: draft.rowId,
       values: cellItemsToRecord(draft.valuesItems),
-      filter: cellItemsToRecord(draft.filterItems),
+      filter: filter as any,
       timeoutMs: draft.timeoutMs,
       responseMapping,
     };
