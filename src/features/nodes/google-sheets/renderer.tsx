@@ -184,12 +184,15 @@ export function GoogleSheetsNodeRenderer({ id, data, selected }: NodeProps & { d
     }
   };
 
-  const onGetSpreadsheetPickerAccessToken = async (): Promise<string> => {
+  const onGetSpreadsheetPickerAccessToken = async (): Promise<{ accessToken: string; apiKey?: string }> => {
     if (!draft.credentialId || draft.credentialId === "__none") {
       throw new Error("Select a Google Sheets credential first");
     }
     const token = await pickerAccessToken.mutateAsync(draft.credentialId);
-    return token.accessToken;
+    return {
+      accessToken: token.accessToken,
+      apiKey: token.apiKey,
+    };
   };
 
   const onPickSpreadsheet = () => {

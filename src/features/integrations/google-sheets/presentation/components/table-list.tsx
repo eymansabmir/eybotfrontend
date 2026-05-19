@@ -47,23 +47,21 @@ export const TableList = <T extends object>({
       {items.map((item, itemIndex) => (
         <div
           key={"id" in item ? (item as any).id : itemIndex}
-          className="relative flex items-center justify-center pt-2 pb-2"
-          onMouseEnter={() => setShowDeleteIndex(itemIndex)}
-          onMouseLeave={() => setShowDeleteIndex(null)}
+          className="flex items-center gap-2 w-full"
         >
-          {children({ item, onItemChange: (updated) => updateItem(itemIndex, updated) })}
+          <div className="flex-1 min-w-0">
+            {children({ item, onItemChange: (updated) => updateItem(itemIndex, updated) })}
+          </div>
           
-          {showDeleteIndex === itemIndex && (
-            <Button
-              size="icon"
-              aria-label="Remove cell"
-              onClick={deleteItem(itemIndex)}
-              variant="destructive"
-              className="absolute -left-2 -top-2 size-6 rounded-full shadow-md z-10"
-            >
-              <Trash2 className="size-3" />
-            </Button>
-          )}
+          <Button
+            size="icon"
+            aria-label="Remove item"
+            onClick={deleteItem(itemIndex)}
+            variant="ghost"
+            className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 transition-colors rounded-md border border-input bg-background shadow-sm"
+          >
+            <Trash2 className="size-4" />
+          </Button>
         </div>
       ))}
       <Button 

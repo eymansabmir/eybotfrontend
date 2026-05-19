@@ -32,6 +32,7 @@ export const GoogleSheetsTestConnectionSchema = z.object({
 
 export const GoogleSheetsAccessTokenSchema = z.object({
   accessToken: z.string().min(1),
+  apiKey: z.string().optional(),
 });
 
 export const GoogleSpreadsheetInfoSchema = z.object({
