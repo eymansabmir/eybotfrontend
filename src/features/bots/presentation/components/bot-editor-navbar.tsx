@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Save, Play, Loader2, Rocket, Archive, Globe, Download } from "lucide-react";
+import { ArrowLeft, Save, Play, Loader2, Rocket, Archive, Globe, Download, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
@@ -41,6 +41,8 @@ interface BotEditorNavbarProps {
     onNavigateToFlow?: () => void;
     onNavigateToSettings?: () => void;
     liveLanguages?: string[];
+    onToggleHistory?: () => void;
+    isHistoryOpen?: boolean;
 }
 
 export function BotEditorNavbar({
@@ -68,7 +70,9 @@ export function BotEditorNavbar({
     onNavigateToBots,
     onNavigateToFlow,
     onNavigateToSettings,
-    liveLanguages
+    liveLanguages,
+    onToggleHistory,
+    isHistoryOpen
 }: BotEditorNavbarProps) {
     const localization = bot?.settings?.localization;
     const languages = liveLanguages?.length ? liveLanguages : (localization?.languages || []);
@@ -217,6 +221,18 @@ export function BotEditorNavbar({
                     </Button>
                 )}
                 
+                {!isNew && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`gap-2 h-8 rounded-full font-bold text-xs px-4 transition-all ${isHistoryOpen ? 'bg-primary/10 text-primary hover:bg-primary/15' : 'hover:bg-muted'}`}
+                        onClick={onToggleHistory}
+                    >
+                        <History className="size-3" />
+                        History
+                    </Button>
+                )}
+
                 {!isNew && (
                     <Button
                         variant="ghost"
