@@ -38,7 +38,7 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
             title="Wait for Reply"
             popoverTitle="Configure User Input"
             description={inputNode.config.description}
-            summary={data.question ? data.question : "Click to set question..."}
+            summary={data.message ? data.message : "Click to set question..."}
             showPopover={selected}
             popoverContentClassName="p-4 space-y-5"
             popoverBody={
@@ -62,9 +62,9 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                         </div>
                         <AutosizeTextarea
                             className="w-full bg-background rounded-xl border border-[var(--border-dim)] p-3 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
-                            value={data.question}
+                            value={data.message}
                             placeholder="What would you like to ask?"
-                            onChange={(e) => updateData({ question: e.target.value })}
+                            onChange={(e) => updateData({ message: e.target.value })}
                         />
                     </div>
 
@@ -85,13 +85,26 @@ export function InputNodeRenderer({ id, data, selected }: NodeProps & { data: In
                             </TooltipProvider>
                             {isTranslationMode && <LockedBadge />}
                         </div>
-                        <div className="relative">
-                            <VariableSelect
-                                value={data.variable || ""}
-                                onValueChange={(val: string) => updateData({ variable: val })}
-                                placeholder="e.g. user_age"
-                                className={isTranslationMode ? "opacity-50 pointer-events-none" : ""}
-                            />
+                        <div className="flex items-center gap-2">
+                            <div className="flex-1 min-w-0">
+                                <VariableSelect 
+                                    value={data.variableName || ""} 
+                                    onValueChange={(val: string) => updateData({ variableName: val })} 
+                                    placeholder="e.g. user_age" 
+                                    className={isTranslationMode ? "opacity-50 pointer-events-none" : ""}
+                                />
+                            </div>
+                            <div className="w-24 shrink-0">
+                                <select
+                                    className="w-full bg-background rounded-lg border border-[var(--border-dim)] px-2 h-8 text-[10px] font-medium focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all cursor-pointer disabled:opacity-50 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:8px_auto] bg-[position:right_8px_center] bg-no-repeat pr-6"
+                                    value={data.variableScope || "session"}
+                                    onChange={(e) => updateData({ variableScope: e.target.value as any })}
+                                    disabled={isTranslationMode}
+                                >
+                                    <option value="session">Session</option>
+                                    <option value="contact">Contact</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
