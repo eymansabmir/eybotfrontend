@@ -1,6 +1,8 @@
 import { FlowBuilder, type FlowBuilderRef } from "@/features/nodes/presentation/components/flow-builder";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Clock, RotateCcw, X, History } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { formatDistanceToNow } from "date-fns";
 import { 
     useBot, 
     useUpdateBot, 
@@ -8,7 +10,9 @@ import {
     usePublishBot, 
     useArchiveBot,
     useFlowTranslation,
-    useUpdateFlowTranslation
+    useUpdateFlowTranslation,
+    useFlowRevisions,
+    useRollbackFlow
 } from "../../data/queries/use-bots";
 import { toast } from "sonner";
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
@@ -63,6 +67,52 @@ export function BotEditorPage() {
     const isPublished = bot?.status === "published";
     const [isEditingName, setIsEditingName] = useState(false);
     const [tempName, setTempName] = useState(bot?.name || "");
+
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const { data: revisions, isLoading: isLoadingRevisions } = useFlowRevisions(id);
+    const rollbackMutation = useRollbackFlow(id);
+
+    const [rollbackDialogOpen, setRollbackDialogOpen] = useState(false);
+    const [rollbackTarget, setRollbackTarget] = useState<{ id: string; version: number } | null>(null);
+
+    const handleRollback = useCallback((revisionId: string, versionNumber: number) => {
+        if (isPublished) {
+            toast.error("Cannot rollback a published flow. Unpublish it first.");
+            return;
+        }
+        setRollbackTarget({ id: revisionId, version: versionNumber });
+        setRollbackDialogOpen(true);
+    }, [isPublished]);
+
+    const executeRollback = async () => {
+        if (!rollbackTarget) return;
+        const { id: revisionId, version: versionNumber } = rollbackTarget;
+
+        try {
+            const rolledBackBot = await rollbackMutation.mutateAsync(revisionId);
+            toast.success(`Successfully rolled back to Version ${versionNumber}!`);
+
+            // Map database representation back to frontend format using our helpers
+            const baseNodes = (rolledBackBot?.nodes as any[]) || [];
+            const mappedNodes = baseNodes.map((n: any) => mapNodeToFrontend(n, rolledBackBot?.settings?.localization));
+
+            const baseEdges = (rolledBackBot?.edges as any[]) || [];
+            const mappedEdges = baseEdges.map(mapEdgeToFrontend);
+
+            // Sync flow builder state
+            flowBuilderRef.current?.setFlowState(mappedNodes, mappedEdges);
+            resetDirtyState(mappedNodes, mappedEdges);
+
+            setIsHistoryOpen(false);
+            setIsDirty(false);
+        } catch (err: any) {
+            const message = err?.response?.data?.message || err?.message || "Failed to rollback";
+            toast.error(message);
+        } finally {
+            setRollbackTarget(null);
+            setRollbackDialogOpen(false);
+        }
+    };
 
     useEffect(() => {
         if (bot?.name) setTempName(bot.name);
@@ -406,17 +456,77 @@ export function BotEditorPage() {
 
 
 
+    const mapNodeToFrontend = useCallback((n: any, settingsLocalization: any) => {
+        let frontendData = { ...n.data };
+        if (n.type === "ask_question") {
+            frontendData = {
+                ...frontendData,
+                question: n.data.message || "",
+                variable: n.data.variableName || "var",
+                validationType: n.data.inputType || "text",
+                timeoutSeconds: n.data.timeoutSeconds || 3600
+            };
+        } else if (n.type === "nps") {
+            frontendData = {
+                ...frontendData,
+                message: n.data.message || "",
+                variable: n.data.variableName || "nps_score",
+                variableScope: n.data.variableScope || "session",
+                length: n.data.length ?? 10,
+                startsAt: n.data.startsAt ?? 1,
+                leftLabel: n.data.leftLabel,
+                rightLabel: n.data.rightLabel,
+                buttonLabel: n.data.buttonLabel || "Rate",
+                timeoutSeconds: n.data.timeoutSeconds || 3600
+            };
+        } else if (n.type === "language") {
+            const nodeLangs = Array.isArray(n.data.languages) ? n.data.languages : [];
+            const languageList = nodeLangs.length > 0
+                ? nodeLangs.slice(0, MAX_LANGUAGE_NODE_LANGUAGES)
+                : (settingsLocalization?.languages || []);
+
+            const localizationEnabled = typeof n.data.localizationEnabled === "boolean"
+                ? n.data.localizationEnabled
+                : (settingsLocalization?.isEnabled ?? languageList.length > 0);
+
+            frontendData = {
+                ...frontendData,
+                message: n.data.message || "Please select your language",
+                variableName: n.data.variableName || n.data.variable || "selected_language",
+                variable: n.data.variableName || n.data.variable || "selected_language",
+                variableScope: n.data.variableScope || "session",
+                timeoutSeconds: n.data.timeoutSeconds || 3600,
+                localizationEnabled,
+                languages: languageList,
+                defaultLanguage: n.data.defaultLanguage || settingsLocalization?.defaultLanguage || languageList[0],
+                skipIfAlreadySelected: !!n.data.skipIfAlreadySelected,
+            };
+        }
+        return {
+            id: n.id,
+            type: n.type,
+            position: n.position,
+            data: { 
+                ...frontendData,
+                isTranslationMode,
+                branches: n.branches || []
+            }
+        };
+    }, [isTranslationMode]);
+
+    const mapEdgeToFrontend = useCallback((e: any) => ({
+        id: e.id,
+        source: e.sourceNodeId || e.source,
+        sourceHandle: e.sourceBranchKey === "default" ? undefined : (e.sourceBranchKey || e.sourceHandle),
+        target: e.targetNodeId || e.target,
+    }), []);
+
     const initialEdges = useMemo(() => {
         const baseEdges = bot?.edges || [];
         const sourceEdges = baseEdges.length > 0 ? baseEdges : (isNew ? DEFAULT_EDGES : []);
         
-        return (sourceEdges as any[]).map((e: any) => ({
-            id: e.id,
-            source: e.sourceNodeId || e.source,
-            sourceHandle: e.sourceBranchKey === "default" ? undefined : (e.sourceBranchKey || e.sourceHandle),
-            target: e.targetNodeId || e.target,
-        }));
-    }, [bot?.edges, isNew]);
+        return (sourceEdges as any[]).map(mapEdgeToFrontend);
+    }, [bot?.edges, isNew, mapEdgeToFrontend]);
 
     const showValidationErrors = (errors: string[]) => {
         if (errors.length === 0) return;
@@ -597,75 +707,13 @@ export function BotEditorPage() {
                     data: {
                         ...base.data,
                         ...tData, // Overwrites labels/messages
-                        // STICKY - But only take from Master if NOT already in translation? 
-                        // Actually, just take EVERYTHING from base.data except what tData overrides
                     }
                 };
             })
             : (baseNodes.length > 0 ? baseNodes : (isNew ? DEFAULT_NODES : []));
 
-        return sourceNodes.map((n: any) => {
-            let frontendData = { ...n.data };
-            if (n.type === "ask_question") {
-                frontendData = {
-                    ...frontendData,
-                    question: n.data.message || "",
-                    variable: n.data.variableName || "var",
-                    validationType: n.data.inputType || "text",
-                    timeoutSeconds: n.data.timeoutSeconds || 3600
-                };
-            } else if (n.type === "nps") {
-                frontendData = {
-                    ...frontendData,
-                    message: n.data.message || "",
-                    variable: n.data.variableName || "nps_score",
-                    variableScope: n.data.variableScope || "session",
-                    length: n.data.length ?? 10,
-                    startsAt: n.data.startsAt ?? 1,
-                    leftLabel: n.data.leftLabel,
-                    rightLabel: n.data.rightLabel,
-                    buttonLabel: n.data.buttonLabel || "Rate",
-                    timeoutSeconds: n.data.timeoutSeconds || 3600
-                };
-            } else if (n.type === "language") {
-                const settingsLocalization = bot?.settings?.localization;
-                const nodeLangs = Array.isArray(n.data.languages) ? n.data.languages : [];
-                
-                // If the node has no languages, fallback to global settings.
-                // Otherwise, use the node's specific list.
-                const languageList = nodeLangs.length > 0
-                    ? nodeLangs.slice(0, MAX_LANGUAGE_NODE_LANGUAGES)
-                    : (settingsLocalization?.languages || []);
-
-                const localizationEnabled = typeof n.data.localizationEnabled === "boolean"
-                    ? n.data.localizationEnabled
-                    : (settingsLocalization?.isEnabled ?? languageList.length > 0);
-
-                frontendData = {
-                    ...frontendData,
-                    message: n.data.message || "Please select your language",
-                    variableName: n.data.variableName || n.data.variable || "selected_language",
-                    variable: n.data.variableName || n.data.variable || "selected_language",
-                    variableScope: n.data.variableScope || "session",
-                    timeoutSeconds: n.data.timeoutSeconds || 3600,
-                    localizationEnabled,
-                    languages: languageList,
-                    defaultLanguage: n.data.defaultLanguage || settingsLocalization?.defaultLanguage || languageList[0],
-                    skipIfAlreadySelected: !!n.data.skipIfAlreadySelected,
-                };
-            }
-            return {
-                id: n.id,
-                type: n.type,
-                position: n.position,
-                data: { 
-                    ...frontendData,
-                    isTranslationMode,
-                    branches: n.branches || []
-                }
-            };
-        }) || [];
-    }, [bot?.nodes, bot?.settings?.localization, translationData, isTranslationMode]);
+        return sourceNodes.map(n => mapNodeToFrontend(n, bot?.settings?.localization)) || [];
+    }, [bot?.nodes, bot?.settings?.localization, translationData, isTranslationMode, mapNodeToFrontend, isNew]);
 
     const lastSyncedNodesRef = useRef<string>("");
     useEffect(() => {
@@ -741,6 +789,36 @@ export function BotEditorPage() {
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <AlertDialog open={rollbackDialogOpen} onOpenChange={setRollbackDialogOpen}>
+                <AlertDialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-none shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-amber-50 dark:bg-amber-950/20 px-6 py-5 flex items-center gap-3 border-b border-amber-100 dark:border-amber-900/30">
+                        <div className="flex size-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400">
+                            <RotateCcw className="size-6" />
+                        </div>
+                        <AlertDialogTitle className="text-lg font-bold text-amber-900 dark:text-amber-200">Confirm Rollback</AlertDialogTitle>
+                    </div>
+                    
+                    <div className="p-6">
+                        <AlertDialogDescription className="text-sm leading-relaxed text-muted-foreground/90 font-medium">
+                            Are you sure you want to rollback to <strong>Version {rollbackTarget?.version}</strong>? All current unsaved edits will be replaced and permanently discarded.
+                        </AlertDialogDescription>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 px-6 pb-6 pt-2">
+                        <AlertDialogCancel className="mt-0 h-10 rounded-full border-border/50 px-6 text-xs font-semibold hover:bg-muted transition-colors">
+                            Cancel
+                        </AlertDialogCancel>
+                        
+                        <AlertDialogAction
+                            className="h-10 rounded-full bg-amber-600 hover:bg-amber-700 text-white transition-all text-xs font-bold px-6"
+                            onClick={executeRollback}
+                        >
+                            Confirm Rollback
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
             <BotEditorNavbar
                 id={id}
                 bot={bot as any}
@@ -772,24 +850,120 @@ export function BotEditorPage() {
                 onNavigateToBots={() => handleGuardedNavigate("bots")}
                 onNavigateToSettings={() => handleGuardedNavigate("settings")}
                 liveLanguages={liveLanguages}
+                onToggleHistory={() => setIsHistoryOpen(prev => !prev)}
+                isHistoryOpen={isHistoryOpen}
             />
 
-            <main className="relative flex-1 overflow-hidden">
-                {(isLoadingTranslation && isTranslationMode) ? (
-                    <div className="flex h-full w-full items-center justify-center bg-background/50 backdrop-blur-sm z-50">
-                        <Loader2 className="size-8 animate-spin text-primary" />
+            <main className="relative flex-1 overflow-hidden flex flex-row">
+                <div className="flex-1 h-full relative overflow-hidden">
+                    {(isLoadingTranslation && isTranslationMode) ? (
+                        <div className="flex h-full w-full items-center justify-center bg-background/50 backdrop-blur-sm z-50">
+                            <Loader2 className="size-8 animate-spin text-primary" />
+                        </div>
+                    ) : (
+                        <FlowBuilder
+                            key={`${id}-${selectedLang}`}
+                            ref={flowBuilderRef}
+                            initialNodes={initialNodes}
+                            initialEdges={initialEdges}
+                            isTranslationMode={isTranslationMode}
+                            onFlowChange={handleFlowChange}
+                            onNodesChange={handleNodesChange}
+                        />
+                    )}
+                </div>
+
+                {/* Right-Side Version History Drawer */}
+                <div
+                    className={`absolute top-0 right-0 z-30 h-full w-80 bg-background/95 backdrop-blur-md border-l border-border shadow-2xl flex flex-col transition-all duration-300 ease-in-out transform ${
+                        isHistoryOpen ? "translate-x-0" : "translate-x-full"
+                    }`}
+                >
+                    <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
+                        <div className="flex items-center gap-2">
+                            <History className="size-4 text-primary" />
+                            <h2 className="text-sm font-bold tracking-tight text-foreground">Version History</h2>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 rounded-full hover:bg-muted/80"
+                            onClick={() => setIsHistoryOpen(false)}
+                        >
+                            <X className="size-4 text-muted-foreground" />
+                        </Button>
                     </div>
-                ) : (
-                    <FlowBuilder
-                        key={`${id}-${selectedLang}`}
-                        ref={flowBuilderRef}
-                        initialNodes={initialNodes}
-                        initialEdges={initialEdges}
-                        isTranslationMode={isTranslationMode}
-                        onFlowChange={handleFlowChange}
-                        onNodesChange={handleNodesChange}
-                    />
-                )}
+
+                    <div className="p-3 bg-primary/5 border-b border-primary/10">
+                        <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
+                            Restoring a version will overwrite current unsaved edits. Published bots cannot be rolled back directly.
+                        </p>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                        {isLoadingRevisions ? (
+                            <div className="flex flex-col items-center justify-center h-48 gap-2">
+                                <Loader2 className="size-6 animate-spin text-primary" />
+                                <span className="text-[10px] text-muted-foreground font-semibold">Loading revisions...</span>
+                            </div>
+                        ) : !revisions || revisions.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-48 text-center px-4">
+                                <Clock className="size-8 text-muted-foreground/30 mb-2" />
+                                <h3 className="text-xs font-bold text-foreground/80 mb-1">No Published Versions Yet</h3>
+                                <p className="text-[10px] text-muted-foreground leading-normal">
+                                    Revisions are captured automatically when you publish your bot.
+                                </p>
+                            </div>
+                        ) : (
+                            revisions.map((rev: any) => {
+                                const formattedDate = rev.createdAt
+                                    ? formatDistanceToNow(new Date(rev.createdAt), { addSuffix: true })
+                                    : "unknown time";
+                                
+                                return (
+                                    <div
+                                        key={rev.id}
+                                        className="group relative flex flex-col gap-2 p-3.5 rounded-xl border border-border bg-card/60 hover:bg-card hover:border-primary/40 hover:shadow-sm transition-all duration-200"
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-xs font-bold text-foreground">
+                                                        Version {rev.version}
+                                                    </span>
+                                                    {isPublished && rev.isPublished && (
+                                                         <span className="text-[8px] font-extrabold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-1.5 py-0.5 rounded tracking-wider shadow-sm">
+                                                             Published
+                                                         </span>
+                                                     )}
+                                                </div>
+                                                <span className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1 font-medium">
+                                                    <Clock className="size-3 shrink-0" />
+                                                    {formattedDate}
+                                                </span>
+                                            </div>
+
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={isPublished || rollbackMutation.isPending}
+                                                className="h-7 px-2.5 rounded-full font-bold text-[10px] gap-1 border-primary/20 text-primary bg-primary/5 hover:bg-primary hover:text-white transition-all shadow-sm active:scale-95"
+                                                onClick={() => handleRollback(rev.id, rev.version)}
+                                            >
+                                                {rollbackMutation.isPending && rollbackMutation.variables === rev.id ? (
+                                                    <Loader2 className="size-2.5 animate-spin" />
+                                                ) : (
+                                                    <RotateCcw className="size-2.5" />
+                                                )}
+                                                Restore
+                                            </Button>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
             </main>
         </div>
     );

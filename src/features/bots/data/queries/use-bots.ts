@@ -111,3 +111,24 @@ export function useImportBot() {
         },
     });
 }
+
+export function useFlowRevisions(id: string) {
+    return useQuery({
+        queryKey: [...botKeys.detail(id), "revisions"] as const,
+        queryFn: () => botsApi.getFlowRevisions(id),
+        enabled: !!id && id !== "new",
+    });
+}
+
+export function useRollbackFlow(id: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (revisionId: string) => botsApi.rollbackFlow(id, revisionId),
+        onSuccess: (data) => {
+            queryClient.setQueryData(botKeys.detail(id), data);
+            queryClient.invalidateQueries({ queryKey: [...botKeys.detail(id), "revisions"] });
+            queryClient.invalidateQueries({ queryKey: botKeys.lists() });
+        },
+    });
+}

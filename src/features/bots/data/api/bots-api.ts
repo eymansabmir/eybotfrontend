@@ -50,4 +50,14 @@ export const botsApi = {
         const { data } = await apiClient.post("/flows/import?orgId=68b08633907a113536238290", input);
         return data;
     },
+
+    getFlowRevisions: async (id: string): Promise<any[]> => {
+        const { data } = await apiClient.get(`/flows/${id}/revisions`);
+        return data;
+    },
+
+    rollbackFlow: async (id: string, revisionId: string): Promise<Bot> => {
+        const { data } = await apiClient.post(`/flows/${id}/revisions/${revisionId}/rollback`);
+        return data;
+    },
 };

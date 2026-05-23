@@ -47,6 +47,7 @@ interface FlowBuilderProps {
 
 export interface FlowBuilderRef {
     getFlowState: () => { nodes: Node[]; edges: Edge[] };
+    setFlowState: (nodes: Node[], edges: Edge[]) => void;
 }
 
 const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
@@ -123,7 +124,11 @@ const FlowBuilderContent = forwardRef<FlowBuilderRef, FlowBuilderProps>(({
         getFlowState: () => ({
             nodes: getNodes(),
             edges: getEdges()
-        })
+        }),
+        setFlowState: (newNodes: Node[], newEdges: Edge[]) => {
+            setNodes(newNodes);
+            setEdges(newEdges);
+        }
     }));
 
     const lastNotifiedSnapshotRef = useRef<string>("");
