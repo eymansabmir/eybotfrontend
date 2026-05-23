@@ -13,6 +13,7 @@ import {
   LogOut,
   MoreVertical,
   SearchIcon,
+  History,
 } from "lucide-react"
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
@@ -86,6 +87,7 @@ const mainNav = [
 ]
 
 const footerNav = [
+  { label: "Activity Logs", to: "/activity-logs", icon: History },
   { label: "Settings", to: "/settings", icon: Settings2Icon },
 ]
 
