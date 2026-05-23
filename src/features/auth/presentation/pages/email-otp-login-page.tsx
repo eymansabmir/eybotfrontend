@@ -226,7 +226,7 @@ export function EmailOtpLoginPage() {
                 )}
               </Button>
 
-              {stage === "verify" && (
+              {(stage === "verify" || !!error) && (
                 <button
                   type="button"
                   disabled={isLoading}
@@ -235,9 +235,10 @@ export function EmailOtpLoginPage() {
                     setStage("request")
                     setOtp("")
                     setError(null)
+                    if (stage === "request") setEmail("") 
                   }}
                 >
-                  Use a different email address
+                  {stage === "verify" ? "Use a different email address" : "Try another email"}
                 </button>
               )}
             </form>
