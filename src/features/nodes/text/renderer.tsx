@@ -1,5 +1,5 @@
 import type { NodeProps } from "@xyflow/react";
-import { MessageSquare, X, Info } from "lucide-react";
+import { MessageSquare, Info } from "lucide-react";
 import { useReactFlow } from "@xyflow/react";
 import {
     Tooltip,

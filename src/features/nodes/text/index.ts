@@ -10,7 +10,7 @@ export const textNode: NodeDefinition<TextNodeData> = {
     schema: TextNodeSchema,
     renderer: TextNodeRenderer,
     handler: TextNodeHandler,
-    defaultData: { message: '', variables: [] },
+    defaultData: { message: '', variableScope: 'session' },
     defaultBranches: [{ key: 'default', label: 'Default' }],
     validate: (data) => {
         if (!data.message || !data.message.trim()) {
