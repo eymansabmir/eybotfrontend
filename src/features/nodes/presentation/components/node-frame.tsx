@@ -136,33 +136,18 @@ export function NodeFrame({
 
                 <div className="flex flex-col gap-2.5 w-full">
                     <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center gap-2.5 overflow-hidden">
+                        <div className="flex items-center gap-2.5 overflow-hidden flex-1">
                             <div className={cn(
                                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300",
                                 error && "bg-red-500/10 text-red-500"
                             )}>
                                 {icon}
                             </div>
-                            <div className="flex flex-col overflow-hidden">
-                                <span className={cn(
-                                    "text-sm font-semibold text-foreground leading-none pr-1 truncate",
-                                    error && "text-red-500"
-                                )}>{title}</span>
-                                {error && (
-                                    <span className="text-[9px] text-red-500 font-medium truncate mt-1">
-                                        {typeof error === "string" ? error : "Invalid Format"}
-                                    </span>
-                                )}
-                            </div>
-                        <div className="flex items-center gap-2.5 overflow-hidden flex-1">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300">
-                                {icon}
-                            </div>
-                             {isEditing ? (
-                                 <div 
-                                     data-is-editing="true"
-                                     className="flex-1 px-2 py-0.5 rounded-md ring-1 ring-[var(--ey-yellow)] bg-[var(--ey-yellow)]/5 shadow-[0_0_8px_rgba(254,226,3,0.2)] mr-8"
-                                 >
+                            {isEditing ? (
+                                <div 
+                                    data-is-editing="true"
+                                    className="flex-1 px-2 py-0.5 rounded-md ring-1 ring-[var(--ey-yellow)] bg-[var(--ey-yellow)]/5 shadow-[0_0_8px_rgba(254,226,3,0.2)] mr-8"
+                                >
                                     <input
                                         ref={inputRef}
                                         value={tempTitle}
@@ -175,17 +160,26 @@ export function NodeFrame({
                             ) : (
                                 <div 
                                     className={cn(
-                                        "flex items-center gap-1.5 group/title truncate pr-1 cursor-text",
+                                        "flex flex-col overflow-hidden flex-1 cursor-text",
                                         id && "hover:text-primary transition-colors"
                                     )}
                                     onDoubleClick={handleStartEdit}
                                 >
-                                    <span className="text-sm font-semibold text-foreground leading-none truncate">
+                                    <span className={cn(
+                                        "text-sm font-semibold text-foreground leading-none pr-1 truncate",
+                                        error && "text-red-500"
+                                    )}>
                                         {displayTitle}
                                     </span>
+                                    {error && (
+                                        <span className="text-[9px] text-red-500 font-medium truncate mt-1">
+                                            {typeof error === "string" ? error : "Invalid Format"}
+                                        </span>
+                                    )}
                                 </div>
                             )}
                         </div>
+                    </div>
 
                     {summary && (
                         <div className="bg-black/5 dark:bg-black/20 rounded-md p-2 border border-[var(--border-dim)] mt-0.5">
