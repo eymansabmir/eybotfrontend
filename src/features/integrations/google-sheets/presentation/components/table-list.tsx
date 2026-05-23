@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,7 +22,6 @@ export const TableList = <T extends object>({
   newItemDefaultProps,
   children,
 }: Props<T>) => {
-  const [showDeleteIndex, setShowDeleteIndex] = useState<number | null>(null);
 
   const createItem = () => {
     const newItem = { id: crypto.randomUUID(), ...newItemDefaultProps } as unknown as T;
