@@ -7,11 +7,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { VariableSelect } from "@/features/variables/components/variable-select";
+import { validateMediaUrl, validateMediaUrlRemote } from "@/lib/storage/application/validation";
+import { useEffect } from "react";
 
 export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: ImageNodeData }) {
     const { setNodes } = useReactFlow();
     const isVariable = !!data.url && data.url.includes("{{") && data.url.includes("}}");
     const { data: previewSrc } = useResolveUrl(isVariable ? undefined : data.url, "public");
+
+    // Remote validation for external URLs (checks size/availability)
+    useEffect(() => {
+        if (!data.url || data.validationError || !data.url.startsWith("http")) return;
+        
+        const timer = setTimeout(async () => {
+            const result = await validateMediaUrlRemote(data.url, "image");
+            if (!result.isValid) {
+                updateData({ validationError: result.error || "Size limit exceeded" });
+            }
+        }, 800);
+        
+        return () => clearTimeout(timer);
+    }, [data.url]);
 
     const updateData = (newData: Partial<ImageNodeData>) => {
         setNodes((nds) =>
@@ -40,6 +56,7 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
             description={imageNode.config.description}
             summary={getSummary()}
             showPopover={selected}
+            error={data.validationError}
             popoverBody={
                 <div className="space-y-5">
                     {/* Segmented Control for Upload vs URL */}
@@ -60,7 +77,7 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
                         </TabsList>
                         
                         <TabsContent value="upload" className="pt-4 mt-0 space-y-4 outline-none">
-                            <MediaUploader onUploadSuccess={(path) => updateData({ url: path })} purpose="image" />
+                            <MediaUploader onUploadSuccess={(path) => updateData({ url: path, validationError: undefined })} purpose="image" />
                         </TabsContent>
                         
                         <TabsContent value="url" className="pt-4 mt-0 space-y-3 outline-none">
@@ -73,7 +90,14 @@ export function ImageNodeRenderer({ id, data, selected }: NodeProps & { data: Im
                                     className="w-full bg-background rounded-lg border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                     value={data.url || ""}
                                     placeholder="https://example.com/image.jpg or {{var}}"
-                                    onChange={(e) => updateData({ url: e.target.value })}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        const validation = validateMediaUrl(val, "image");
+                                        updateData({ 
+                                            url: val, 
+                                            validationError: validation.isValid ? undefined : (validation.error || "Invalid Image")
+                                        });
+                                    }}
                                 />
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mt-2 block">Or pick a variable</label>
                                 <VariableSelect

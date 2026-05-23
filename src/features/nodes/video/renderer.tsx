@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { Video as VideoIcon, Link as LinkIcon, Type } from "lucide-react";
 import type { VideoNodeData } from "./schema";
@@ -8,6 +9,7 @@ import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { isDynamicVariable } from "../utils";
 import { VariableSelect } from "@/features/variables/components/variable-select";
+import { validateMediaUrl, validateMediaUrlRemote } from "@/lib/storage/application/validation";
 
 /** Returns true if the value looks like an absolute URL (not a storage path). */
 function isAbsoluteUrl(value: string) {
@@ -21,6 +23,20 @@ export function VideoNodeRenderer({ id, data, selected }: NodeProps & { data: Vi
     const isPath = !!data.url && !isAbsoluteUrl(data.url) && !isVariable;
     const { data: resolvedUrl } = useResolveUrl(isPath ? data.url : undefined, "public");
     const previewSrc = data.url ? (isPath ? resolvedUrl : (isVariable ? undefined : data.url)) : undefined;
+
+    // Remote validation for external URLs (checks size/availability)
+    useEffect(() => {
+        if (!data.url || data.validationError || !data.url.startsWith("http")) return;
+        
+        const timer = setTimeout(async () => {
+            const result = await validateMediaUrlRemote(data.url, "video");
+            if (!result.isValid) {
+                updateData({ validationError: result.error || "Size limit exceeded" });
+            }
+        }, 800);
+        
+        return () => clearTimeout(timer);
+    }, [data.url]);
 
     const updateData = (newData: Partial<VideoNodeData>) => {
         setNodes((nds) =>
@@ -45,6 +61,7 @@ export function VideoNodeRenderer({ id, data, selected }: NodeProps & { data: Vi
             description={videoNode.config.description}
             summary={getSummary()}
             showPopover={selected}
+            error={data.validationError}
             popoverBody={
                 <div className="space-y-4">
                     <Tabs defaultValue={isVariable ? "url" : "upload"} className="w-full">
@@ -64,7 +81,7 @@ export function VideoNodeRenderer({ id, data, selected }: NodeProps & { data: Vi
                         </TabsList>
                         
                         <TabsContent value="upload" className="pt-4 mt-0 space-y-4 outline-none">
-                            <MediaUploader onUploadSuccess={(path) => updateData({ url: path })} purpose="video" />
+                            <MediaUploader onUploadSuccess={(path) => updateData({ url: path, validationError: undefined })} purpose="video" />
                         </TabsContent>
                         
                         <TabsContent value="url" className="pt-4 mt-0 space-y-3 outline-none">
@@ -78,7 +95,14 @@ export function VideoNodeRenderer({ id, data, selected }: NodeProps & { data: Vi
                                     className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                     value={data.url || ""}
                                     placeholder="https://example.com/video.mp4 or {{var}}"
-                                    onChange={(e) => updateData({ url: e.target.value })}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        const validation = validateMediaUrl(val, "video");
+                                        updateData({ 
+                                            url: val, 
+                                            validationError: validation.isValid ? undefined : (validation.error || "Invalid Video")
+                                        });
+                                    }}
                                 />
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mt-2 block self-start">Or pick a variable</label>
                                 <VariableSelect

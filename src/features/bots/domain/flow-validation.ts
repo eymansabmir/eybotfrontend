@@ -89,6 +89,11 @@ export const getFlowValidationErrors = (nodes: Node[]): string[] => {
             hasNodeError = true;
         };
 
+        // Check for specific validation errors persisted in the node data (e.g. from media URL checks)
+        if (typeof nodeData["validationError"] === "string" && nodeData["validationError"].length > 0) {
+            pushNodeError(`${nodeTitle} node: ${nodeData["validationError"]}`);
+        }
+
         if (node.type === NodeType.SEND_TEXT) {
             const message = typeof nodeData["message"] === "string" ? nodeData["message"].trim() : "";
             if (!message) {

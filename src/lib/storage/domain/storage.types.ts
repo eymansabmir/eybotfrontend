@@ -1,5 +1,5 @@
 /** Upload purpose — the frontend's abstraction over backend storage folders. */
-export type UploadPurpose = "image" | "video" | "audio" | "document" | "campaign_csv" | "general";
+export type UploadPurpose = "image" | "video" | "audio" | "document" | "sticker" | "campaign_csv" | "general";
 
 /** Core upload result returned after a successful upload. Contains only the stored path — no URL. */
 export interface UploadResult {

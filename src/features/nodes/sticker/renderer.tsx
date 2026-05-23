@@ -10,6 +10,7 @@ import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 import { isDynamicVariable } from "../utils";
 import { VariableSelect } from "@/features/variables/components/variable-select";
+import { validateMediaUrl, validateMediaUrlRemote } from "@/lib/storage/application/validation";
 
 /** Returns true if the value looks like an absolute URL (not a storage path). */
 function isAbsoluteUrl(value: string) {
@@ -37,6 +38,33 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
         );
     };
 
+    // Remote validation for stickers (checks size/availability/resolution)
+    useEffect(() => {
+        if (!data.url || data.validationError || isVariable) return;
+        
+        const timer = setTimeout(async () => {
+            // 1. Remote size and URL check via backend
+            const result = await validateMediaUrlRemote(data.url, "sticker");
+            if (!result.isValid) {
+                updateData({ validationError: result.error || "Invalid sticker" });
+                return;
+            }
+
+            // 2. Frontend resolution check (must be 512x512)
+            if (previewSrc) {
+                const img = new globalThis.Image();
+                img.onload = () => {
+                    if (img.width !== 512 || img.height !== 512) {
+                        updateData({ validationError: `Sticker resolution must be 512x512 (got ${img.width}x${img.height})` });
+                    }
+                };
+                img.src = previewSrc;
+            }
+        }, 800);
+        
+        return () => clearTimeout(timer);
+    }, [data.url, previewSrc, isVariable]);
+
     const fetchMediaId = async (url: string) => {
         if (!url || data.mediaId) return;
 
@@ -59,12 +87,20 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
         }
     };
 
-    // Automatically trigger Meta upload when we have a displayable sticker
+    // Automatically trigger Meta upload when we have a displayable sticker AND no validation errors
+    // We add a slight delay to ensure the validation logic has had time to run first
     useEffect(() => {
-        if (previewSrc && !data.mediaId && !isUploadingToMeta && !isVariable) {
-            fetchMediaId(previewSrc);
-        }
-    }, [previewSrc, isVariable]);
+        if (!previewSrc || data.mediaId || isUploadingToMeta || isVariable || data.validationError) return;
+        
+        const timer = setTimeout(() => {
+            // Re-check validationError after the delay
+            if (!data.validationError) {
+                fetchMediaId(previewSrc);
+            }
+        }, 1200); // Wait longer than the 800ms validation debounce
+        
+        return () => clearTimeout(timer);
+    }, [previewSrc, isVariable, data.mediaId, isUploadingToMeta, data.validationError]);
 
     return (
         <NodeFrame
@@ -75,6 +111,7 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
             description={stickerNode.config.description}
             summary={isVariable ? `Dynamic: ${data.url}` : (data.url ? "1 attached sticker" : "Upload a sticker...")}
             showPopover={selected}
+            error={data.validationError}
             popoverBody={
                 <div className="space-y-4">
                     <Tabs defaultValue={isVariable ? "url" : "upload"} className="w-full">
@@ -94,7 +131,7 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
                         </TabsList>
                         
                         <TabsContent value="upload" className="pt-4 mt-0 space-y-4 outline-none">
-                            <MediaUploader onUploadSuccess={(path) => updateData({ url: path, mediaId: undefined })} purpose="image" />
+                            <MediaUploader onUploadSuccess={(path) => updateData({ url: path, mediaId: undefined, validationError: undefined })} purpose="sticker" />
                             {data.mediaId && (
                                 <div className="w-full mt-2">
                                     <div className="flex items-center gap-1.5 mb-1">
@@ -115,10 +152,18 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
                                 </div>
                                 <input
                                     type="text"
-                                    className="w-full bg-background rounded-md border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
+                                    className="w-full bg-background rounded-lg border border-[var(--border-dim)] px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--ey-yellow)] transition-all"
                                     value={data.url || ""}
                                     placeholder="https://example.com/sticker.webp or {{var}}"
-                                    onChange={(e) => updateData({ url: e.target.value, mediaId: undefined })}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        const validation = validateMediaUrl(val, "sticker");
+                                        updateData({ 
+                                            url: val, 
+                                            mediaId: undefined,
+                                            validationError: validation.isValid ? undefined : (validation.error || "Invalid Sticker")
+                                        });
+                                    }}
                                 />
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mt-2 block self-start">Or pick a variable</label>
                                 <VariableSelect

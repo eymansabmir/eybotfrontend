@@ -33,6 +33,7 @@ interface NodeFrameProps {
     extraPopoverHeader?: ReactNode;
     extraContent?: ReactNode;
     description?: string;
+    error?: string | boolean;
     id?: string; // If provided, NodeFrame handles renaming automatically
 }
 
@@ -60,6 +61,7 @@ export function NodeFrame({
     extraPopoverHeader,
     extraContent,
     description,
+    error,
     id: propId,
 }: NodeFrameProps) {
     const nodeCtx = useNodeContext();
@@ -133,6 +135,25 @@ export function NodeFrame({
                 )}
 
                 <div className="flex flex-col gap-2.5 w-full">
+                    <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                            <div className={cn(
+                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300",
+                                error && "bg-red-500/10 text-red-500"
+                            )}>
+                                {icon}
+                            </div>
+                            <div className="flex flex-col overflow-hidden">
+                                <span className={cn(
+                                    "text-sm font-semibold text-foreground leading-none pr-1 truncate",
+                                    error && "text-red-500"
+                                )}>{title}</span>
+                                {error && (
+                                    <span className="text-[9px] text-red-500 font-medium truncate mt-1">
+                                        {typeof error === "string" ? error : "Invalid Format"}
+                                    </span>
+                                )}
+                            </div>
                         <div className="flex items-center gap-2.5 overflow-hidden flex-1">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-500/10 text-zinc-600 dark:text-zinc-300">
                                 {icon}
