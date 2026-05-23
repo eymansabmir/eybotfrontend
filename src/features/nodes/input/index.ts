@@ -10,7 +10,7 @@ export const inputNode: NodeDefinition<InputNodeData> = {
     schema: InputNodeSchema,
     renderer: InputNodeRenderer,
     handler: InputNodeHandler,
-    defaultData: { question: '', variable: 'var_name', validationType: 'text', timeoutSeconds: 3600 },
+    defaultData: { message: '', variableName: 'var_name', variableScope: 'session', validationType: 'text', timeoutSeconds: 3600 },
     defaultBranches: [{ key: 'default', label: 'Default' }, { key: 'timeout', label: 'Timeout' }],
 };
 

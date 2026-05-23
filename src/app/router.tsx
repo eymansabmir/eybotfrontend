@@ -189,6 +189,8 @@ const activityLogsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "activity-logs",
   component: ActivityLogPage,
+})
+
 const connectorsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "connectors",
