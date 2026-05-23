@@ -53,6 +53,7 @@ export function BotEditorPage() {
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
     const baselineSnapshotRef = useRef<string>("");
     const hasInitialVariablesLoadedRef = useRef(false);
+    const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const [isDirty, setIsDirty] = useState(false);
     const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
@@ -192,9 +193,18 @@ export function BotEditorPage() {
             return newDirtyStatus;
         });
 
-        // Sync variables from nodes into the global store
-        syncVariablesFromNodes(payload.nodes);
+        // Sync variables from nodes into the global store (debounced to avoid keystroke pollution)
+        if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = setTimeout(() => {
+            syncVariablesFromNodes(payload.nodes);
+        }, 1000);
     }, [syncVariablesFromNodes]);
+
+    useEffect(() => {
+        return () => {
+            if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+        };
+    }, []);
 
     const handleGuardedNavigate = (target: "bots" | "settings") => {
         if (!isDirty) {

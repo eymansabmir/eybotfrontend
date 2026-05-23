@@ -108,7 +108,7 @@ function loadPickerModule(): Promise<void> {
 interface GoogleSpreadsheetPickerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  getAccessToken: () => Promise<string>;
+  getAccessToken: () => Promise<string | { accessToken: string; apiKey?: string }>;
   onPick: (spreadsheet: GoogleSpreadsheetInfo) => void;
 }
 
@@ -138,12 +138,22 @@ export function GoogleSpreadsheetPicker({
 
     const openPicker = async () => {
       try {
-        const apiKey = import.meta.env.VITE_GOOGLE_SHEETS_API_KEY as string | undefined;
+        const tokenResponse = await getAccessTokenRef.current();
+        let accessToken: string;
+        let apiKeyFromBackend: string | undefined;
+
+        if (typeof tokenResponse === "string") {
+          accessToken = tokenResponse;
+        } else {
+          accessToken = tokenResponse.accessToken;
+          apiKeyFromBackend = tokenResponse.apiKey;
+        }
+
+        const apiKey = apiKeyFromBackend || (import.meta.env.VITE_GOOGLE_SHEETS_API_KEY as string | undefined);
         if (!apiKey) {
           throw new Error("VITE_GOOGLE_SHEETS_API_KEY is missing");
         }
 
-        const accessToken = await getAccessTokenRef.current();
         await loadGoogleApiScript();
         await loadPickerModule();
 

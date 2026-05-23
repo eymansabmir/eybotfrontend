@@ -10,6 +10,8 @@ import type { GoogleSheetsCredential, GoogleSheetInfo } from "../domain/google-s
 import type { GoogleSheetsConfigDraft } from "../state/google-sheets-config.state";
 import { TableList } from "./components/table-list";
 import { CellWithValueStack, type CellItem } from "./components/cell-value-stack";
+import { CellWithVariableSelectStack, type ExtractItem } from "./components/cell-variable-stack";
+import { CellComparisonStack, type ComparisonItem } from "./components/cell-comparison-stack";
 
 interface GoogleSheetsConfigFormProps {
   draft: GoogleSheetsConfigDraft;
@@ -97,64 +99,47 @@ export function GoogleSheetsConfigForm({
 
       {draft.credentialId && (
         <>
-          {/* ── Step 2: Action ── */}
+          {/* ── Step 2: Spreadsheet ── */}
           <div className="space-y-1.5">
-            <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">2. Action</Label>
-            <Select value={draft.action} onValueChange={(value) => onDraftChange({ action: value as GoogleSheetsConfigDraft["action"] })}>
-              <SelectTrigger className="w-full bg-background h-9 text-sm">
-                <SelectValue placeholder="Select an operation" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="insert_row">Insert a row</SelectItem>
-                <SelectItem value="update_row">Update a row</SelectItem>
-                <SelectItem value="get_row">Get data from sheet</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">2. Spreadsheet</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 flex-1 justify-start truncate text-left font-normal"
+                onClick={() => onPickSpreadsheet()}
+              >
+                {draft.spreadsheetName || draft.spreadsheetId || "Pick spreadsheet"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9"
+                disabled={!draft.spreadsheetId}
+                onClick={() =>
+                  onDraftChange({
+                    spreadsheetId: "",
+                    spreadsheetName: "",
+                    sheetId: "",
+                    sheetName: "",
+                  })
+                }
+              >
+                Clear
+              </Button>
+            </div>
+            {draft.spreadsheetId ? (
+              <p className="truncate text-[11px] text-muted-foreground">
+                {draft.spreadsheetName || draft.spreadsheetId}
+              </p>
+            ) : null}
           </div>
 
-          {/* ── Step 3: Spreadsheet (only when action is selected) ── */}
-          {draft.action && (
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">3. Spreadsheet</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-9 flex-1 justify-start truncate text-left font-normal"
-                  onClick={() => onPickSpreadsheet()}
-                >
-                  {draft.spreadsheetName || draft.spreadsheetId || "Pick spreadsheet"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-9"
-                  disabled={!draft.spreadsheetId}
-                  onClick={() =>
-                    onDraftChange({
-                      spreadsheetId: "",
-                      spreadsheetName: "",
-                      sheetId: "",
-                      sheetName: "",
-                    })
-                  }
-                >
-                  Clear
-                </Button>
-              </div>
-              {draft.spreadsheetId ? (
-                <p className="truncate text-[11px] text-muted-foreground">
-                  {draft.spreadsheetName || draft.spreadsheetId}
-                </p>
-              ) : null}
-            </div>
-          )}
-
-          {/* ── Step 4: Worksheet (only when spreadsheet is selected) ── */}
+          {/* ── Step 3: Worksheet (only when spreadsheet is selected) ── */}
           {draft.spreadsheetId && (
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">4. Worksheet</Label>
+              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">3. Worksheet</Label>
               <Select
                 value={draft.sheetId}
                 onValueChange={(value) => {
@@ -174,6 +159,23 @@ export function GoogleSheetsConfigForm({
                       <SelectItem key={sh.id} value={sh.id}>{sh.name}</SelectItem>
                     ))
                   )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* ── Step 4: Action (only when worksheet is selected) ── */}
+          {draft.sheetId && (
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">4. Action</Label>
+              <Select value={draft.action} onValueChange={(value) => onDraftChange({ action: value as GoogleSheetsConfigDraft["action"] })}>
+                <SelectTrigger className="w-full bg-background h-9 text-sm">
+                  <SelectValue placeholder="Select an operation" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="insert_row">Insert a row</SelectItem>
+                  <SelectItem value="update_row">Update a row</SelectItem>
+                  <SelectItem value="get_row">Get data from sheet</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -289,35 +291,72 @@ function ActionOptions({
 
     case "get_row":
       return (
-        <Accordion type="multiple" defaultValue={["select"]} className="w-full space-y-1">
+        <Accordion type="multiple" defaultValue={["select", "extract"]} className="w-full space-y-1">
           <AccordionItem value="select" className="border rounded-md bg-muted/20 px-3">
             <AccordionTrigger className="py-2.5 text-xs font-semibold hover:no-underline">Select row(s)</AccordionTrigger>
             <AccordionContent className="pb-3 space-y-3">
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">Row ID (optional)</Label>
-                <Input
-                  type="number"
-                  value={draft.rowId ?? ""}
-                  onChange={(e) => onDraftChange({ rowId: e.target.value ? Number(e.target.value) : undefined })}
-                  placeholder="2"
-                  className="bg-background h-8 text-xs"
-                />
+                <Select
+                  value={draft.totalRowsToExtract || "All"}
+                  onValueChange={(val) => onDraftChange({ totalRowsToExtract: val })}
+                >
+                  <SelectTrigger className="w-full bg-background h-8 text-xs font-medium">
+                    <SelectValue placeholder="Select extraction mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All</SelectItem>
+                    <SelectItem value="First">First</SelectItem>
+                    <SelectItem value="Last">Last</SelectItem>
+                    <SelectItem value="Random">Random</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {draft.totalRowsToExtract === "All" && (
+                  <div className="space-y-1 mt-1">
+                    <Label className="text-[11px] text-muted-foreground font-semibold">Row limit (leave empty for all matches)</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={draft.limit ?? ""}
+                      onChange={(e) => onDraftChange({ limit: e.target.value ? Number(e.target.value) : undefined })}
+                      placeholder="e.g. 5"
+                      className="bg-background h-8 text-xs font-mono"
+                    />
+                  </div>
+                )}
               </div>
-              <Label className="text-xs text-muted-foreground">Or filter:</Label>
+
               {columnsLoading ? (
-                <p className="text-xs text-muted-foreground animate-pulse">Loading columns...</p>
+                <p className="text-xs text-muted-foreground animate-pulse mt-2">Loading columns...</p>
               ) : (
-                <TableList<CellItem>
-                  items={draft.filterItems}
-                  onItemsChange={(items) => onDraftChange({ filterItems: items })}
-                  addLabel="Add a filter"
+                <TableList<ComparisonItem>
+                  items={draft.comparisonItems}
+                  onItemsChange={(items) => onDraftChange({ comparisonItems: items })}
+                  addLabel="Add filter rule"
                 >
                   {({ item, onItemChange }) => (
-                    <CellWithValueStack item={item} onItemChange={onItemChange} columns={cols} />
+                    <CellComparisonStack item={item} onItemChange={onItemChange} columns={cols} />
                   )}
                 </TableList>
               )}
-
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="extract" className="border rounded-md bg-muted/20 px-3">
+            <AccordionTrigger className="py-2.5 text-xs font-semibold hover:no-underline">Columns to extract</AccordionTrigger>
+            <AccordionContent className="pb-3 space-y-2">
+              {columnsLoading ? (
+                <p className="text-xs text-muted-foreground animate-pulse">Loading columns...</p>
+              ) : (
+                <TableList<ExtractItem>
+                  items={draft.extractItems}
+                  onItemsChange={(items) => onDraftChange({ extractItems: items })}
+                  addLabel="Add a value"
+                >
+                  {({ item, onItemChange }) => (
+                    <CellWithVariableSelectStack item={item} onItemChange={onItemChange} columns={cols} />
+                  )}
+                </TableList>
+              )}
             </AccordionContent>
           </AccordionItem>
         </Accordion>
