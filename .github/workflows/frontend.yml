@@ -51,3 +51,4 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             VITE_API_URL=https://devwhatsappbe.epf6.in/api
+            VITE_ENABLE_VOICE_TECH=false
