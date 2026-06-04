@@ -9,6 +9,11 @@ export const campaignApi = {
         return data;
     },
 
+    getCustomFilters: async (): Promise<{ id: string; name: string; key: string; value: string }[]> => {
+        const { data } = await apiClient.get<{ id: string; name: string; key: string; value: string }[]>(`${BASE}/custom-filters`);
+        return data;
+    },
+
     getById: async (id: string): Promise<Campaign> => {
         const { data } = await apiClient.get<Campaign>(`${BASE}/${id}`);
         return data;

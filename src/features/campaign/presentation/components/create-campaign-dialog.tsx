@@ -33,9 +33,11 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
     const [title, setTitle] = useState("");
     const [botId, setBotId] = useState("");
     const [filePath, setFilePath] = useState("");
-    const [sourceType, setSourceType] = useState<'CSV' | 'DB2DB' | 'API'>('CSV');
+    const [sourceType, setSourceType] = useState<'CSV' | 'DB2DB' | 'API' | 'CUSTOM_API'>('CSV');
     const [selectedDataSourceId, setSelectedDataSourceId] = useState<string | undefined>();
     const [selectedView, setSelectedView] = useState<string | undefined>();
+    const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
+    const [filters, setFilters] = useState<string[]>([]);
     const [executionMode, setExecutionMode] = useState<ExecutionMode>("NOW");
     const [executeAt, setExecuteAt] = useState("");
     const [isAudienceValid, setIsAudienceValid] = useState(false);
@@ -50,6 +52,8 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
         setSourceType('CSV');
         setSelectedDataSourceId(undefined);
         setSelectedView(undefined);
+        setFieldMapping({});
+        setFilters([]);
         setExecutionMode("NOW");
         setExecuteAt("");
         setIsAudienceValid(false);
@@ -78,8 +82,10 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                 name: title.trim(),
                 flowId: botId.trim(),
                 filePath: sourceType === 'CSV' ? filePath : undefined,
-                dataSourceId: sourceType === 'DB2DB' ? selectedDataSourceId : undefined,
+                dataSourceId: sourceType === 'DB2DB' ? selectedDataSourceId : (sourceType === 'CUSTOM_API' ? 'CUSTOM_API' : undefined),
                 tableName: sourceType === 'DB2DB' ? selectedView : undefined,
+                fieldMapping: sourceType === 'CUSTOM_API' ? fieldMapping : undefined,
+                filters: sourceType === 'CUSTOM_API' && filters.length > 0 ? filters : undefined,
                 // If API, we don't send file or DB info, backend will create a 'WAITING_FOR_API' style campaign
                 scheduleTime: executionMode === "SCHEDULED" ? new Date(executeAt).toISOString() : undefined,
             });
@@ -128,6 +134,10 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                                             onDataSourceChange={setSelectedDataSourceId}
                                             selectedView={selectedView}
                                             onViewChange={setSelectedView}
+                                            fieldMapping={fieldMapping}
+                                            onFieldMappingChange={setFieldMapping}
+                                            filters={filters}
+                                            onFiltersChange={setFilters}
                                             onValidityChange={setIsAudienceValid}
                                         />
                                     )}

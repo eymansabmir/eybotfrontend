@@ -299,9 +299,9 @@ export function BotEditorPage() {
 
         if (n.type === "ask_question") {
             backendData = {
-                message: n.data.question || "Default question",
-                variableName: n.data.variable || "var",
-                variableScope: "session",
+                message: n.data.message || n.data.question || "Default question",
+                variableName: n.data.variableName || n.data.variable || "var",
+                variableScope: n.data.variableScope || "session",
                 inputType: n.data.validationType || "text",
                 timeoutSeconds: n.data.timeoutSeconds || 3600
             };
@@ -462,7 +462,9 @@ export function BotEditorPage() {
             frontendData = {
                 ...frontendData,
                 question: n.data.message || "",
+                message: n.data.message || "",
                 variable: n.data.variableName || "var",
+                variableName: n.data.variableName || "var",
                 validationType: n.data.inputType || "text",
                 timeoutSeconds: n.data.timeoutSeconds || 3600
             };
@@ -559,7 +561,7 @@ export function BotEditorPage() {
                     backendData = contentOnly;
                 }
                 if (n.type === "ask_question") {
-                    backendData = { ...backendData, message: n.data.question, variableName: n.data.variable || n.data.variableName, inputType: n.data.validationType };
+                    backendData = { ...backendData, message: n.data.message || n.data.question, variableName: n.data.variableName || n.data.variable, inputType: n.data.validationType };
                 } else if (n.type === "nps") {
                     backendData = { ...backendData, message: n.data.message, variableName: n.data.variable || n.data.variableName, variableScope: n.data.variableScope };
                 }

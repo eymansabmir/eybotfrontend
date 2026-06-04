@@ -16,6 +16,14 @@ export function useCampaigns() {
     });
 }
 
+export function useCustomFilters() {
+    return useQuery({
+        queryKey: ["custom-filters"],
+        queryFn: campaignApi.getCustomFilters,
+        staleTime: Infinity,
+    });
+}
+
 export function useCampaign(id: string) {
     return useQuery({
         queryKey: CAMPAIGN_KEYS.detail(id),
