@@ -1,4 +1,4 @@
-import { Plus, Trash2, MapPin, Type, Image as ImageIcon, Video, FileText, Calendar, DollarSign } from "lucide-react";
+import { Plus, Trash2, MapPin, Type, Image as ImageIcon, Video, FileText, Calendar, DollarSign, Download, Loader2 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { TemplateNodeData, TemplateComponent, TemplateParameter } from "../schema";
+import { useState } from "react";
+import { useParams } from "@tanstack/react-router";
+import { useBot } from "@/features/bots/data/queries/use-bots";
+import { useWhatsAppCredentials } from "@/features/integrations/whatsapp/hooks/use-whatsapp-credentials";
+import { whatsappCredentialsApi } from "@/features/integrations/whatsapp/api/whatsapp-credentials.api";
+import { toast } from "sonner";
 
 interface TemplateConfigFormProps {
     data: TemplateNodeData;
@@ -26,6 +32,47 @@ const PARAM_TYPES = [
 
 export function TemplateConfigForm({ data, onChange }: TemplateConfigFormProps) {
     const components = data.components || [];
+    const { id } = useParams({ strict: false });
+    const { data: bot } = useBot(id || "");
+    const { data: credentials } = useWhatsAppCredentials(bot?.orgId || "");
+    const [isFetching, setIsFetching] = useState(false);
+
+    const handleFetchTemplate = async () => {
+        if (!data.templateName.trim()) {
+            toast.error("Please enter a template name first.");
+            return;
+        }
+
+        const credentialId = bot?.settings?.credentialId || credentials?.[0]?.id;
+        const orgId = bot?.orgId;
+
+        setIsFetching(true);
+
+        const fetchPromise = whatsappCredentialsApi.fetchTemplate({
+            templateName: data.templateName.trim(),
+            credentialId,
+            orgId,
+        });
+
+        toast.promise(fetchPromise, {
+            loading: "Connecting to Meta Graph API & downloading template...",
+            success: (res) => {
+                setIsFetching(false);
+                onChange({
+                    templateName: res.templateName,
+                    languageCode: res.languageCode,
+                    components: res.components,
+                    previewText: (res as any).previewText,
+                });
+                return `Successfully fetched & mapped '${res.templateName}' components!`;
+            },
+            error: (err: any) => {
+                setIsFetching(false);
+                const errMsg = err?.response?.data?.message || err?.message || "Failed to fetch template from Meta. Please check your credentials.";
+                return errMsg;
+            }
+        });
+    };
 
     const updateComponents = (newComponents: TemplateComponent[]) => {
         onChange({ components: newComponents });
@@ -85,26 +132,51 @@ export function TemplateConfigForm({ data, onChange }: TemplateConfigFormProps) 
 
     return (
         <div className="flex flex-col gap-6 pt-1">
-            <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                    <Label className={SECTION_LABEL_CLASS}>Template Name</Label>
-                    <Input 
-                        value={data.templateName} 
-                        onChange={(e) => onChange({ templateName: e.target.value })} 
-                        placeholder="hello_world" 
-                        className="h-9 text-sm"
-                    />
-                </div>
-                <div className="space-y-1.5">
-                    <Label className={SECTION_LABEL_CLASS}>Language Code</Label>
-                    <Input 
-                        value={data.languageCode} 
-                        onChange={(e) => onChange({ languageCode: e.target.value })} 
-                        placeholder="en_US" 
-                        className="h-9 text-sm"
-                    />
-                </div>
+            <div className="space-y-1.5">
+                <Label className={SECTION_LABEL_CLASS}>Template Name</Label>
+                <Input 
+                    value={data.templateName} 
+                    onChange={(e) => onChange({ templateName: e.target.value })} 
+                    placeholder="hello_world" 
+                    className="h-9 text-sm"
+                />
             </div>
+
+            {data.previewText && (
+                <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] dark:bg-emerald-500/[0.01] space-y-2 animate-in fade-in slide-in-from-top-2">
+                    <Label className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                        Template Preview
+                    </Label>
+                    <div className="text-xs text-muted-foreground whitespace-pre-wrap font-mono p-2.5 rounded-lg bg-muted/30 border border-muted/50 leading-relaxed max-h-48 overflow-y-auto">
+                        {data.previewText}
+                    </div>
+                </div>
+            )}
+
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleFetchTemplate}
+                disabled={isFetching || !data.templateName.trim()}
+                className={cn(
+                    "w-full h-9 flex items-center justify-center gap-2 text-xs font-bold transition-all relative overflow-hidden",
+                    "border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/40 active:scale-[0.98]",
+                    "disabled:opacity-50 disabled:pointer-events-none disabled:scale-100 shadow-sm"
+                )}
+            >
+                {isFetching ? (
+                    <>
+                        <Loader2 className="size-3.5 animate-spin mr-1" />
+                        Fetching structure...
+                    </>
+                ) : (
+                    <>
+                        <Download className="size-3.5 mr-1" />
+                        Fetch Template from Meta
+                    </>
+                )}
+            </Button>
 
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
