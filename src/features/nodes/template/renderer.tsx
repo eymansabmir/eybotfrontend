@@ -34,9 +34,9 @@ export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data:
                     const mergedData = { ...node.data, ...newData };
                     const updatedNode = { ...node, data: mergedData };
                     
-                    const quickReplyButtons = mergedData.components?.filter(
+                    const quickReplyButtons = (mergedData.components?.filter(
                         c => c.type === 'button' && c.sub_type === 'quick_reply'
-                    ) || [];
+                    ) || []) as Extract<import('./schema').TemplateComponent, { type: 'button' }>[];
                     
                     if (quickReplyButtons.length > 0) {
                         (updatedNode as any).branches = quickReplyButtons.map((btn, idx) => ({
@@ -65,9 +65,9 @@ export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data:
     };
 
     const hasComponents = data.components && data.components.length > 0;
-    const quickReplyButtons = data.components?.filter(
+    const quickReplyButtons = (data.components?.filter(
         c => c.type === "button" && c.sub_type === "quick_reply"
-    ) || [];
+    ) || []) as Extract<import('./schema').TemplateComponent, { type: 'button' }>[];
 
     return (
         <NodeFrame
