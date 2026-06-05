@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react"
-import type { ReactNode } from "react"
+import type { ComponentType, ReactNode, SVGProps } from "react"
 import {
   BotIcon,
   LayoutDashboardIcon,
   MegaphoneIcon,
   MoonIcon,
-  PhoneCallIcon,
+  // PhoneCallIcon,
   Settings2Icon,
   SunIcon,
   UsersIcon,
@@ -15,6 +15,19 @@ import {
   SearchIcon,
   History,
 } from "lucide-react"
+
+interface SidebarSubNavItem {
+  label: string;
+  to: string;
+}
+
+interface SidebarNavItem {
+  label: string;
+  to: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  featureFlag?: keyof typeof ENV.FEATURES;
+  items?: SidebarSubNavItem[];
+}
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router"
 import { useTheme } from "next-themes"
 import { EYLogo } from "@/components/branding/ey-logo"
@@ -58,35 +71,35 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 
-const mainNav = [
+const mainNav: SidebarNavItem[] = [
   { label: "Dashboard", to: "/", icon: LayoutDashboardIcon },
   { label: "Bots", to: "/bots", icon: BotIcon },
-  { 
-    label: "Campaign", 
-    to: "/campaign", 
+  {
+    label: "Campaign",
+    to: "/campaign",
     icon: MegaphoneIcon,
     featureFlag: "CAMPAIGNS" as const
   },
+  // {
+  //   label: "Voice Tech",
+  //   to: "/voice-tech",
+  //   icon: PhoneCallIcon,
+  //   featureFlag: "VOICE_TECH" as const,
+  //   items: [
+  //     { label: "Orchestrations", to: "/voice-tech" },
+  //     { label: "Datasets", to: "/voice-tech/datasets" },
+  //     { label: "Vendors", to: "/voice-tech/vendors" },
+  //   ],
+  // },
   {
-    label: "Voice Tech",
-    to: "/voice-tech",
-    icon: PhoneCallIcon,
-    featureFlag: "VOICE_TECH" as const,
-    items: [
-      { label: "Orchestrations", to: "/voice-tech" },
-      { label: "Datasets", to: "/voice-tech/datasets" },
-      { label: "Vendors", to: "/voice-tech/vendors" },
-    ],
-  },
-  { 
-    label: "Users", 
-    to: "/users", 
+    label: "Users",
+    to: "/users",
     icon: UsersIcon,
     featureFlag: "USERS" as const
   },
 ]
 
-const footerNav = [
+const footerNav: SidebarNavItem[] = [
   { label: "Activity Logs", to: "/activity-logs", icon: History },
   { label: "Settings", to: "/settings", icon: Settings2Icon },
 ]
@@ -138,7 +151,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {mainNav
                   .filter((item) => !item.featureFlag || ENV.FEATURES[item.featureFlag])
                   .map((item) => {
-                  const hasSubItems = item.items && item.items.length > 0;
+                  const hasSubItems = Array.isArray(item.items) && item.items.length > 0;
                   const isActive = item.to === "/"
                     ? pathname === "/"
                     : pathname === item.to || pathname.startsWith(item.to + "/");
@@ -153,8 +166,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                       >
                         <SidebarMenuItem>
                           <CollapsibleTrigger asChild>
-                            <SidebarMenuButton 
-                              tooltip={item.label} 
+                            <SidebarMenuButton
+                              tooltip={item.label}
                               isActive={isActive}
                               className={cn(
                                 "transition-all duration-200 h-10 rounded-none",
@@ -168,7 +181,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                           </CollapsibleTrigger>
                           <CollapsibleContent>
                             <SidebarMenuSub>
-                              {item.items?.map((subItem) => (
+                              {item.items?.map((subItem: SidebarSubNavItem) => (
                                 <SidebarMenuSubItem key={subItem.label}>
                                   <SidebarMenuSubButton asChild isActive={pathname === subItem.to}>
                                     <Link to={subItem.to}>
@@ -254,7 +267,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={handleLogout}
                   className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:text-red-400 dark:focus:bg-red-950/20"
                 >
@@ -308,8 +321,8 @@ function Header({ onSearchClick }: { onSearchClick: () => void }) {
               <span className="text-[10px]">⌘</span>K
             </kbd>
           </button>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             className="bg-primary text-primary-foreground hover:opacity-90 transition-all shadow-sm h-9 px-5 rounded-lg text-xs font-bold"
             onClick={() => navigate({ to: "/create-bot" })}
           >
