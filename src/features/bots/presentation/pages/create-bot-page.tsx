@@ -158,8 +158,8 @@ export function CreateBotPage() {
 
     if (n.type === NodeType.ASK_QUESTION && !backendData.variableName) {
       backendData = {
-        message: n.data.question || n.data.message || "Default question",
-        variableName: n.data.variable || n.data.variableName || "var",
+        message: n.data.message || n.data.question || "Default question",
+        variableName: n.data.variableName || n.data.variable || "var",
         variableScope: n.data.variableScope || "session",
         inputType: n.data.validationType || n.data.inputType || "text",
         timeoutSeconds: n.data.timeoutSeconds || 3600

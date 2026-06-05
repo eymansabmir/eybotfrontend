@@ -33,6 +33,7 @@ export const TemplateComponentSchema = z.discriminatedUnion("type", [
         type: z.literal("button"),
         sub_type: z.enum(["quick_reply", "url", "button"]),
         index: z.number(),
+        text: z.string().optional(),
         parameters: z.array(TemplateButtonParameterSchema),
     }),
 ]);
@@ -41,6 +42,7 @@ export const TemplateNodeSchema = z.object({
     templateName: z.string().min(1, "Template name is required"),
     languageCode: z.string().min(1, "Language code is required").default("en_US"),
     components: z.array(TemplateComponentSchema).optional(),
+    previewText: z.string().optional(),
 });
 
 export type TemplateNodeData = z.infer<typeof TemplateNodeSchema>;

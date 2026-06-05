@@ -1,43 +1,48 @@
-import { useMemo, useState } from "react";
-import { 
-  Variable, 
-  Database, 
-  FileSpreadsheet, 
-  CheckCircle2, 
-  AlertCircle, 
-  HelpCircle, 
-  Code2, 
-  Terminal, 
-  Copy,
-  Info,
-} from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { CsvUploader } from "../CsvUploader";
-import { useBot } from "@/features/bots/data/queries/use-bots";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useDataSources, useDiscover, useDiscoverColumns } from "@/features/integrations/hooks/use-connectors";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger
 } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useBot } from "@/features/bots/data/queries/use-bots";
+import { useCustomFilters } from "@/features/campaign/api/campaign-queries";
+import { useDataSources, useDiscover, useDiscoverColumns } from "@/features/integrations/hooks/use-connectors";
+import { cn } from "@/lib/utils";
+import {
+    AlertCircle,
+    CheckCircle2,
+    Code2,
+    Copy,
+    Database,
+    FileSpreadsheet,
+    HelpCircle,
+    Info,
+    Terminal,
+    Variable,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { CsvUploader } from "../CsvUploader";
 
 export interface AudienceStepProps {
     filePath: string;
     onFileUploaded: (path: string) => void;
     botId: string;
-    sourceType: 'CSV' | 'DB2DB' | 'API';
-    onSourceTypeChange: (type: 'CSV' | 'DB2DB' | 'API') => void;
+    sourceType: 'CSV' | 'DB2DB' | 'API' | 'CUSTOM_API';
+    onSourceTypeChange: (type: 'CSV' | 'DB2DB' | 'API' | 'CUSTOM_API') => void;
     selectedDataSourceId?: string;
     onDataSourceChange: (id: string) => void;
     selectedView?: string;
     onViewChange: (view: string) => void;
+    fieldMapping?: Record<string, string>;
+    onFieldMappingChange?: (mapping: Record<string, string>) => void;
+    filters?: string[];
+    onFiltersChange?: (filters: string[]) => void;
     onValidityChange: (isValid: boolean) => void;
 }
 
@@ -53,6 +58,10 @@ export function AudienceStep({
     onDataSourceChange,
     selectedView,
     onViewChange,
+    fieldMapping = {},
+    onFieldMappingChange,
+    filters = [],
+    onFiltersChange,
     onValidityChange
 }: AudienceStepProps) {
     const { data: bot } = useBot(botId);
@@ -61,6 +70,7 @@ export function AudienceStep({
     
     const { data: tables = [], isLoading: loadingTables } = useDiscover(selectedDataSourceId);
     const { data: columns = [], isLoading: loadingColumns } = useDiscoverColumns(selectedDataSourceId, selectedView);
+    const { data: predefinedFilters = [], isLoading: loadingFilters } = useCustomFilters();
     
     const botVariables = useMemo(() => {
         if (!bot?.nodes) return [];
@@ -86,6 +96,14 @@ export function AudienceStep({
 
     const validation = useMemo(() => {
         if (sourceType === 'API') return { valid: true, missing: [] }; 
+        if (sourceType === 'CUSTOM_API') {
+            const required = ['phone', ...botVariables];
+            const missing = required.filter(v => {
+                const mappedTo = fieldMapping[v === 'phone' ? 'waId' : v];
+                return !mappedTo || mappedTo.trim() === '';
+            });
+            return { valid: missing.length === 0, missing };
+        }
         
         const isSelected = sourceType === 'CSV' ? filePath : selectedView;
         if (!isSelected) return { valid: false, missing: [] }; 
@@ -178,7 +196,10 @@ export function AudienceStep({
                         {[
                             { id: 'CSV', icon: FileSpreadsheet, label: 'CSV' },
                             { id: 'DB2DB', icon: Database, label: 'DB Sync' },
-                            { id: 'API', icon: Code2, label: 'API' }
+                            { id: 'API', icon: Code2, label: 'API' },
+                            ...(import.meta.env.VITE_ENABLE_CUSTOM_CAMPAIGN_API === 'true' 
+                                ? [{ id: 'CUSTOM_API', icon: Database, label: 'Custom API' }]
+                                : [])
                         ].map((t) => (
                             <button 
                                 key={t.id}
@@ -472,9 +493,95 @@ export function AudienceStep({
                             )}
                         </div>
                     )}
+                    
+                    {sourceType === 'CUSTOM_API' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-1 duration-300">
+                            <div className="p-5 rounded-2xl bg-primary/[0.03] border border-primary/20 flex gap-5 items-start">
+                                <div className="space-y-1">
+                                    <h4 className="text-sm font-bold tracking-tight">Custom API Ingestion</h4>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed max-w-lg">
+                                        Map the API response fields to the required bot variables below. The API will be polled continuously until all pages are ingested.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="rounded-2xl border bg-card/50 overflow-hidden shadow-sm ring-1 ring-border/50">
+                                <table className="w-full text-[12px]">
+                                    <thead className="bg-muted/40 border-b">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left font-bold text-muted-foreground/80 uppercase tracking-wider text-[10px]">Bot Variable</th>
+                                            <th className="px-6 py-3 text-left font-bold text-muted-foreground/80 uppercase tracking-wider text-[10px]">API Field (JSON Path)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border/30">
+                                        {['phone', ...botVariables].map(v => {
+                                            const mapKey = v === 'phone' ? 'waId' : v;
+                                            return (
+                                                <tr key={v} className="hover:bg-muted/20 transition-colors group">
+                                                    <td className="px-6 py-3.5 font-mono font-bold text-foreground/90">
+                                                        {v}
+                                                        {v === 'phone' && <span className="ml-2 text-[9px] text-primary bg-primary/10 px-1 rounded uppercase font-black">Required</span>}
+                                                    </td>
+                                                    <td className="px-6 py-3.5">
+                                                        <input 
+                                                            type="text" 
+                                                            className="w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
+                                                            placeholder={`e.g. ${v === 'phone' ? 'member_id' : v}`}
+                                                            value={fieldMapping[mapKey] || ''}
+                                                            onChange={(e) => {
+                                                                if (onFieldMappingChange) {
+                                                                    onFieldMappingChange({
+                                                                        ...fieldMapping,
+                                                                        [mapKey]: e.target.value
+                                                                    });
+                                                                }
+                                                            }}
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Dynamic Filters Section */}
+                            <div className="p-5 rounded-2xl bg-card border flex flex-col gap-4">
+                                <div>
+                                    <h4 className="text-sm font-bold tracking-tight">Audience Filters (Optional)</h4>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                        Select a predefined rule to apply during ingestion.
+                                    </p>
+                                </div>
+                                <div className="space-y-3">
+                                    <Select 
+                                        value={filters[0] || ""} 
+                                        onValueChange={(val) => {
+                                            if (val === "none") {
+                                                onFiltersChange?.([]);
+                                            } else {
+                                                onFiltersChange?.([val]);
+                                            }
+                                        }}
+                                        disabled={loadingFilters}
+                                    >
+                                        <SelectTrigger className="w-full bg-background border rounded-md">
+                                            <SelectValue placeholder={loadingFilters ? "Loading filters..." : "Select a filter"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">No Filter</SelectItem>
+                                            {predefinedFilters.map((f: any) => (
+                                                <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Mapping Table */}
-                    {sourceType !== 'API' && (sourceType === 'CSV' ? filePath : selectedView) && (
+                    {sourceType !== 'API' && sourceType !== 'CUSTOM_API' && (sourceType === 'CSV' ? filePath : selectedView) && (
                         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                             <div className="rounded-2xl border bg-card/50 overflow-hidden shadow-sm ring-1 ring-border/50">
                                 <table className="w-full text-[12px]">
@@ -526,7 +633,7 @@ export function AudienceStep({
                     )}
 
                     {/* Requirements Footer */}
-                    {sourceType !== 'API' && botVariables.length > 0 && (
+                    {sourceType !== 'API' && sourceType !== 'CUSTOM_API' && botVariables.length > 0 && (
                         <div className="p-5 rounded-2xl border bg-muted/5 border-border/50 animate-in fade-in duration-700">
                             <div className="flex items-center gap-2.5 mb-4">
                                 <div className="size-6 rounded-lg bg-primary/10 flex items-center justify-center">

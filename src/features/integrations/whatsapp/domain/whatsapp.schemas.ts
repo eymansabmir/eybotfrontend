@@ -26,4 +26,5 @@ export type CreateWhatsAppCredentialInput = {
     accessToken: string;
     phoneNumberId: string;
     displayPhoneNumber?: string;
+    whatsappBusinessAccountId?: string;
 };

@@ -25,7 +25,8 @@ export interface CreateCampaignInput {
   filePath?: string;
   dataSourceId?: string;
   tableName?: string;
-  fieldMapping?: Record<string, string>;
+  fieldMapping?: Record<string, any>;
+  filters?: string[];
   scheduleTime?: string;
 }
 

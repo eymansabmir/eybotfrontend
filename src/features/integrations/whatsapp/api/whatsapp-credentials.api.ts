@@ -41,6 +41,7 @@ export const whatsappCredentialsApi = {
       metadata: {
         phoneNumberId: input.phoneNumberId,
         displayPhoneNumber: input.displayPhoneNumber || null,
+        whatsappBusinessAccountId: input.whatsappBusinessAccountId || null,
       },
       isActive: true,
     });
@@ -73,5 +74,15 @@ export const whatsappCredentialsApi = {
     await apiClient.delete(`/integrations/credentials/${credentialId}`, {
       data: { orgId },
     });
+  },
+
+  async fetchTemplate(input: {
+    templateName: string;
+    languageCode?: string;
+    credentialId?: string;
+    orgId?: string;
+  }): Promise<{ templateName: string; languageCode: string; components: any[] }> {
+    const { data } = await apiClient.post("/integrations/whatsapp/fetch-template", input);
+    return data;
   },
 };

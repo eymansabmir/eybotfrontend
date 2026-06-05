@@ -41,6 +41,7 @@ export function WhatsAppCredentialsDialog({ open, onOpenChange, orgId, onNewCred
   const [accessToken, setAccessToken] = useState("");
   const [phoneNumberId, setPhoneNumberId] = useState("");
   const [phoneNumberName, setPhoneNumberName] = useState("");
+  const [whatsappBusinessAccountId, setWhatsappBusinessAccountId] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [dynamicWebhookUrl, setDynamicWebhookUrl] = useState<string | null>(null);
@@ -87,6 +88,7 @@ export function WhatsAppCredentialsDialog({ open, onOpenChange, orgId, onNewCred
     setAccessToken("");
     setPhoneNumberId("");
     setPhoneNumberName("");
+    setWhatsappBusinessAccountId("");
     setValidationError(null);
     setIsVerifying(false);
     setResolvedPhoneNumber(null);
@@ -185,6 +187,7 @@ export function WhatsAppCredentialsDialog({ open, onOpenChange, orgId, onNewCred
           accessToken: accessToken.trim(),
           phoneNumberId: phoneNumberId.trim(),
           displayPhoneNumber: resolvedPhoneNumber || undefined,
+          whatsappBusinessAccountId: whatsappBusinessAccountId.trim() || undefined,
         });
         toast.success("WhatsApp account connected successfully!");
         onNewCredentials?.(credential.id);
@@ -372,6 +375,15 @@ export function WhatsAppCredentialsDialog({ open, onOpenChange, orgId, onNewCred
                             <Label>Account Name / Label</Label>
                             <Input value={phoneNumberName} onChange={(e) => setPhoneNumberName(e.target.value)} />
                             <p className="text-xs text-muted-foreground">Auto-filled from Meta if left empty.</p>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>WhatsApp Business Account (WABA) ID <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span></Label>
+                            <Input 
+                              value={whatsappBusinessAccountId} 
+                              onChange={(e) => setWhatsappBusinessAccountId(e.target.value)}
+                              placeholder="e.g., 942080224962111"
+                            />
+                            <p className="text-xs text-muted-foreground">Directly configure this WABA ID to bypass Graph API lookups and avoid Meta permission limits.</p>
                         </div>
                     </div>
 
