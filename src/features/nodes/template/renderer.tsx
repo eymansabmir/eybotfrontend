@@ -6,12 +6,25 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { TemplateConfigForm } from "./components/template-config-form";
-import type { TemplateNodeData } from "./schema";
+import type {  TemplateNodeData } from "./schema";
 import { templateNode } from "./index";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
 
+type QuickReplyButtonComponent = {
+    type: "button";
+    sub_type: "quick_reply";
+    index: number;
+    text?: string;
+    parameters: Array<{
+        type: "payload" | "text" | "coupon_code";
+        payload?: string;
+        text?: string;
+        coupon_code?: string;
+    }>;
+};
+
 export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data: TemplateNodeData }) {
-    const { setNodes } = useReactFlow();
+    const { setNodes, setEdges } = useReactFlow();
     const [draft, setDraft] = useState<TemplateNodeData>(() => ({
         templateName: data.templateName || "",
         languageCode: data.languageCode || "en_US",
@@ -28,30 +41,43 @@ export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data:
     }, [data, selected]);
 
     const updateNodeData = (newData: Partial<TemplateNodeData>) => {
+        let newBranchKeys: string[] = [];
+
         setNodes((nds) =>
             nds.map((node) => {
                 if (node.id === id) {
                     const mergedData = { ...node.data, ...newData };
                     const updatedNode = { ...node, data: mergedData };
-                    
-                    const quickReplyButtons = (mergedData.components?.filter(
-                        c => c.type === 'button' && c.sub_type === 'quick_reply'
-                    ) || []) as Extract<import('./schema').TemplateComponent, { type: 'button' }>[];
-                    
+
+                    const quickReplyButtons: QuickReplyButtonComponent[] = mergedData.components?.filter(
+                        (c): c is QuickReplyButtonComponent => c.type === 'button' && c.sub_type === 'quick_reply'
+                    ) ?? [];
+
                     if (quickReplyButtons.length > 0) {
-                        (updatedNode as any).branches = quickReplyButtons.map((btn, idx) => ({
-                            key: `btn_${btn.index ?? idx}`,
-                            label: btn.text || `Button ${idx + 1}`
-                        }));
+                        (updatedNode as any).branches = quickReplyButtons.map((btn, idx) => {
+                            const key = `btn_${btn.index ?? idx}`;
+                            newBranchKeys.push(key);
+                            return {
+                                key,
+                                label: btn.text || `Button ${idx + 1}`
+                            };
+                        });
                     } else {
+                        newBranchKeys = ['default'];
                         (updatedNode as any).branches = [{ key: 'default', label: 'Default' }];
                     }
-                    
+
                     return updatedNode;
                 }
                 return node;
             })
         );
+
+        // Remove any edges originating from this node that use an invalid branch key
+        setEdges((eds) => eds.filter(edge => {
+            if (edge.source !== id) return true;
+            return edge.sourceHandle && newBranchKeys.includes(edge.sourceHandle);
+        }));
     };
 
     const onSaveConfig = () => {
@@ -65,9 +91,9 @@ export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data:
     };
 
     const hasComponents = data.components && data.components.length > 0;
-    const quickReplyButtons = (data.components?.filter(
-        c => c.type === "button" && c.sub_type === "quick_reply"
-    ) || []) as Extract<import('./schema').TemplateComponent, { type: 'button' }>[];
+    const quickReplyButtons: QuickReplyButtonComponent[] = data.components?.filter(
+        (c): c is QuickReplyButtonComponent => c.type === "button" && c.sub_type === "quick_reply"
+    ) ?? [];
 
     return (
         <NodeFrame
@@ -118,16 +144,16 @@ export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data:
             }
             popoverBody={
                 <div className="space-y-4">
-                    <TemplateConfigForm 
-                        data={draft} 
-                        onChange={(patch) => setDraft(prev => ({ ...prev, ...patch }))} 
+                    <TemplateConfigForm
+                        data={draft}
+                        onChange={(patch) => setDraft(prev => ({ ...prev, ...patch }))}
                     />
                 </div>
             }
             popoverFooter={
-                <Button 
-                    onClick={onSaveConfig} 
-                    size="sm" 
+                <Button
+                    onClick={onSaveConfig}
+                    size="sm"
                     className="h-8 gap-1.5 font-bold shadow-sm bg-[var(--ey-yellow)] text-black hover:brightness-95 transition-all w-full"
                 >
                     <Save className="size-3.5" />
