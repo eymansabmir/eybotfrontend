@@ -7,9 +7,12 @@ import { useCampaigns } from "../../api/campaign-queries";
 import { CampaignTable } from "../components/campaign-table";
 import { CreateCampaignDialog } from "../components/create-campaign-dialog";
 
+import type { Campaign } from "../../types";
+
 export function CampaignPage() {
   const { data: campaigns, isLoading } = useCampaigns();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [rerunCampaign, setRerunCampaign] = useState<Campaign | null>(null);
 
   return (
     <div className="space-y-6">
@@ -21,19 +24,30 @@ export function CampaignPage() {
           </p>
           <h1 className="text-2xl font-bold text-foreground">Campaigns</h1>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
+        <Button onClick={() => { setRerunCampaign(null); setDialogOpen(true); }} className="gap-2">
           <Plus className="size-4" />
           Create Campaign
         </Button>
       </div>
 
       {/* Table */}
-      <CampaignTable campaigns={campaigns} isLoading={isLoading} />
+      <CampaignTable 
+        campaigns={campaigns} 
+        isLoading={isLoading} 
+        onRerunCampaign={(c) => {
+          setRerunCampaign(c);
+          setDialogOpen(true);
+        }}
+      />
 
       {/* Create Dialog */}
       <CreateCampaignDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setRerunCampaign(null);
+          setDialogOpen(open);
+        }}
+        initialCampaign={rerunCampaign}
       />
     </div>
   );

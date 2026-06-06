@@ -64,6 +64,20 @@ export function useCreateCampaign() {
     });
 }
 
+export function useUpdateCampaign() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, input }: { id: string; input: Partial<CreateCampaignInput> }) => campaignApi.update(id, input),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: CAMPAIGN_KEYS.all });
+            toast.success("Campaign updated successfully");
+        },
+        onError: () => {
+            toast.error("Failed to update campaign");
+        },
+    });
+}
+
 export function useStartCampaign() {
     const qc = useQueryClient();
     return useMutation({

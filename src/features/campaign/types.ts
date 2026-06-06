@@ -10,6 +10,10 @@ export interface Campaign {
   scheduleTime: string | null;
   status: CampaignStatus;
   activeVersionId: string | null;
+  dataSourceId?: string | null;
+  tableName?: string | null;
+  fieldMapping?: Record<string, any>;
+  filters?: any;
   createdAt: string;
   updatedAt: string;
 }

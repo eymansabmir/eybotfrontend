@@ -15,6 +15,7 @@ interface CampaignDetailsStepProps {
     onTitleChange: (val: string) => void;
     botId: string;
     onBotIdChange: (val: string) => void;
+    isRerunMode?: boolean;
 }
 
 export function CampaignDetailsStep({
@@ -22,6 +23,7 @@ export function CampaignDetailsStep({
     onTitleChange,
     botId,
     onBotIdChange,
+    isRerunMode = false,
 }: CampaignDetailsStepProps) {
     const { data: bots, isLoading, isError } = useBots();
     const publishedBots = bots?.filter((b) => b.status === "published") ?? [];
@@ -44,6 +46,7 @@ export function CampaignDetailsStep({
                         placeholder="e.g. Q4 Customer Outreach"
                         value={title}
                         onChange={(e) => onTitleChange(e.target.value)}
+                        disabled={isRerunMode}
                         autoFocus
                     />
                     <p className="text-xs text-muted-foreground">
@@ -69,7 +72,7 @@ export function CampaignDetailsStep({
                             </p>
                         </div>
                     ) : (
-                        <Select value={botId} onValueChange={onBotIdChange}>
+                        <Select value={botId} onValueChange={onBotIdChange} disabled={isRerunMode}>
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Choose a published bot" />
                             </SelectTrigger>

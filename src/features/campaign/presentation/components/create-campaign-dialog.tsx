@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import {
@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-import { useCreateCampaign } from "../../api/campaign-queries";
-import type { ExecutionMode } from "../../types";
+import { useCreateCampaign, useUpdateCampaign, useStartCampaign } from "../../api/campaign-queries";
+import type { ExecutionMode, Campaign } from "../../types";
 
 import { StepperSidebar, type StepConfig } from "./wizard/stepper-sidebar";
 import { CampaignDetailsStep } from "./wizard/campaign-details-step";
@@ -24,9 +24,10 @@ const STEPS: StepConfig[] = [
 interface CreateCampaignDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    initialCampaign?: Campaign | null;
 }
 
-export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialogProps) {
+export function CreateCampaignDialog({ open, onOpenChange, initialCampaign }: CreateCampaignDialogProps) {
     const [step, setStep] = useState(0);
 
     // Form state
@@ -43,6 +44,10 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
     const [isAudienceValid, setIsAudienceValid] = useState(false);
 
     const createMutation = useCreateCampaign();
+    const updateMutation = useUpdateCampaign();
+    const startMutation = useStartCampaign();
+
+    const isRerunMode = !!initialCampaign;
 
     const resetForm = useCallback(() => {
         setStep(0);
@@ -58,6 +63,25 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
         setExecuteAt("");
         setIsAudienceValid(false);
     }, []);
+
+    // Initialize state when open and initialCampaign changes
+    useEffect(() => {
+        if (open && initialCampaign) {
+            setStep(0);
+            setTitle(initialCampaign.name);
+            setBotId(initialCampaign.flowId);
+            setSourceType('CUSTOM_API'); // Rerun is only for API/CUSTOM_API currently based on context, but let's assume it based on dataSourceId
+            setSelectedDataSourceId(initialCampaign.dataSourceId || undefined);
+            setSelectedView(initialCampaign.tableName || undefined);
+            setFieldMapping(initialCampaign.fieldMapping || {});
+            setFilters(initialCampaign.filters as string[] || []);
+            setExecutionMode(initialCampaign.scheduleTime ? "SCHEDULED" : "NOW");
+            setExecuteAt(initialCampaign.scheduleTime ? new Date(initialCampaign.scheduleTime).toISOString().slice(0, 16) : "");
+            setIsAudienceValid(true); // Assuming valid since it was created before
+        } else if (open && !initialCampaign) {
+            resetForm();
+        }
+    }, [open, initialCampaign, resetForm]);
 
     const handleClose = useCallback(() => {
         onOpenChange(false);
@@ -78,17 +102,35 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
 
     const handleSubmit = async () => {
         try {
-            await createMutation.mutateAsync({
-                name: title.trim(),
-                flowId: botId.trim(),
-                filePath: sourceType === 'CSV' ? filePath : undefined,
-                dataSourceId: sourceType === 'DB2DB' ? selectedDataSourceId : (sourceType === 'CUSTOM_API' ? 'CUSTOM_API' : undefined),
-                tableName: sourceType === 'DB2DB' ? selectedView : undefined,
-                fieldMapping: sourceType === 'CUSTOM_API' ? fieldMapping : undefined,
-                filters: sourceType === 'CUSTOM_API' && filters.length > 0 ? filters : undefined,
-                // If API, we don't send file or DB info, backend will create a 'WAITING_FOR_API' style campaign
-                scheduleTime: executionMode === "SCHEDULED" ? new Date(executeAt).toISOString() : undefined,
-            });
+            if (isRerunMode && initialCampaign) {
+                // Update the limits and reset the page
+                const updatedFieldMapping = {
+                    ...fieldMapping,
+                    apiCurrentPage: 1, // Force reset to page 1
+                };
+                
+                await updateMutation.mutateAsync({
+                    id: initialCampaign.id,
+                    input: {
+                        fieldMapping: updatedFieldMapping,
+                    }
+                });
+
+                // Trigger start on the existing campaign
+                await startMutation.mutateAsync(initialCampaign.id);
+            } else {
+                await createMutation.mutateAsync({
+                    name: title.trim(),
+                    flowId: botId.trim(),
+                    filePath: sourceType === 'CSV' ? filePath : undefined,
+                    dataSourceId: sourceType === 'DB2DB' ? selectedDataSourceId : (sourceType === 'CUSTOM_API' ? 'CUSTOM_API' : undefined),
+                    tableName: sourceType === 'DB2DB' ? selectedView : undefined,
+                    fieldMapping: sourceType === 'CUSTOM_API' ? fieldMapping : undefined,
+                    filters: sourceType === 'CUSTOM_API' && filters.length > 0 ? filters : undefined,
+                    // If API, we don't send file or DB info, backend will create a 'WAITING_FOR_API' style campaign
+                    scheduleTime: executionMode === "SCHEDULED" ? new Date(executeAt).toISOString() : undefined,
+                });
+            }
         } catch {
             // Error handled via onError toast in mutation hook
             return;
@@ -121,6 +163,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                                             onTitleChange={setTitle}
                                             botId={botId}
                                             onBotIdChange={setBotId}
+                                            isRerunMode={isRerunMode}
                                         />
                                     )}
                                     {step === 1 && (
@@ -139,6 +182,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                                             filters={filters}
                                             onFiltersChange={setFilters}
                                             onValidityChange={setIsAudienceValid}
+                                            isRerunMode={isRerunMode}
                                         />
                                     )}
                                     {step === 2 && (
@@ -150,6 +194,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                                             onModeChange={setExecutionMode}
                                             executeAt={executeAt}
                                             onExecuteAtChange={setExecuteAt}
+                                            isRerunMode={isRerunMode}
                                         />
                                     )}
                                 </motion.div>
@@ -183,9 +228,9 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                                 ) : (
                                     <Button
                                         onClick={handleSubmit}
-                                        disabled={!canContinue || createMutation.isPending}
+                                        disabled={!canContinue || createMutation.isPending || updateMutation.isPending || startMutation.isPending}
                                     >
-                                        {createMutation.isPending ? "Creating..." : "Create Campaign"}
+                                        {createMutation.isPending || updateMutation.isPending || startMutation.isPending ? (isRerunMode ? "Updating..." : "Creating...") : (isRerunMode ? "Rerun Campaign" : "Create Campaign")}
                                     </Button>
                                 )}
                             </div>
