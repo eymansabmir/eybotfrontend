@@ -98,6 +98,11 @@ export function BotSettingsPage() {
         return window.localStorage.getItem(getCredentialStorageKey(botId));
     };
 
+    // Use window.ENV for runtime Docker injection, fallback to import.meta.env for local dev
+    const bspEnv = (window as any).ENV?.VITE_DEFAULT_WHATSAPP_BSP || import.meta.env.VITE_DEFAULT_WHATSAPP_BSP;
+    const isKarixBypass = bspEnv === 'karix';
+    const isIntegrationEnabled = Boolean(selectedCredentialId || isKarixBypass);
+
     const setCachedCredentialId = (botId: string, credentialId: string) => {
         if (typeof window === "undefined") return;
         window.localStorage.setItem(getCredentialStorageKey(botId), credentialId);
