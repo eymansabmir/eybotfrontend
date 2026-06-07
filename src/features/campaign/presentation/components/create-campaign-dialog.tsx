@@ -104,9 +104,11 @@ export function CreateCampaignDialog({ open, onOpenChange, initialCampaign }: Cr
         try {
             if (isRerunMode && initialCampaign) {
                 // Update the limits and reset the page
+                const { apiTotalPages, apiTotalRecords, ...restFieldMapping } = fieldMapping as Record<string, any>;
                 const updatedFieldMapping = {
-                    ...fieldMapping,
-                    apiCurrentPage: 1, // Force reset to page 1
+                    ...restFieldMapping,
+                    apiCurrentPage: 0, // Force reset to page 1 (backend adds 1)
+                    apiIngestedInCurrentRun: 0, // Reset run-specific record counter
                 };
                 
                 await updateMutation.mutateAsync({
