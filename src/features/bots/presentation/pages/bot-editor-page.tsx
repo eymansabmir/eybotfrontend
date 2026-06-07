@@ -57,13 +57,13 @@ export function BotEditorPage() {
     const flowBuilderRef = useRef<FlowBuilderRef>(null);
     const baselineSnapshotRef = useRef<string>("");
     const hasInitialVariablesLoadedRef = useRef(false);
-    const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
 
     const [isDirty, setIsDirty] = useState(false);
     const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<"bots" | "settings" | null>(null);
 
-    const { variables, setVariables, addVariable } = useVariablesStore();
+    const { variables, setVariables } = useVariablesStore();
     const isPublished = bot?.status === "published";
     const [isEditingName, setIsEditingName] = useState(false);
     const [tempName, setTempName] = useState(bot?.name || "");
@@ -178,55 +178,6 @@ export function BotEditorPage() {
         setIsDirty(false);
     };
 
-    const syncVariablesFromNodes = useCallback((nodes: Node[]) => {
-        const foundVariables = new Set<string>();
-        
-        const extractFromObj = (obj: any) => {
-            if (!obj) return;
-            if (typeof obj === 'string') {
-                // Check for template syntax {{variable}} or {{session.variable}}
-                const matches = obj.matchAll(/\{\{\s*([^}]+)\s*\}\}/g);
-                for (const match of matches) {
-                    const varName = match[1].trim().replace(/^(session|contact)\./, '');
-                    if (varName) foundVariables.add(varName);
-                }
-            } else if (Array.isArray(obj)) {
-                obj.forEach(extractFromObj);
-            } else if (typeof obj === 'object') {
-                // Check common variable fields directly
-                if (typeof obj.variable === 'string' && obj.variable) foundVariables.add(obj.variable);
-                if (typeof obj.variableName === 'string' && obj.variableName) foundVariables.add(obj.variableName);
-                if (typeof obj.parentKey === 'string' && obj.parentKey) foundVariables.add(obj.parentKey);
-                if (typeof obj.childKey === 'string' && obj.childKey) foundVariables.add(obj.childKey);
-                
-                Object.values(obj).forEach(extractFromObj);
-            }
-        };
-
-        nodes.forEach(node => extractFromObj(node.data));
-
-        // Identify current store state
-        const currentVariables = useVariablesStore.getState().variables;
-        const currentVariableNames = new Set(currentVariables.map(v => v.name));
-
-        // 1. Add newly discovered variables
-        foundVariables.forEach(name => {
-            const trimmed = name.trim();
-            if (trimmed && !currentVariableNames.has(trimmed)) {
-                addVariable(trimmed);
-            }
-        });
-
-        // Pruning variables automatically is dangerous as it can cause infinite loops
-        // and data loss if a user is mid-edit. We only add new ones.
-        /*
-        const unusedVariables = currentVariables.filter(v => !foundVariables.has(v.name));
-        if (unusedVariables.length > 0) {
-            const remainingVariables = currentVariables.filter(v => foundVariables.has(v.name));
-            setVariables(remainingVariables);
-        }
-        */
-    }, [addVariable, setVariables]);
 
     const handleFlowChange = useCallback((payload: { nodes: Node[]; edges: Edge[] }) => {
         const snapshot = serializeFlowSnapshot(payload.nodes, payload.edges);
@@ -243,17 +194,11 @@ export function BotEditorPage() {
             return newDirtyStatus;
         });
 
-        // Sync variables from nodes into the global store (debounced to avoid keystroke pollution)
-        if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-        syncTimeoutRef.current = setTimeout(() => {
-            syncVariablesFromNodes(payload.nodes);
-        }, 1000);
-    }, [syncVariablesFromNodes]);
-
+        // Variable syncing is now handled exclusively by explicit user actions via Variable Manager and Select components.
+    }, []);
     useEffect(() => {
-        return () => {
-            if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-        };
+        // Cleanup function for any timeouts if added in the future
+        return () => {};
     }, []);
 
     const handleGuardedNavigate = (target: "bots" | "settings") => {
@@ -725,8 +670,7 @@ export function BotEditorPage() {
         if (nodesHash === lastSyncedNodesRef.current) return;
         
         lastSyncedNodesRef.current = nodesHash;
-        syncVariablesFromNodes(initialNodes);
-    }, [initialNodes, syncVariablesFromNodes]);
+    }, [initialNodes]);
 
     useEffect(() => {
         const langNodes = initialNodes.filter(n => n.type === NodeType.LANGUAGE);
