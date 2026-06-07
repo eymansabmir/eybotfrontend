@@ -101,7 +101,7 @@ export function BotSettingsPage() {
     // Use window.ENV for runtime Docker injection, fallback to import.meta.env for local dev
     const bspEnv = (window as any).ENV?.VITE_DEFAULT_WHATSAPP_BSP || import.meta.env.VITE_DEFAULT_WHATSAPP_BSP;
     const isKarixBypass = bspEnv === 'karix';
-
+    const isIntegrationEnabled = Boolean(selectedCredentialId || isKarixBypass);
     const setCachedCredentialId = (botId: string, credentialId: string) => {
         if (typeof window === "undefined") return;
         window.localStorage.setItem(getCredentialStorageKey(botId), credentialId);
@@ -725,7 +725,7 @@ export function BotSettingsPage() {
                                 />
 
                                 {/* Step 2: Configure Integration */}
-                                <div className={`space-y-4 transition-opacity duration-300 ${!selectedCredentialId ? 'opacity-50 pointer-events-none' : ''}`}>
+                                <div className={`space-y-4 transition-opacity duration-300 ${!isIntegrationEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
                                     <div className="flex items-center gap-3">
                                         <div className="size-7 rounded-full bg-black dark:bg-white dark:text-black text-white text-[10px] font-bold flex items-center justify-center">2</div>
                                         <Label className="text-base font-bold">Configure Integration</Label>
