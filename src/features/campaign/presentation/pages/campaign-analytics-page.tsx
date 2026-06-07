@@ -20,8 +20,8 @@ import { exportCampaignCsv } from "../../api/campaign-export";
 import { CampaignStatusBadge } from "../components/campaign-status-badge";
 import { MetricCard, RateCard } from "../components/analytics/metric-card";
 import { ConversionFunnel } from "../components/analytics/conversion-funnel";
-import { NpsSection } from "../components/analytics/nps-section";
 import { StatsTable } from "../components/analytics/stats-table";
+import { CampaignBatchTable } from "../components/analytics/campaign-batch-table";
 
 export function CampaignAnalyticsPage() {
     const { id } = useParams({ strict: false });
@@ -46,8 +46,6 @@ export function CampaignAnalyticsPage() {
         pending: 0,
         queued: 0,
     };
-
-    const nps = analyticsData?.analytics.nps ?? null;
 
     const deliveryRate = stats.sent > 0 ? (stats.delivered / stats.sent) * 100 : 0;
     const openRate = stats.delivered > 0 ? (stats.opened / stats.delivered) * 100 : 0;
@@ -105,8 +103,10 @@ export function CampaignAnalyticsPage() {
                 <RateCard title="Campaign Success" rate={completionRate} color="#14b8a6" formula="Completed / Total Recipients" />
             </div>
 
-            {/* NPS Deep Dive */}
-            <NpsSection nps={nps} isLoading={isLoadingAnalytics} />
+            {/* Batch Launch History Table (For Karix Rate Limits) */}
+            <div className="mb-6 mt-6">
+                <CampaignBatchTable campaignId={id as string} />
+            </div>
 
             {/* Detailed Metric Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
