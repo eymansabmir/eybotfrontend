@@ -43,4 +43,4 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "sed -i 's|%%VITE_DEFAULT_WHATSAPP_BSP%%|'\"$VITE_DEFAULT_WHATSAPP_BSP\"'|g' /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"]
