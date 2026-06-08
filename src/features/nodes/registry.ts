@@ -27,6 +27,7 @@ import { googleSheetsNode } from "./google-sheets";
 import { nocodbNode } from "./nocodb";
 import { anthropicNode } from "./anthropic";
 import { deepseekNode } from "./deepseek";
+import { pmvbryNode } from "./pmvbry";
 import { MediaConditionalNode } from "./media-conditional";
 import { botNode } from "./bot-node";
 import { waitNode } from "./wait-node";
@@ -67,6 +68,7 @@ export const nodeRegistry: Record<string, NodeDefinition> = {
     [nocodbNode.config.type]: nocodbNode,
     [anthropicNode.config.type]: anthropicNode,
     [deepseekNode.config.type]: deepseekNode,
+    [pmvbryNode.config.type]: pmvbryNode,
     [MediaConditionalNode.config.type]: MediaConditionalNode,
     [botNode.config.type]: botNode,
     [waitNode.config.type]: waitNode,
