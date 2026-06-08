@@ -45,6 +45,15 @@ export function EmailOtpLoginPage() {
       return
     }
 
+    const domain = normalizedEmail.split('@')[1];
+    const isEy = domain === 'in.ey.com' || domain?.endsWith('.in.ey.com');
+    const isAirtel = domain === 'airtel.com' || domain?.endsWith('.airtel.com');
+    
+    if (!isEy && !isAirtel) {
+      setError("This email or domain is not authorized. Please contact your administrator.")
+      return
+    }
+
     setIsLoading(true)
     try {
       const { error: sendError } = await authClient.emailOtp.sendVerificationOtp({
