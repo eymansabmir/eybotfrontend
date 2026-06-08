@@ -24,7 +24,7 @@ type QuickReplyButtonComponent = {
 };
 
 export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data: TemplateNodeData }) {
-    const { setNodes } = useReactFlow();
+    const { setNodes, setEdges } = useReactFlow();
     const [draft, setDraft] = useState<TemplateNodeData>(() => ({
         templateName: data.templateName || "",
         languageCode: data.languageCode || "en_US",
@@ -41,6 +41,8 @@ export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data:
     }, [data, selected]);
 
     const updateNodeData = (newData: Partial<TemplateNodeData>) => {
+        let newBranchKeys: string[] = [];
+
         setNodes((nds) =>
             nds.map((node) => {
                 if (node.id === id) {
@@ -52,11 +54,16 @@ export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data:
                     ) ?? [];
 
                     if (quickReplyButtons.length > 0) {
-                        (updatedNode as any).branches = quickReplyButtons.map((btn, idx) => ({
-                            key: `btn_${btn.index ?? idx}`,
-                            label: btn.text || `Button ${idx + 1}`
-                        }));
+                        (updatedNode as any).branches = quickReplyButtons.map((btn, idx) => {
+                            const key = `btn_${btn.index ?? idx}`;
+                            newBranchKeys.push(key);
+                            return {
+                                key,
+                                label: btn.text || `Button ${idx + 1}`
+                            };
+                        });
                     } else {
+                        newBranchKeys = ['default'];
                         (updatedNode as any).branches = [{ key: 'default', label: 'Default' }];
                     }
 
@@ -65,6 +72,12 @@ export function TemplateNodeRenderer({ id, data, selected }: NodeProps & { data:
                 return node;
             })
         );
+
+        // Remove any edges originating from this node that use an invalid branch key
+        setEdges((eds) => eds.filter(edge => {
+            if (edge.source !== id) return true;
+            return edge.sourceHandle && newBranchKeys.includes(edge.sourceHandle);
+        }));
     };
 
     const onSaveConfig = () => {

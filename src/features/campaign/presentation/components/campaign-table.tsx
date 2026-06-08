@@ -8,6 +8,7 @@ import {
     Play,
     Ban,
     MegaphoneIcon,
+    RotateCw,
 } from "lucide-react";
 
 import {
@@ -79,9 +80,10 @@ function TableSkeleton() {
 interface CampaignTableProps {
     campaigns: Campaign[] | undefined;
     isLoading: boolean;
+    onRerunCampaign?: (campaign: Campaign) => void;
 }
 
-export function CampaignTable({ campaigns, isLoading }: CampaignTableProps) {
+export function CampaignTable({ campaigns, isLoading, onRerunCampaign }: CampaignTableProps) {
     const navigate = useNavigate();
     const deleteMutation = useDeleteCampaign();
     const startMutation = useStartCampaign();
@@ -156,6 +158,12 @@ export function CampaignTable({ campaigns, isLoading }: CampaignTableProps) {
                                                     <DropdownMenuItem onClick={() => cancelMutation.mutate(c.id)}>
                                                         <Ban className="size-4 mr-2" />
                                                         Cancel
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {onRerunCampaign && c.dataSourceId === 'CUSTOM_API' && (
+                                                    <DropdownMenuItem onClick={() => onRerunCampaign(c)}>
+                                                        <RotateCw className="size-4 mr-2" />
+                                                        Rerun Campaign
                                                     </DropdownMenuItem>
                                                 )}
                                                 <DropdownMenuSeparator />

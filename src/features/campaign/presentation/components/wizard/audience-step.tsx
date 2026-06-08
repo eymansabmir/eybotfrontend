@@ -44,6 +44,7 @@ export interface AudienceStepProps {
     filters?: string[];
     onFiltersChange?: (filters: string[]) => void;
     onValidityChange: (isValid: boolean) => void;
+    isRerunMode?: boolean;
 }
 
 const PHONE_ALIASES = ['phone', 'wa_id', 'mobile', 'recipient', 'waid', 'phone_number', 'number', 'to'];
@@ -62,7 +63,8 @@ export function AudienceStep({
     onFieldMappingChange,
     filters = [],
     onFiltersChange,
-    onValidityChange
+    onValidityChange,
+    isRerunMode = false
 }: AudienceStepProps) {
     const { data: bot } = useBot(botId);
     const { data: sources = [] } = useDataSources();
@@ -102,7 +104,9 @@ export function AudienceStep({
                 const mappedTo = fieldMapping[v === 'phone' ? 'waId' : v];
                 return !mappedTo || mappedTo.trim() === '';
             });
-            return { valid: missing.length === 0, missing };
+            const hasCategory = Boolean(filters && filters.length > 0);
+            const hasBatchSize = Boolean(fieldMapping['__batchSize'] && Number(fieldMapping['__batchSize']) > 0);
+            return { valid: Boolean(missing.length === 0 && hasCategory && hasBatchSize), missing };
         }
         
         const isSelected = sourceType === 'CSV' ? filePath : selectedView;
@@ -203,10 +207,12 @@ export function AudienceStep({
                         ].map((t) => (
                             <button 
                                 key={t.id}
+                                disabled={isRerunMode}
                                 onClick={() => onSourceTypeChange(t.id as any)}
                                 className={cn(
                                     "flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200",
-                                    sourceType === t.id ? "bg-background shadow-sm text-primary ring-1 ring-border/50" : "text-muted-foreground hover:text-foreground"
+                                    sourceType === t.id ? "bg-background shadow-sm text-primary ring-1 ring-border/50" : "text-muted-foreground hover:text-foreground",
+                                    isRerunMode && "opacity-50 cursor-not-allowed"
                                 )}
                             >
                                 <t.icon className="size-3" />
@@ -525,7 +531,8 @@ export function AudienceStep({
                                                     <td className="px-6 py-3.5">
                                                         <input 
                                                             type="text" 
-                                                            className="w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
+                                                            disabled={isRerunMode}
+                                                            className={cn("w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow", isRerunMode && "opacity-50 cursor-not-allowed")}
                                                             placeholder={`e.g. ${v === 'phone' ? 'member_id' : v}`}
                                                             value={fieldMapping[mapKey] || ''}
                                                             onChange={(e) => {
@@ -545,36 +552,83 @@ export function AudienceStep({
                                 </table>
                             </div>
 
-                            {/* Dynamic Filters Section */}
+                            {/* Dynamic Category Section */}
                             <div className="p-5 rounded-2xl bg-card border flex flex-col gap-4">
                                 <div>
-                                    <h4 className="text-sm font-bold tracking-tight">Audience Filters (Optional)</h4>
+                                    <h4 className="text-sm font-bold tracking-tight">Audience Category</h4>
                                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                        Select a predefined rule to apply during ingestion.
+                                        Select the exact category of users to target for this campaign (Required).
                                     </p>
                                 </div>
                                 <div className="space-y-3">
                                     <Select 
                                         value={filters[0] || ""} 
                                         onValueChange={(val) => {
-                                            if (val === "none") {
+                                            if (!val) {
                                                 onFiltersChange?.([]);
                                             } else {
                                                 onFiltersChange?.([val]);
                                             }
                                         }}
-                                        disabled={loadingFilters}
+                                        disabled={loadingFilters || isRerunMode}
                                     >
-                                        <SelectTrigger className="w-full bg-background border rounded-md">
-                                            <SelectValue placeholder={loadingFilters ? "Loading filters..." : "Select a filter"} />
+                                        <SelectTrigger className={cn("w-full bg-background border rounded-md", !filters[0] && "border-destructive/30")}>
+                                            <SelectValue placeholder={loadingFilters ? "Loading categories..." : "Select a category"} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="none">No Filter</SelectItem>
                                             {predefinedFilters.map((f: any) => (
                                                 <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                </div>
+                            </div>
+
+                            {/* Batch Limits Section */}
+                            <div className="p-5 rounded-2xl bg-card border flex flex-col gap-4">
+                                <div>
+                                    <h4 className="text-sm font-bold tracking-tight">API Import Limits</h4>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                        Configure the batch size per API call and the absolute maximum number of unique records to fetch.
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs">Batch Fetch Size (Required)</Label>
+                                        <input 
+                                            type="number" 
+                                            min="1"
+                                            className="w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
+                                            placeholder="e.g. 1000"
+                                            value={fieldMapping['__batchSize'] || ''}
+                                            onChange={(e) => {
+                                                if (onFieldMappingChange) {
+                                                    onFieldMappingChange({
+                                                        ...fieldMapping,
+                                                        __batchSize: e.target.value
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs">Max Records (Optional)</Label>
+                                        <input 
+                                            type="number" 
+                                            min="1"
+                                            className="w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
+                                            placeholder="e.g. 50000"
+                                            value={fieldMapping['__maxRecords'] || ''}
+                                            onChange={(e) => {
+                                                if (onFieldMappingChange) {
+                                                    onFieldMappingChange({
+                                                        ...fieldMapping,
+                                                        __maxRecords: e.target.value
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

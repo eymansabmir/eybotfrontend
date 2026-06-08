@@ -13,6 +13,7 @@ interface ScheduleStepProps {
     onModeChange: (mode: ExecutionMode) => void;
     executeAt: string;
     onExecuteAtChange: (val: string) => void;
+    isRerunMode?: boolean;
 }
 
 export function ScheduleStep({
@@ -23,6 +24,7 @@ export function ScheduleStep({
     onModeChange,
     executeAt,
     onExecuteAtChange,
+    isRerunMode = false,
 }: ScheduleStepProps) {
     return (
         <div className="space-y-6">
@@ -75,6 +77,7 @@ export function ScheduleStep({
                             value="NOW"
                             checked={executionMode === "NOW"}
                             onChange={() => onModeChange("NOW")}
+                            disabled={isRerunMode}
                             className="accent-[hsl(var(--primary))] size-4"
                         />
                         <div className="flex items-center gap-2 flex-1">
@@ -103,6 +106,7 @@ export function ScheduleStep({
                             value="SCHEDULED"
                             checked={executionMode === "SCHEDULED"}
                             onChange={() => onModeChange("SCHEDULED")}
+                            disabled={isRerunMode}
                             className="accent-[hsl(var(--primary))] size-4"
                         />
                         <div className="flex items-center gap-2 flex-1">
@@ -125,6 +129,7 @@ export function ScheduleStep({
                                 type="datetime-local"
                                 value={executeAt}
                                 onChange={(e) => onExecuteAtChange(e.target.value)}
+                                disabled={isRerunMode}
                             />
                         </div>
                     )}

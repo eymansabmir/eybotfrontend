@@ -24,6 +24,11 @@ export const campaignApi = {
         return data.campaign;
     },
 
+    update: async (id: string, input: Partial<CreateCampaignInput>): Promise<Campaign> => {
+        const { data } = await apiClient.patch<Campaign>(`${BASE}/${id}`, input);
+        return data;
+    },
+
     start: async (id: string): Promise<void> => {
         await apiClient.post(`${BASE}/${id}/start`);
     },
