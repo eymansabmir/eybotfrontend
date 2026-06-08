@@ -19,8 +19,8 @@ import { exportCampaignCsv } from "../../api/campaign-export";
 
 import { CampaignStatusBadge } from "../components/campaign-status-badge";
 import { MetricCard, RateCard } from "../components/analytics/metric-card";
-import { ConversionFunnel } from "../components/analytics/conversion-funnel";
-import { StatsTable } from "../components/analytics/stats-table";
+// import { ConversionFunnel } from "../components/analytics/conversion-funnel";
+// import { StatsTable } from "../components/analytics/stats-table";
 import { CampaignBatchTable } from "../components/analytics/campaign-batch-table";
 
 export function CampaignAnalyticsPage() {
@@ -51,15 +51,15 @@ export function CampaignAnalyticsPage() {
     const openRate = stats.delivered > 0 ? (stats.opened / stats.delivered) * 100 : 0;
     const completionRate = stats.total > 0 ? (stats.completed / stats.total) * 100 : 0;
 
-    const funnelSteps = [
-        { label: "Total", value: stats.total, color: "#3b82f6" },
-        { label: "Initiated", value: stats.initiated, color: "#6366f1" },
-        { label: "Sent", value: stats.sent, color: "#22c55e" },
-        { label: "Delivered", value: stats.delivered, color: "#a855f7" },
-        { label: "Opened", value: stats.opened, color: "#f97316" },
-        { label: "Started", value: stats.started, color: "#ec4899" },
-        { label: "Completed", value: stats.completed, color: "#14b8a6" },
-    ];
+    // const funnelSteps = [
+    //     { label: "Total", value: stats.total, color: "#3b82f6" },
+    //     { label: "Initiated", value: stats.initiated, color: "#6366f1" },
+    //     { label: "Sent", value: stats.sent, color: "#22c55e" },
+    //     { label: "Delivered", value: stats.delivered, color: "#a855f7" },
+    //     { label: "Opened", value: stats.opened, color: "#f97316" },
+    //     { label: "Started", value: stats.started, color: "#ec4899" },
+    //     { label: "Completed", value: stats.completed, color: "#14b8a6" },
+    // ];
 
     return (
         <div className="space-y-8 pb-12">
@@ -103,10 +103,6 @@ export function CampaignAnalyticsPage() {
                 <RateCard title="Campaign Success" rate={completionRate} color="#14b8a6" formula="Completed / Total Recipients" />
             </div>
 
-            {/* Batch Launch History Table (For Karix Rate Limits) */}
-            <div className="mb-6 mt-6">
-                <CampaignBatchTable campaignId={id as string} />
-            </div>
 
             {/* Detailed Metric Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -123,16 +119,21 @@ export function CampaignAnalyticsPage() {
                 <MetricCard title="Failed / Bounced" value={stats.failed} total={stats.total} icon={XCircle} color="#ef4444" description="Errors and delivery failures" />
             </div>
 
+            {/* Batch Launch History Table (For Karix Rate Limits) */}
+            <div className="mb-6 mt-6">
+                <CampaignBatchTable campaignId={id as string} />
+            </div>
+
             {/* Core Funnel and Distribution */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-12">
                     <ConversionFunnel steps={funnelSteps} />
                 </div>
-            </div>
+            </div> */}
 
 
             {/* Raw Data Table */}
-            <StatsTable stats={stats} />
+            {/* <StatsTable stats={stats} /> */}
         </div>
     );
 }
