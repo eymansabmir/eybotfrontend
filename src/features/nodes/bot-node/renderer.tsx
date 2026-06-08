@@ -41,21 +41,37 @@ export function BotNodeRenderer({
   // Scans nodes for variables used in Ask Question, Set Variable, etc.
   const scanVariables = (nodes: any[]): string[] => {
     const vars = new Set<string>();
-    nodes?.forEach(n => {
-      if (n.type === 'ask_question' || n.type === 'nps') {
-        if (n.data?.variableName) vars.add(n.data.variableName);
-      } else if (n.type === 'set_variable') {
-        if (n.data?.targetVariable) vars.add(n.data.targetVariable);
+    
+    // Helper to recursively find specific keys
+    const findKeys = (obj: any, keys: string[]) => {
+      if (!obj || typeof obj !== 'object') return;
+      for (const k in obj) {
+        if (keys.includes(k) && typeof obj[k] === 'string' && obj[k]) {
+          vars.add(obj[k]);
+        } else if (typeof obj[k] === 'object') {
+          findKeys(obj[k], keys);
+        }
       }
-      // Also check for template variables in text
-      const text = JSON.stringify(n.data);
+    };
+
+    nodes?.forEach(n => {
+      // Find declared variables in any node type
+      findKeys(n.data, ['variableName', 'variable', 'targetVariable']);
+
+      // Also check for template variables in text, but exclude bot node mappings to prevent cross-contamination
+      const dataToScan = n.type === 'bot_node' 
+        ? { ...n.data, inputMappings: [], outputMappings: [] } 
+        : n.data;
+        
+      const text = JSON.stringify(dataToScan);
       const matches = text.match(/{{([^}]+)}}/g);
       matches?.forEach(m => vars.add(m.replace(/{{|}}/g, '').replace(/^(session|contact)\./, '')));
     });
     return Array.from(vars).filter(v => !v.includes('.') && !v.startsWith('sys.'));
   };
 
-  const targetVariables = scanVariables(targetBot?.nodes || []);
+  const targetStoredVars = targetBot?.settings?.variables?.map((v: any) => v.name) || [];
+  const targetVariables = Array.from(new Set([...scanVariables(targetBot?.nodes || []), ...targetStoredVars])).sort();
   
   // Combine scanned variables from current nodes + variables manually created in the Variable Manager
   const nodeVariables = scanVariables(getNodes().map(n => ({ type: n.type, data: n.data })));
