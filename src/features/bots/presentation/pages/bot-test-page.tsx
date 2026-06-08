@@ -70,7 +70,7 @@ export function BotTestPage() {
         setIsTriggering(true);
         try {
             const waId = phoneNumber.startsWith("+") ? phoneNumber : `+${phoneNumber}`;
-            const mockWaBusinessNumber = "986914541176866";
+            const mockWaBusinessNumber = "918796441700";
 
             const result = await chatSessionApi.startFlow({
                 orgId: bot.orgId,
@@ -102,7 +102,7 @@ export function BotTestPage() {
 
             setSessionResult(result);
             setUserReply("");
-            
+
             if (result.isFinished) {
                 toast.success("Flow completed!");
             } else if (result.waitingFor) {
@@ -200,7 +200,7 @@ export function BotTestPage() {
                                     </p>
                                 </div>
                                 <div className={`size-2 rounded-full ${
-                                    sessionResult.isFinished ? 'bg-gray-400' : 
+                                    sessionResult.isFinished ? 'bg-gray-400' :
                                     sessionResult.waitingFor ? 'bg-amber-400' : 'bg-emerald-500'
                                 }`} />
                             </div>
@@ -246,7 +246,7 @@ export function BotTestPage() {
                                         </div>
                                     </div>
                                 ))}
-                                
+
                                 {sessionResult.session.history.filter(h => h.userInput).map((h, idx) => (
                                     <div key={`user-${idx}`} className="flex justify-end">
                                         <div className="bg-emerald-500 text-white rounded-2xl rounded-tr-none px-4 py-3 max-w-[80%] shadow-sm">

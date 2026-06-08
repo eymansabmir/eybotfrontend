@@ -8,6 +8,13 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-frontend
+  # Vite build-time config — passed to Docker as build-args below
+  VITE_API_URL: https://devwhatsappbe.epf6.in/api
+  VITE_BASE_MEDIA_URL: https://devwhatsappbe.epf6.in/api/storage/file
+  VITE_ENABLE_VOICE_TECH: "false"
+  VITE_ENABLE_USERS: "true"
+  VITE_ENABLE_CAMPAIGNS: "true"
+  VITE_DEFAULT_WHATSAPP_BSP: karix
 
 jobs:
   build:
@@ -50,5 +57,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VITE_API_URL=https://devwhatsappbe.epf6.in/api
-            VITE_ENABLE_VOICE_TECH=false
+            VITE_API_URL=${{ env.VITE_API_URL }}
+            VITE_BASE_MEDIA_URL=${{ env.VITE_BASE_MEDIA_URL }}
+            VITE_ENABLE_VOICE_TECH=${{ env.VITE_ENABLE_VOICE_TECH }}
+            VITE_ENABLE_USERS=${{ env.VITE_ENABLE_USERS }}
+            VITE_ENABLE_CAMPAIGNS=${{ env.VITE_ENABLE_CAMPAIGNS }}
+            VITE_DEFAULT_WHATSAPP_BSP=${{ env.VITE_DEFAULT_WHATSAPP_BSP }}

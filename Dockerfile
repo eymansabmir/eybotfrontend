@@ -3,6 +3,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Vite bakes these into the static bundle at build time (via import.meta.env / index.html %VITE_*%).
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 
@@ -17,6 +18,9 @@ ENV VITE_ENABLE_USERS=$VITE_ENABLE_USERS
 
 ARG VITE_ENABLE_CAMPAIGNS
 ENV VITE_ENABLE_CAMPAIGNS=$VITE_ENABLE_CAMPAIGNS
+
+ARG VITE_DEFAULT_WHATSAPP_BSP
+ENV VITE_DEFAULT_WHATSAPP_BSP=$VITE_DEFAULT_WHATSAPP_BSP
 
 # Install dependencies
 COPY package*.json ./
@@ -43,4 +47,4 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8080
 
-CMD ["/bin/sh", "-c", "sed -i 's|%%VITE_DEFAULT_WHATSAPP_BSP%%|'\"$VITE_DEFAULT_WHATSAPP_BSP\"'|g' /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"]
+CMD ["nginx", "-g", "daemon off;"]
