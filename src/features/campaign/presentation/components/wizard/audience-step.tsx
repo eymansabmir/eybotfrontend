@@ -201,9 +201,7 @@ export function AudienceStep({
                             { id: 'CSV', icon: FileSpreadsheet, label: 'CSV' },
                             { id: 'DB2DB', icon: Database, label: 'DB Sync' },
                             { id: 'API', icon: Code2, label: 'API' },
-                            ...(import.meta.env.VITE_ENABLE_CUSTOM_CAMPAIGN_API === 'true' 
-                                ? [{ id: 'CUSTOM_API', icon: Database, label: 'Custom API' }]
-                                : [])
+                            { id: 'CUSTOM_API', icon: Database, label: 'Custom API' }
                         ].map((t) => (
                             <button 
                                 key={t.id}
