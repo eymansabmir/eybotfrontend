@@ -2,9 +2,8 @@ import axios, { type InternalAxiosRequestConfig } from "axios";
 import { ENV } from "@/config/env";
 
 const STATE_CHANGING_METHODS = new Set(["post", "put", "patch", "delete"]);
+const retriedCsrfConfigs = new WeakSet<InternalAxiosRequestConfig>();
 let csrfToken: string | null = null;
-
-type CsrfAxiosRequestConfig = InternalAxiosRequestConfig & { _csrfRetried?: boolean };
 
 export const apiClient = axios.create({
     baseURL: ENV.API_URL,
@@ -46,7 +45,7 @@ apiClient.interceptors.response.use(
             error.message = backendMessage;
         }
 
-        const config = error.config as CsrfAxiosRequestConfig | undefined;
+        const config = error.config;
         const method = config?.method?.toLowerCase();
         const isStateChanging = method && STATE_CHANGING_METHODS.has(method);
         const isCsrfFailure =
@@ -54,9 +53,10 @@ apiClient.interceptors.response.use(
             typeof backendMessage === "string" &&
             backendMessage.toLowerCase().includes("csrf");
 
-        if (isStateChanging && isCsrfFailure && config && !config._csrfRetried) {
+        if (isStateChanging && isCsrfFailure && config && !retriedCsrfConfigs.has(config)) {
+            retriedCsrfConfigs.add(config);
             await ensureCsrfToken();
-            return apiClient({ ...config, _csrfRetried: true });
+            return apiClient(config);
         }
 
         return Promise.reject(error);
