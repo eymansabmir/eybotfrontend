@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 
 import { Spinner } from "@/components/ui/spinner"
+import { ensureCsrfToken } from "@/lib/api-client"
 import { authClient } from "@/lib/auth-client"
 
 interface ProtectedLayoutProps {
@@ -26,6 +27,7 @@ export function ProtectedLayout({ children }: ProtectedLayoutProps) {
         }
         
         setIsAuthenticated(true)
+        await ensureCsrfToken()
       } catch {
         setIsAuthenticated(false)
         void navigate({ to: "/login", replace: true })
