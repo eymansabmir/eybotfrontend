@@ -58,10 +58,35 @@ export function TemplateConfigForm({ data, onChange }: TemplateConfigFormProps) 
             loading: "Connecting to Meta Graph API & downloading template...",
             success: (res) => {
                 setIsFetching(false);
+
+                // Preserve existing parameters if components match
+                const mergedComponents = res.components.map((newComp: any) => {
+                    const existingComp = components.find(c => 
+                        c.type === newComp.type && 
+                        (newComp.type !== "button" || ("index" in c && c.index === newComp.index))
+                    );
+
+                    if (existingComp && existingComp.parameters) {
+                        const newParams = newComp.parameters || [];
+                        const mergedParams = newParams.map((newP: any, i: number) => {
+                            const oldP = existingComp.parameters?.[i];
+                            return oldP ? { ...newP, ...oldP } : newP;
+                        });
+
+                        const finalParams = mergedParams.length > 0 ? mergedParams : existingComp.parameters;
+                        
+                        return {
+                            ...newComp,
+                            parameters: finalParams
+                        };
+                    }
+                    return newComp;
+                });
+
                 onChange({
                     templateName: res.templateName,
                     languageCode: res.languageCode,
-                    components: res.components,
+                    components: mergedComponents,
                     previewText: (res as any).previewText,
                 });
                 return `Successfully fetched & mapped '${res.templateName}' components!`;
