@@ -14,6 +14,10 @@ export const apiClient = axios.create({
 });
 
 export async function ensureCsrfToken(): Promise<string> {
+    if (csrfToken) {
+        return csrfToken;
+    }
+
     const { data, headers } = await apiClient.get<{ csrfToken: string }>("/csrf-token");
     const token = data.csrfToken ?? (headers["x-csrf-token"] as string | undefined);
     if (!token) {
@@ -23,10 +27,11 @@ export async function ensureCsrfToken(): Promise<string> {
     return token;
 }
 
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(async (config) => {
     const method = config.method?.toLowerCase();
-    if (method && STATE_CHANGING_METHODS.has(method) && csrfToken) {
-        config.headers.set("X-CSRF-Token", csrfToken);
+    if (method && STATE_CHANGING_METHODS.has(method)) {
+        const token = csrfToken ?? (await ensureCsrfToken());
+        config.headers.set("X-CSRF-Token", token);
     }
     return config;
 });
@@ -55,6 +60,7 @@ apiClient.interceptors.response.use(
 
         if (isStateChanging && isCsrfFailure && config && !retriedCsrfConfigs.has(config)) {
             retriedCsrfConfigs.add(config);
+            csrfToken = null;
             await ensureCsrfToken();
             return apiClient(config);
         }

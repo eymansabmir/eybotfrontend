@@ -1,6 +1,7 @@
 import { useRouterState } from "@tanstack/react-router";
 import { SettingsLayout } from "../components/settings-layout";
 import { ProfileSettings } from "../components/profile-settings";
+import { ActiveSessionsSettings } from "../components/active-sessions-settings";
 import { CredentialsSettings } from "../components/credentials-settings";
 import { AddCredentialSection } from "../components/add-credential-section";
 import { ApiKeySection } from "../components/api-key-section";
@@ -16,6 +17,8 @@ export function SettingsPage() {
         return <CredentialsSettings />;
       case "/settings/api-keys":
         return <ApiKeySection />;
+      case "/settings/security":
+        return <ActiveSessionsSettings />;
       case "/settings":
       default:
         return <ProfileSettings />;

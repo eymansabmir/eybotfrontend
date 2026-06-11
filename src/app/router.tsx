@@ -155,6 +155,12 @@ const settingsApiKeysRoute = createRoute({
   component: SettingsPage,
 })
 
+const settingsSecurityRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "settings/security",
+  component: SettingsPage,
+})
+
 const botEditorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "bot/$id",
@@ -213,6 +219,7 @@ const routeTree = rootRoute.addChildren([
   settingsCredentialsRoute,
   settingsCredentialsCreateRoute,
   settingsApiKeysRoute,
+  settingsSecurityRoute,
   botEditorRoute,
   botSettingsRoute,
   botTestRoute,
