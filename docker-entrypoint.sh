@@ -1,8 +1,20 @@
 #!/bin/sh
 set -eu
 
+# Hostnames only (no scheme/path). Strip accidental https:// from deploy configs.
+normalize_hosts() {
+  printf '%s' "$1" | tr ',' '\n' | while IFS= read -r host; do
+    host="$(printf '%s' "$host" | tr -d '[:space:]')"
+    [ -z "$host" ] && continue
+    host="${host#https://}"
+    host="${host#http://}"
+    host="${host%%/*}"
+    printf '%s\n' "$host"
+  done | tr '\n' ' ' | sed 's/ $//'
+}
+
 ALLOWED_HOSTS="${ALLOWED_HOSTS:-localhost}"
-SERVER_NAMES="$(printf '%s' "$ALLOWED_HOSTS" | tr ',' ' ')"
+SERVER_NAMES="$(normalize_hosts "$ALLOWED_HOSTS")"
 FRONTEND_RATE="${FRONTEND_RATE_LIMIT:-60r/m}"
 FRONTEND_BURST="${FRONTEND_RATE_BURST:-20}"
 

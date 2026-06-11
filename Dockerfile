@@ -39,6 +39,12 @@ RUN npm run build
 # Production Stage
 FROM nginxinc/nginx-unprivileged:alpine AS runner
 
+# Runtime nginx config (override at deploy with -e or platform env if needed)
+ARG ALLOWED_HOSTS=localhost
+ARG CSP_CONNECT_SRC=https://devwhatsappbe.epf6.in
+ENV ALLOWED_HOSTS=$ALLOWED_HOSTS
+ENV CSP_CONNECT_SRC=$CSP_CONNECT_SRC
+
 # Copy static files
 COPY --from=builder /app/dist /usr/share/nginx/html
 
