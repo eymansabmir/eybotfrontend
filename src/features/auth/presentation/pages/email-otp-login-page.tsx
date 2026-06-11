@@ -88,11 +88,17 @@ export function EmailOtpLoginPage() {
       return
     }
 
+    const otpValue = otp.trim()
+    if (!/^\d{6}$/.test(otpValue)) {
+      setError("Enter the 6-digit verification code")
+      return
+    }
+
     setIsLoading(true)
     try {
       const { error: signInError } = await authClient.signIn.emailOtp({
         email: normalizedEmail,
-        otp: otp.trim(),
+        otp: otpValue,
       })
 
       if (signInError) {
@@ -185,7 +191,8 @@ export function EmailOtpLoginPage() {
                         type="email"
                         placeholder="name@ey.com"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => setEmail(e.target.value.slice(0, 254))}
+                        maxLength={254}
                         className="h-12 w-full rounded-xl border-slate-200/60 bg-white/50 pl-11 text-base shadow-sm ring-offset-white transition-all focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-slate-800 dark:bg-black/20 dark:ring-offset-slate-950"
                         required
                     />

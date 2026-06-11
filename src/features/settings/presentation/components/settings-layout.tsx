@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { UserIcon, KeyIcon, ShieldCheck } from "lucide-react";
+import { UserIcon, KeyIcon, ShieldCheck, ShieldIcon } from "lucide-react";
 
 interface SettingsLayoutProps {
   children: ReactNode;
@@ -13,6 +13,12 @@ const navItems = [
     href: "/settings",
     icon: UserIcon,
     description: "Manage your profile and account settings"
+  },
+  {
+    label: "Security",
+    href: "/settings/security",
+    icon: ShieldIcon,
+    description: "Manage active sessions and review login protections"
   },
   {
     label: "Credentials",
