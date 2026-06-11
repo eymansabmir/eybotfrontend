@@ -1,20 +1,32 @@
 #!/bin/sh
 set -eu
 
-# Hostnames only (no scheme/path). Strip accidental https:// from deploy configs.
+# Hostnames only (no scheme/path/port). Commas separate multiple hosts.
 normalize_hosts() {
-  printf '%s' "$1" | tr ',' '\n' | while IFS= read -r host; do
-    host="$(printf '%s' "$host" | tr -d '[:space:]')"
+  normalized=""
+  old_ifs=$IFS
+  IFS=','
+
+  for host in $1; do
+    # trim whitespace and CR (Windows env files)
+    host=$(printf '%s' "$host" | tr -d ' \t\r\n')
     [ -z "$host" ] && continue
-    host="${host#https://}"
-    host="${host#http://}"
-    host="${host%%/*}"
-    printf '%s\n' "$host"
-  done | tr '\n' ' ' | sed 's/ $//'
+    host=${host#https://}
+    host=${host#http://}
+    host=${host%%/*}
+    host=${host%%:*}
+    [ -z "$host" ] && continue
+    normalized="${normalized:+$normalized }$host"
+  done
+
+  IFS=$old_ifs
+  printf '%s' "$normalized"
 }
 
-ALLOWED_HOSTS="${ALLOWED_HOSTS:-localhost}"
-SERVER_NAMES="$(normalize_hosts "$ALLOWED_HOSTS")"
+raw_allowed_hosts="${ALLOWED_HOSTS:-localhost}"
+SERVER_NAMES="$(normalize_hosts "$raw_allowed_hosts")"
+[ -z "$SERVER_NAMES" ] && SERVER_NAMES="localhost"
+echo "nginx allowed hosts: ${SERVER_NAMES}" >&2
 FRONTEND_RATE="${FRONTEND_RATE_LIMIT:-60r/m}"
 FRONTEND_BURST="${FRONTEND_RATE_BURST:-20}"
 
