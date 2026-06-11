@@ -15,6 +15,9 @@ env:
   VITE_ENABLE_USERS: "true"
   VITE_ENABLE_CAMPAIGNS: "true"
   VITE_DEFAULT_WHATSAPP_BSP: karix
+  # Nginx runtime config — baked into image (Host allowlist + CSP connect-src)
+  ALLOWED_HOSTS: devwhatsappfe.epf6.in
+  CSP_CONNECT_SRC: https://devwhatsappbe.epf6.in
 
 jobs:
   build:
@@ -63,3 +66,5 @@ jobs:
             VITE_ENABLE_USERS=${{ env.VITE_ENABLE_USERS }}
             VITE_ENABLE_CAMPAIGNS=${{ env.VITE_ENABLE_CAMPAIGNS }}
             VITE_DEFAULT_WHATSAPP_BSP=${{ env.VITE_DEFAULT_WHATSAPP_BSP }}
+            ALLOWED_HOSTS=${{ env.ALLOWED_HOSTS }}
+            CSP_CONNECT_SRC=${{ env.CSP_CONNECT_SRC }}
