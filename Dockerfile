@@ -43,8 +43,8 @@ FROM nginxinc/nginx-unprivileged:alpine AS runner
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Runtime host allowlist (set ALLOWED_HOSTS at deploy time, e.g. devwhatsappfe.epf6.in)
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# --chmod avoids RUN chmod, which fails on nginx-unprivileged (non-root USER)
+COPY --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
 
 EXPOSE 8080
 
