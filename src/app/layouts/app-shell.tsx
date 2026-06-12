@@ -34,7 +34,7 @@ import { EYLogo } from "@/components/branding/ey-logo"
 import { authClient } from "@/lib/auth-client"
 import { ENV } from "@/config/env"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { CommandMenu } from "./components/command-menu"
 // import { NotificationsMenu } from "./components/notifications-menu"
@@ -243,7 +243,6 @@ export function AppShell({ children }: { children: ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <button className="flex w-full items-center gap-3 rounded-xl bg-muted/40 p-3 transition-colors hover:bg-muted/60 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2">
                   <Avatar className="size-9 shrink-0 ring-2 ring-white/50 dark:ring-slate-900/50">
-                    <AvatarImage src={user?.image || `https://avatar.vercel.sh/${user?.email}`} alt={user?.name || "User"} />
                     <AvatarFallback className="bg-primary/10 text-primary font-bold">
                       {user?.name?.substring(0, 2).toUpperCase() || "US"}
                     </AvatarFallback>

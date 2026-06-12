@@ -31,7 +31,7 @@ FRONTEND_RATE="${FRONTEND_RATE_LIMIT:-60r/m}"
 FRONTEND_BURST="${FRONTEND_RATE_BURST:-20}"
 
 # API origin allowed in CSP connect-src (no path suffix).
-CSP_CONNECT_SRC="${CSP_CONNECT_SRC:-https://devwhatsappbe.epf6.in}"
+CSP_CONNECT_SRC="${CSP_CONNECT_SRC:-http://localhost:3000}"
 CSP_CONNECT_SRC="${CSP_CONNECT_SRC%/api}"
 CSP_CONNECT_SRC="${CSP_CONNECT_SRC%/}"
 
