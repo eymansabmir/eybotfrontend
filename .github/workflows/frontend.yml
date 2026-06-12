@@ -2,22 +2,35 @@ name: Build and Push Frontend
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches:
+      - main
+      - dev
+  release:
+    types:
+      - published
   workflow_dispatch:
+
+# Required repository variables (Settings → Secrets and variables → Actions → Variables):
+#
+# Production (main branch + releases):
+#   PROD_VITE_API_URL          https://whatsappbe.epfindia.gov.in/api
+#   PROD_VITE_BASE_MEDIA_URL   https://whatsappbe.epfindia.gov.in/api/storage/file
+#   PROD_ALLOWED_HOSTS         whatsappfe.epfindia.gov.in
+#   PROD_CSP_CONNECT_SRC       https://whatsappbe.epfindia.gov.in
+#
+# Development (dev branch):
+#   DEV_VITE_API_URL           https://devwhatsappbe.epf6.in/api
+#   DEV_VITE_BASE_MEDIA_URL    https://devwhatsappbe.epf6.in/api/storage/file
+#   DEV_ALLOWED_HOSTS          devwhatsappfe.epf6.in
+#   DEV_CSP_CONNECT_SRC        https://devwhatsappbe.epf6.in
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-frontend
-  # Vite build-time config — passed to Docker as build-args below
-  VITE_API_URL: https://devwhatsappbe.epf6.in/api
-  VITE_BASE_MEDIA_URL: https://devwhatsappbe.epf6.in/api/storage/file
   VITE_ENABLE_VOICE_TECH: "false"
   VITE_ENABLE_USERS: "true"
   VITE_ENABLE_CAMPAIGNS: "true"
   VITE_DEFAULT_WHATSAPP_BSP: karix
-  # Nginx runtime config — baked into image (Host allowlist + CSP connect-src)
-  ALLOWED_HOSTS: devwhatsappfe.epf6.in
-  CSP_CONNECT_SRC: https://devwhatsappbe.epf6.in
 
 jobs:
   build:
@@ -25,10 +38,31 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      VITE_API_URL: ${{ (github.event_name == 'release' || github.ref == 'refs/heads/main') && vars.PROD_VITE_API_URL || vars.DEV_VITE_API_URL }}
+      VITE_BASE_MEDIA_URL: ${{ (github.event_name == 'release' || github.ref == 'refs/heads/main') && vars.PROD_VITE_BASE_MEDIA_URL || vars.DEV_VITE_BASE_MEDIA_URL }}
+      ALLOWED_HOSTS: ${{ (github.event_name == 'release' || github.ref == 'refs/heads/main') && vars.PROD_ALLOWED_HOSTS || vars.DEV_ALLOWED_HOSTS }}
+      CSP_CONNECT_SRC: ${{ (github.event_name == 'release' || github.ref == 'refs/heads/main') && vars.PROD_CSP_CONNECT_SRC || vars.DEV_CSP_CONNECT_SRC }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}
+
+      - name: Validate build variables
+        run: |
+          missing=""
+          for name in VITE_API_URL VITE_BASE_MEDIA_URL ALLOWED_HOSTS CSP_CONNECT_SRC; do
+            eval "value=\$$name"
+            if [ -z "$value" ]; then
+              missing="$missing $name"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required build configuration:$missing"
+            exit 1
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -46,9 +80,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=sha,format=short
-            latest
+            type=raw,value=latest,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+            type=sha,format=long,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+            type=raw,value=dev-latest,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' }}
+            type=sha,prefix=dev-,format=long,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' }}
+            type=raw,value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

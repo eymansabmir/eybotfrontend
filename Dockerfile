@@ -41,14 +41,14 @@ FROM nginxinc/nginx-unprivileged:alpine AS runner
 
 # Runtime nginx config (override at deploy with -e or platform env if needed)
 ARG ALLOWED_HOSTS=localhost
-ARG CSP_CONNECT_SRC=https://devwhatsappbe.epf6.in
+ARG CSP_CONNECT_SRC=http://localhost:3000
 ENV ALLOWED_HOSTS=$ALLOWED_HOSTS
 ENV CSP_CONNECT_SRC=$CSP_CONNECT_SRC
 
 # Copy static files
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Runtime host allowlist (set ALLOWED_HOSTS at deploy time, e.g. devwhatsappfe.epf6.in)
+# Runtime host allowlist (set ALLOWED_HOSTS at build or deploy time)
 # --chmod avoids RUN chmod, which fails on nginx-unprivileged (non-root USER)
 COPY --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
 
