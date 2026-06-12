@@ -15,6 +15,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { MessageCircle, AlertTriangle, Bot, CheckCircle2 } from "lucide-react";
+import { sanitizeAlphanumericSlug, sanitizeNumeric, sanitizePhone, sanitizeUrl, sanitizeUrlPath, sanitizeLocaleCode } from "@/lib/input-validation";
 import { StepperSidebar, type StepConfig } from "@/features/campaign/presentation/components/wizard/stepper-sidebar";
 import { ConditionBuilder } from "./condition-builder";
 import { ProviderBadge } from "../shared/provider-badge";
@@ -562,8 +563,9 @@ export function CreateRoutingRuleDialog({
                                 <Label>Agent Phone Number ID</Label>
                                 <Input
                                   value={agentPhoneNumberId}
-                                  onChange={(e) => setAgentPhoneNumberId(e.target.value)}
+                                  onChange={(e) => setAgentPhoneNumberId(sanitizeAlphanumericSlug(e.target.value))}
                                   placeholder="e.g. pn_abc123"
+                                  maxLength={100}
                                 />
                                 <p className="text-[10px] text-muted-foreground">Required for ElevenLabs telephony endpoint.</p>
                               </div>
@@ -578,8 +580,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>WhatsApp Phone Number ID</Label>
                                   <Input
                                     value={whatsappPhoneNumberId}
-                                    onChange={(e) => setWhatsappPhoneNumberId(e.target.value)}
+                                    onChange={(e) => setWhatsappPhoneNumberId(sanitizeAlphanumericSlug(e.target.value))}
                                     placeholder="e.g. wpn_abc123"
+                                    maxLength={100}
                                   />
                                 </div>
 
@@ -587,8 +590,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>Permission Template Name</Label>
                                   <Input
                                     value={whatsappTemplateName}
-                                    onChange={(e) => setWhatsappTemplateName(e.target.value)}
+                                    onChange={(e) => setWhatsappTemplateName(sanitizeAlphanumericSlug(e.target.value))}
                                     placeholder="e.g. call_permission_template"
+                                    maxLength={100}
                                   />
                                 </div>
 
@@ -596,8 +600,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>Template Language Code</Label>
                                   <Input
                                     value={whatsappTemplateLanguageCode}
-                                    onChange={(e) => setWhatsappTemplateLanguageCode(e.target.value)}
+                                    onChange={(e) => setWhatsappTemplateLanguageCode(sanitizeLocaleCode(e.target.value))}
                                     placeholder="e.g. en_US"
+                                    maxLength={10}
                                   />
                                 </div>
 
@@ -605,8 +610,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>Default WhatsApp User ID (Optional)</Label>
                                   <Input
                                     value={defaultWhatsappUserId}
-                                    onChange={(e) => setDefaultWhatsappUserId(e.target.value)}
+                                    onChange={(e) => setDefaultWhatsappUserId(sanitizePhone(e.target.value))}
                                     placeholder="e.g. 15551234567"
+                                    maxLength={20}
                                   />
                                   <p className="text-[10px] text-muted-foreground">
                                     If left empty, you can provide user ID while triggering a specific call.
@@ -624,8 +630,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>Orchestrator Base URL (Optional)</Label>
                                   <Input
                                     value={sarvamOrchestratorBaseUrl}
-                                    onChange={(e) => setSarvamOrchestratorBaseUrl(e.target.value)}
+                                    onChange={(e) => setSarvamOrchestratorBaseUrl(sanitizeUrl(e.target.value))}
                                     placeholder="https://your-orchestrator.example.com"
+                                    maxLength={500}
                                   />
                                 </div>
 
@@ -633,8 +640,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>Telephony Endpoint (Optional)</Label>
                                   <Input
                                     value={sarvamTelephonyEndpoint}
-                                    onChange={(e) => setSarvamTelephonyEndpoint(e.target.value)}
+                                    onChange={(e) => setSarvamTelephonyEndpoint(sanitizeUrlPath(e.target.value))}
                                     placeholder="/v1/voice/telephony/outbound-call"
+                                    maxLength={200}
                                   />
                                 </div>
 
@@ -642,8 +650,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>WhatsApp Endpoint (Optional)</Label>
                                   <Input
                                     value={sarvamWhatsappEndpoint}
-                                    onChange={(e) => setSarvamWhatsappEndpoint(e.target.value)}
+                                    onChange={(e) => setSarvamWhatsappEndpoint(sanitizeUrlPath(e.target.value))}
                                     placeholder="/v1/voice/whatsapp/outbound-call"
+                                    maxLength={200}
                                   />
                                 </div>
 
@@ -651,8 +660,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>Batch Endpoint (Optional)</Label>
                                   <Input
                                     value={sarvamBatchEndpoint}
-                                    onChange={(e) => setSarvamBatchEndpoint(e.target.value)}
+                                    onChange={(e) => setSarvamBatchEndpoint(sanitizeUrlPath(e.target.value))}
                                     placeholder="/v1/voice/batch-calling/submit"
+                                    maxLength={200}
                                   />
                                 </div>
 
@@ -661,8 +671,9 @@ export function CreateRoutingRuleDialog({
                                     <Label>Default WhatsApp User ID (Optional)</Label>
                                     <Input
                                       value={defaultWhatsappUserId}
-                                      onChange={(e) => setDefaultWhatsappUserId(e.target.value)}
+                                      onChange={(e) => setDefaultWhatsappUserId(sanitizePhone(e.target.value))}
                                       placeholder="e.g. 15551234567"
+                                      maxLength={20}
                                     />
                                   </div>
                                 )}
@@ -682,8 +693,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>Phone Number ID</Label>
                                   <Input
                                     value={vapiPhoneNumberId}
-                                    onChange={(e) => setVapiPhoneNumberId(e.target.value)}
+                                    onChange={(e) => setVapiPhoneNumberId(sanitizeAlphanumericSlug(e.target.value))}
                                     placeholder="e.g. pn_abc123"
+                                    maxLength={100}
                                   />
                                   <p className="text-[10px] text-muted-foreground">
                                     Required Vapi number used to place outbound calls.
@@ -694,8 +706,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>API Base URL (Optional)</Label>
                                   <Input
                                     value={vapiBaseUrl}
-                                    onChange={(e) => setVapiBaseUrl(e.target.value)}
+                                    onChange={(e) => setVapiBaseUrl(sanitizeUrl(e.target.value))}
                                     placeholder="https://api.vapi.ai"
+                                    maxLength={500}
                                   />
                                 </div>
 
@@ -703,8 +716,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>Telephony Endpoint (Optional)</Label>
                                   <Input
                                     value={vapiTelephonyEndpoint}
-                                    onChange={(e) => setVapiTelephonyEndpoint(e.target.value)}
+                                    onChange={(e) => setVapiTelephonyEndpoint(sanitizeUrlPath(e.target.value))}
                                     placeholder="/call"
+                                    maxLength={200}
                                   />
                                 </div>
 
@@ -712,8 +726,9 @@ export function CreateRoutingRuleDialog({
                                   <Label>WhatsApp Endpoint (Optional)</Label>
                                   <Input
                                     value={vapiWhatsappEndpoint}
-                                    onChange={(e) => setVapiWhatsappEndpoint(e.target.value)}
+                                    onChange={(e) => setVapiWhatsappEndpoint(sanitizeUrlPath(e.target.value))}
                                     placeholder="/call"
+                                    maxLength={200}
                                   />
                                 </div>
 
@@ -723,8 +738,9 @@ export function CreateRoutingRuleDialog({
                                     type="number"
                                     min="0"
                                     value={vapiBatchIntervalMs}
-                                    onChange={(e) => setVapiBatchIntervalMs(e.target.value)}
+                                    onChange={(e) => setVapiBatchIntervalMs(sanitizeNumeric(e.target.value))}
                                     placeholder="250"
+                                    maxLength={6}
                                   />
                                 </div>
 
@@ -733,8 +749,9 @@ export function CreateRoutingRuleDialog({
                                     <Label>Default WhatsApp User/Number (Optional)</Label>
                                     <Input
                                       value={defaultWhatsappUserId}
-                                      onChange={(e) => setDefaultWhatsappUserId(e.target.value)}
+                                      onChange={(e) => setDefaultWhatsappUserId(sanitizePhone(e.target.value))}
                                       placeholder="e.g. +15551234567"
+                                      maxLength={20}
                                     />
                                   </div>
                                 )}

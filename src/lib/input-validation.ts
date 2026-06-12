@@ -103,3 +103,43 @@ export function sanitizePort(value: string): string {
 export function sanitizeButtonLabel(value: string): string {
   return sanitizeLabel(value).slice(0, INPUT_LIMITS.BUTTON_LABEL);
 }
+
+/**
+ * Sanitizes a phone number field.
+ * Allows only `+` prefix (once, at the start) and digits.
+ * Use for human-entered phone numbers like "+919876543210".
+ */
+export function sanitizePhone(value: string): string {
+  // Keep a leading '+' plus digits only
+  const hasPlus = value.startsWith("+");
+  const digits = value.replace(/\D/g, "");
+  return hasPlus ? `+${digits}` : digits;
+}
+
+/**
+ * Sanitizes a JSON field path / dot-path identifier.
+ * Allows letters, digits, underscores, hyphens, dots, and square brackets
+ * (e.g. `data.items[0].phone`, `member_id`, `req_name`).
+ * Blocks everything else including HTML injection characters.
+ */
+export function sanitizeFieldPath(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_.\-[\]]/g, "");
+}
+
+/**
+ * Sanitizes a relative or absolute URL path / API endpoint.
+ * Broader than sanitizeUrl — also allows leading slashes and path segments
+ * (e.g. `/v1/voice/telephony`, `https://api.vapi.ai`).
+ * Strips characters that enable HTML injection: < > " ` { } | \ ^
+ */
+export function sanitizeUrlPath(value: string): string {
+  return value.replace(/[<>"` {}|\\^]/g, "");
+}
+
+/**
+ * Sanitizes a language/locale code field (e.g. `en_US`, `hi_IN`).
+ * Allows only letters, digits, hyphens, and underscores.
+ */
+export function sanitizeLocaleCode(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_\-]/g, "");
+}

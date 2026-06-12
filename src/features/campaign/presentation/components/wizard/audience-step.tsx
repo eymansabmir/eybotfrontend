@@ -28,6 +28,7 @@ import {
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CsvUploader } from "../CsvUploader";
+import { sanitizeFieldPath, sanitizeNumeric } from "@/lib/input-validation";
 
 export interface AudienceStepProps {
     filePath: string;
@@ -533,11 +534,12 @@ export function AudienceStep({
                                                             className={cn("w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow", isRerunMode && "opacity-50 cursor-not-allowed")}
                                                             placeholder={`e.g. ${v === 'phone' ? 'member_id' : v}`}
                                                             value={fieldMapping[mapKey] || ''}
+                                                            maxLength={200}
                                                             onChange={(e) => {
                                                                 if (onFieldMappingChange) {
                                                                     onFieldMappingChange({
                                                                         ...fieldMapping,
-                                                                        [mapKey]: e.target.value
+                                                                        [mapKey]: sanitizeFieldPath(e.target.value)
                                                                     });
                                                                 }
                                                             }}
@@ -599,11 +601,12 @@ export function AudienceStep({
                                             className="w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
                                             placeholder="e.g. 1000"
                                             value={fieldMapping['__batchSize'] || ''}
+                                            maxLength={7}
                                             onChange={(e) => {
                                                 if (onFieldMappingChange) {
                                                     onFieldMappingChange({
                                                         ...fieldMapping,
-                                                        __batchSize: e.target.value
+                                                        __batchSize: sanitizeNumeric(e.target.value)
                                                     });
                                                 }
                                             }}
@@ -617,11 +620,12 @@ export function AudienceStep({
                                             className="w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
                                             placeholder="e.g. 50000"
                                             value={fieldMapping['__maxRecords'] || ''}
+                                            maxLength={8}
                                             onChange={(e) => {
                                                 if (onFieldMappingChange) {
                                                     onFieldMappingChange({
                                                         ...fieldMapping,
-                                                        __maxRecords: e.target.value
+                                                        __maxRecords: sanitizeNumeric(e.target.value)
                                                     });
                                                 }
                                             }}
