@@ -27,6 +27,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateRoutingConfig, useEntityTypes } from "../../../api/voice-tech-queries";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import { sanitizeLabel, sanitizeText, INPUT_LIMITS } from "@/lib/input-validation";
 
 interface CreateConfigDialogProps {
   open: boolean;
@@ -93,7 +94,8 @@ export function CreateConfigDialog({
               id="config-name" 
               placeholder="e.g. Production Flow, Inbound Test" 
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(sanitizeLabel(e.target.value))}
+              maxLength={INPUT_LIMITS.NAME}
               autoFocus
             />
           </div>
@@ -104,7 +106,8 @@ export function CreateConfigDialog({
               id="config-desc" 
               placeholder="What is this routing group for?" 
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => setDescription(sanitizeText(e.target.value))}
+              maxLength={INPUT_LIMITS.DESCRIPTION}
               className="resize-none h-20"
             />
           </div>
