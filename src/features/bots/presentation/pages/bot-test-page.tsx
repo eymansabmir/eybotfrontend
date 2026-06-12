@@ -6,6 +6,7 @@ import { useBot } from "../../data/queries/use-bots";
 import { toast } from "sonner";
 import { chatSessionApi, type StartFlowResult } from "@/features/chatsession/infra/chat-session-api";
 import { botsApi } from "../../data/api/bots-api";
+import { sanitizeText } from "@/lib/input-validation";
 
 export function BotTestPage() {
     const { id } = useParams({ from: "/bot/$id/test" });
@@ -275,8 +276,9 @@ export function BotTestPage() {
                                                 className="flex-1 bg-muted rounded-xl border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                                                 placeholder="Type your reply..."
                                                 value={userReply}
-                                                onChange={(e) => setUserReply(e.target.value)}
+                                                onChange={(e) => setUserReply(sanitizeText(e.target.value))}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
+                                                maxLength={1000}
                                             />
                                             <Button
                                                 size="icon"
