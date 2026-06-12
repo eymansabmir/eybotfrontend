@@ -1,4 +1,4 @@
-# Project Architecture - Frontend
+# Project Architecture -  dev integrated
 
 ## Overview
 This is a modern React application built with a focus on scalability, maintainability, and clean separation of concerns. It follows a **Feature-Based Modular Architecture** combined with **Clean Architecture** principles within each module.
