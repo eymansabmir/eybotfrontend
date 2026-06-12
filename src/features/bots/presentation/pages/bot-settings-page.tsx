@@ -15,6 +15,7 @@ import { useWhatsAppCredentials, useDeleteWhatsAppCredential } from "@/features/
 import { LocalizationForm } from "@/features/settings/presentation/components/localization-form";
 import { BotEditorNavbar } from "../components/bot-editor-navbar";
 import { getErrorMessage } from "@/lib/utils";
+import { sanitizeLabel, sanitizeText, sanitizeButtonLabel, INPUT_LIMITS } from "@/lib/input-validation";
 import {
   Tooltip,
   TooltipContent,
@@ -402,7 +403,7 @@ export function BotSettingsPage() {
                 onLangChange={() => {}}
                 isEditingName={isEditingName}
                 tempName={tempName}
-                onUpdateTempName={setTempName}
+                onUpdateTempName={(v) => setTempName(sanitizeLabel(v))}
                 onStartRename={() => setIsEditingName(true)}
                 onCancelRename={() => {
                     setTempName(bot?.name || "");
@@ -535,7 +536,8 @@ export function BotSettingsPage() {
                                                             className="w-full min-h-[100px] p-4 bg-transparent border-none focus:ring-0 text-sm resize-none custom-scrollbar"
                                                             placeholder="Are you still there? Would you like to continue?"
                                                             value={renudgeConfig.message}
-                                                            onChange={(e) => setRenudgeConfigSync({ ...renudgeConfig, message: e.target.value })}
+                                                            onChange={(e) => setRenudgeConfigSync({ ...renudgeConfig, message: sanitizeText(e.target.value) })}
+                                                            maxLength={INPUT_LIMITS.MESSAGE}
                                                        />
                                                   </div>
                                              </div>
@@ -555,9 +557,10 @@ export function BotSettingsPage() {
                                                                       value={btn.title}
                                                                       onChange={(e) => {
                                                                            const newButtons = [...renudgeConfig.buttons];
-                                                                           newButtons[idx] = { ...btn, title: e.target.value };
+                                                                           newButtons[idx] = { ...btn, title: sanitizeButtonLabel(e.target.value) };
                                                                            setRenudgeConfigSync({ ...renudgeConfig, buttons: newButtons });
                                                                       }}
+                                                                      maxLength={INPUT_LIMITS.BUTTON_LABEL}
                                                                       className="bg-transparent border-none focus-visible:ring-0 h-8 p-0 text-sm font-medium"
                                                                  />
                                                             </div>
@@ -604,7 +607,8 @@ export function BotSettingsPage() {
                                               className="w-full min-h-[100px] p-4 bg-transparent border-none focus:ring-0 text-sm resize-none custom-scrollbar"
                                               placeholder="Sorry, something went wrong. Please try again later."
                                               value={fallbackMessage}
-                                              onChange={(e) => setFallbackMessageSync(e.target.value)}
+                                              onChange={(e) => setFallbackMessageSync(sanitizeText(e.target.value))}
+                                              maxLength={INPUT_LIMITS.MESSAGE}
                                           />
                                       </div>
                                   </div>
@@ -619,7 +623,8 @@ export function BotSettingsPage() {
                                               className="w-full min-h-[100px] p-4 bg-transparent border-none focus:ring-0 text-sm resize-none custom-scrollbar"
                                               placeholder="Invalid input. Please use the options provided above."
                                               value={invalidInputMessage}
-                                              onChange={(e) => setInvalidInputMessageSync(e.target.value)}
+                                              onChange={(e) => setInvalidInputMessageSync(sanitizeText(e.target.value))}
+                                              maxLength={INPUT_LIMITS.MESSAGE}
                                           />
                                       </div>
                                   </div>
@@ -634,7 +639,8 @@ export function BotSettingsPage() {
                                               className="w-full min-h-[100px] p-4 bg-transparent border-none focus:ring-0 text-sm resize-none custom-scrollbar"
                                               placeholder="You already finished this flow. To start again, please send the trigger keyword."
                                               value={finishedJourneyMessage}
-                                              onChange={(e) => setFinishedJourneyMessageSync(e.target.value)}
+                                              onChange={(e) => setFinishedJourneyMessageSync(sanitizeText(e.target.value))}
+                                              maxLength={INPUT_LIMITS.MESSAGE}
                                           />
                                       </div>
                                   </div>
@@ -834,7 +840,8 @@ export function BotSettingsPage() {
                                                                             placeholder="Type a value..." 
                                                                             className="h-9" 
                                                                             value={comp.value} 
-                                                                            onChange={(e) => updateComparison(idx, "value", e.target.value)} 
+                                                                            onChange={(e) => updateComparison(idx, "value", sanitizeText(e.target.value))}
+                                                                            maxLength={INPUT_LIMITS.COMPARISON_VALUE}
                                                                         />
                                                                         {comparisons.length > 1 && (
                                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0" onClick={() => removeComparison(idx)}>

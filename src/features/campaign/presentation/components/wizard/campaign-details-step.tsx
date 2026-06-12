@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { useBots } from "@/features/bots/data/queries/use-bots";
 import { Loader2 } from "lucide-react";
+import { sanitizeLabel, INPUT_LIMITS } from "@/lib/input-validation";
 
 interface CampaignDetailsStepProps {
     title: string;
@@ -45,7 +46,8 @@ export function CampaignDetailsStep({
                         id="campaign-name"
                         placeholder="e.g. Q4 Customer Outreach"
                         value={title}
-                        onChange={(e) => onTitleChange(e.target.value)}
+                        onChange={(e) => onTitleChange(sanitizeLabel(e.target.value))}
+                        maxLength={INPUT_LIMITS.NAME}
                         disabled={isRerunMode}
                         autoFocus
                     />

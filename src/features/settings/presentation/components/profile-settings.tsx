@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { getErrorMessage } from "@/lib/utils";
+import { sanitizeLabel, INPUT_LIMITS } from "@/lib/input-validation";
 
 export function ProfileSettings() {
   const { data: session, isPending, refetch } = authClient.useSession();
@@ -54,8 +55,9 @@ export function ProfileSettings() {
               <Input
                 id="name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => setName(sanitizeLabel(e.target.value))}
                 placeholder="Your name"
+                maxLength={INPUT_LIMITS.NAME}
               />
             </div>
             <div className="grid gap-2">

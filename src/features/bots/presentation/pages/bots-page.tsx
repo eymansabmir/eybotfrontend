@@ -36,6 +36,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import type { Bot as BotType } from "../../data/schemas/bot.schema";
 import { getErrorMessage } from "@/lib/utils";
+import { sanitizeLabel, INPUT_LIMITS } from "@/lib/input-validation";
 
 
 import {
@@ -165,7 +166,8 @@ function BotActionsMenu({ bot }: BotActionsMenuProps) {
               <Input
                 id="name"
                 value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+                onChange={(e) => setNewName(sanitizeLabel(e.target.value))}
+                maxLength={INPUT_LIMITS.NAME}
                 autoFocus
               />
             </div>

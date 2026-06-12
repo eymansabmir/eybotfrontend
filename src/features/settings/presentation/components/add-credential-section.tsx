@@ -40,6 +40,7 @@ import { DbConnectorSheet } from "./db-connector-sheet";
 
 import { DEFAULT_ORG_ID } from "@/features/integrations/openai/domain/openai.constants";
 import { ProviderLogo } from "@/components/brand-logos";
+import { sanitizeLabel, sanitizeUrl, INPUT_LIMITS } from "@/lib/input-validation";
 
 const integrationTypes = [
   { id: "WHATSAPP", name: "WhatsApp (Meta)", description: "Connect your WhatsApp Business account", icon: MessageSquare },
@@ -280,8 +281,9 @@ export function AddCredentialSection() {
                   </Label>
                   <Input
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => setName(sanitizeLabel(e.target.value))}
                     placeholder="My account"
+                    maxLength={INPUT_LIMITS.NAME}
                     className="h-14 text-base rounded-2xl border-border bg-card shadow-sm"
                   />
                 </div>
@@ -305,8 +307,9 @@ export function AddCredentialSection() {
                     <Label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Base URL (Optional)</Label>
                     <Input
                       value={baseUrl}
-                      onChange={(e) => setBaseUrl(e.target.value)}
+                      onChange={(e) => setBaseUrl(sanitizeUrl(e.target.value))}
                       placeholder={selectedType === "OPENAI" ? "https://api.openai.com/v1" : "https://..."}
+                      maxLength={INPUT_LIMITS.URL}
                       className="h-14 text-base rounded-2xl border-border bg-card shadow-sm"
                     />
                   </div>
