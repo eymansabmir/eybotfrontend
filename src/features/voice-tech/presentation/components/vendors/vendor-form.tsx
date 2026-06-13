@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUploadFile, useCreateCredential } from "../../../api/voice-tech-queries";
+import { sanitizeLabel, sanitizeUrl, sanitizeAlphanumericSlug, sanitizeHostname, INPUT_LIMITS } from "@/lib/input-validation";
 
 const ORG_ID = "tenant-ey-001";
 const VOICE_CRED_TYPES = ["ELEVENLABS", "SARVAM", "VAPI", "EXOTEL"];
@@ -85,7 +86,8 @@ export function VendorForm({ onSuccess, onCancel }: VendorFormProps) {
             id="name"
             placeholder="e.g., ElevenLabs Production"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, name: sanitizeLabel(e.target.value) })}
+            maxLength={INPUT_LIMITS.NAME}
             className="h-11 rounded-lg bg-background border-border focus-visible:ring-1 focus-visible:ring-primary font-medium"
           />
         </div>
@@ -139,7 +141,8 @@ export function VendorForm({ onSuccess, onCancel }: VendorFormProps) {
                 id="logoUrl" 
                 placeholder="Enter logo URL or upload ..." 
                 value={formData.logoUrl}
-                onChange={(e) => setFormData({...formData, logoUrl: e.target.value})}
+                onChange={(e) => setFormData({...formData, logoUrl: sanitizeUrl(e.target.value)})}
+                maxLength={INPUT_LIMITS.URL}
                 className="h-11 rounded-lg bg-background border-border focus-visible:ring-1 focus-visible:ring-primary"
               />
               {formData.logoUrl && (
@@ -181,7 +184,8 @@ export function VendorForm({ onSuccess, onCancel }: VendorFormProps) {
                 id="apiSid"
                 placeholder="Exotel Account SID"
                 value={formData.apiSid}
-                onChange={(e) => setFormData({ ...formData, apiSid: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, apiSid: sanitizeAlphanumericSlug(e.target.value) })}
+                maxLength={INPUT_LIMITS.NAME}
                 className="h-11 rounded-lg bg-background border-border"
               />
             </div>
@@ -193,7 +197,8 @@ export function VendorForm({ onSuccess, onCancel }: VendorFormProps) {
                 id="subdomain"
                 placeholder="api.exotel.com"
                 value={formData.subdomain}
-                onChange={(e) => setFormData({ ...formData, subdomain: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, subdomain: sanitizeHostname(e.target.value) })}
+                maxLength={INPUT_LIMITS.HOSTNAME}
                 className="h-11 rounded-lg bg-background border-border"
               />
             </div>

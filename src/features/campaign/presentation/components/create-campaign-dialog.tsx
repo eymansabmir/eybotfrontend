@@ -115,7 +115,8 @@ export function CreateCampaignDialog({ open, onOpenChange, initialCampaign }: Cr
                     id: initialCampaign.id,
                     input: {
                         fieldMapping: updatedFieldMapping,
-                    }
+                        scheduleTime: executionMode === "SCHEDULED" ? new Date(executeAt).toISOString() : null,
+                    } as any
                 });
 
                 // Trigger start on the existing campaign
@@ -196,7 +197,6 @@ export function CreateCampaignDialog({ open, onOpenChange, initialCampaign }: Cr
                                             onModeChange={setExecutionMode}
                                             executeAt={executeAt}
                                             onExecuteAtChange={setExecuteAt}
-                                            isRerunMode={isRerunMode}
                                         />
                                     )}
                                 </motion.div>

@@ -23,6 +23,7 @@ import { useExecuteRouting } from "../../../api/voice-tech-queries";
 import { ProviderBadge } from "../shared/provider-badge";
 import type { EntityAttribute } from "../../../types";
 import { useEffect } from "react";
+import { sanitizePhone, sanitizeText } from "@/lib/input-validation";
 
 interface SimulationDialogProps {
   open: boolean;
@@ -126,7 +127,8 @@ export function SimulationDialog({
                 placeholder="+1234567890" 
                 className="h-9 font-mono text-sm"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(sanitizePhone(e.target.value))}
+                maxLength={20}
              />
              <p className="text-[10px] text-muted-foreground pl-1">
                 If provided, a real call will be initiated if a rule matches.
@@ -151,7 +153,8 @@ export function SimulationDialog({
                            placeholder={`Value...`} 
                            className="h-8 text-xs font-mono"
                            value={testData[attr.key] || ""}
-                           onChange={(e) => handleInputChange(attr.key, e.target.value)}
+                           onChange={(e) => handleInputChange(attr.key, sanitizeText(e.target.value))}
+                           maxLength={500}
                         />
                         </div>
                      ))}
@@ -176,7 +179,8 @@ export function SimulationDialog({
                                        placeholder={`Value...`} 
                                        className="h-8 text-xs font-mono"
                                        value={testData[fullKey] || ""}
-                                       onChange={(e) => handleInputChange(fullKey, e.target.value)}
+                                       onChange={(e) => handleInputChange(fullKey, sanitizeText(e.target.value))}
+                                       maxLength={500}
                                     />
                                  </div>
                               );

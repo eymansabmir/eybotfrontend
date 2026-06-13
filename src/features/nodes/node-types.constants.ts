@@ -36,6 +36,7 @@ export const NodeType = {
   LANGUAGE: 'language',
   ANTHROPIC: 'anthropic',
   DEEPSEEK: 'deepseek',
+  PMVBRY: 'pmvbry',
   VARIABLE_MANAGER: 'variable_manager',
   MEDIA_CONDITIONAL: 'media_conditional',
   BOT_NODE: 'bot_node',

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { EYLogo } from "@/components/branding/ey-logo";
 import { ISO_TO_NATIVE_NAME } from "@/features/i18n/languages";
+import { sanitizeLabel, INPUT_LIMITS } from "@/lib/input-validation";
 
 interface BotEditorNavbarProps {
     id: string;
@@ -104,13 +105,14 @@ export function BotEditorNavbar({
                         {isEditingName && !isPublished ? (
                             <Input
                                 value={tempName}
-                                onChange={(e: ChangeEvent<HTMLInputElement>) => onUpdateTempName(e.target.value)}
+                                onChange={(e: ChangeEvent<HTMLInputElement>) => onUpdateTempName(sanitizeLabel(e.target.value))}
                                 onBlur={() => onRename(tempName)}
                                 onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
                                     if (e.key === "Enter") onRename(tempName);
                                     if (e.key === "Escape") onCancelRename();
                                 }}
                                 autoFocus
+                                maxLength={INPUT_LIMITS.NAME}
                                 className="h-7 w-60 text-sm font-semibold px-2 py-0 focus-visible:ring-1 bg-muted/30"
                             />
                         ) : (

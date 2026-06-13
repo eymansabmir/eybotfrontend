@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { useCreateDataSource } from "@/features/integrations/hooks/use-connectors";
 import { cn } from "@/lib/utils";
+import { sanitizeLabel, sanitizeHostname, sanitizePort, sanitizeAlphanumericSlug, INPUT_LIMITS } from "@/lib/input-validation";
 
 interface DbConnectorSheetProps {
     open: boolean;
@@ -109,7 +110,8 @@ export function DbConnectorSheet({ open, onOpenChange, onSuccess }: DbConnectorS
                                     placeholder="e.g. Production Master DB" 
                                     className="h-12 bg-muted/30 border-transparent focus:bg-background transition-all rounded-xl"
                                     value={formData.name}
-                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    onChange={(e) => setFormData({...formData, name: sanitizeLabel(e.target.value)})}
+                                    maxLength={INPUT_LIMITS.NAME}
                                 />
                             </div>
 
@@ -132,7 +134,8 @@ export function DbConnectorSheet({ open, onOpenChange, onSuccess }: DbConnectorS
                                         placeholder="5432" 
                                         className="h-12 bg-muted/30 border-transparent rounded-xl"
                                         value={formData.port}
-                                        onChange={(e) => setFormData({...formData, port: e.target.value})}
+                                        onChange={(e) => setFormData({...formData, port: sanitizePort(e.target.value)})}
+                                        maxLength={INPUT_LIMITS.PORT}
                                     />
                                 </div>
                             </div>
@@ -143,7 +146,8 @@ export function DbConnectorSheet({ open, onOpenChange, onSuccess }: DbConnectorS
                                     placeholder="db.your-enterprise.com" 
                                     className="h-12 bg-muted/30 border-transparent rounded-xl"
                                     value={formData.host}
-                                    onChange={(e) => setFormData({...formData, host: e.target.value})}
+                                    onChange={(e) => setFormData({...formData, host: sanitizeHostname(e.target.value)})}
+                                    maxLength={INPUT_LIMITS.HOSTNAME}
                                 />
                             </div>
                         </div>
@@ -165,7 +169,8 @@ export function DbConnectorSheet({ open, onOpenChange, onSuccess }: DbConnectorS
                                     placeholder="db_read_only" 
                                     className="h-12 bg-muted/30 border-transparent rounded-xl"
                                     value={formData.username}
-                                    onChange={(e) => setFormData({...formData, username: e.target.value})}
+                                    onChange={(e) => setFormData({...formData, username: sanitizeAlphanumericSlug(e.target.value)})}
+                                    maxLength={INPUT_LIMITS.USERNAME}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -186,7 +191,8 @@ export function DbConnectorSheet({ open, onOpenChange, onSuccess }: DbConnectorS
                                 placeholder="customer_analytics_prod" 
                                 className="h-12 bg-muted/30 border-transparent rounded-xl"
                                 value={formData.databaseName}
-                                onChange={(e) => setFormData({...formData, databaseName: e.target.value})}
+                                onChange={(e) => setFormData({...formData, databaseName: sanitizeAlphanumericSlug(e.target.value)})}
+                                maxLength={INPUT_LIMITS.DATABASE_NAME}
                             />
                         </div>
                     </div>

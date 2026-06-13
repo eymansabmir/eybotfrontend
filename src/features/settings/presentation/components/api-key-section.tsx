@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
+import { sanitizeLabel, INPUT_LIMITS } from "@/lib/input-validation";
 
 interface ApiKey {
   id: string;
@@ -122,7 +123,8 @@ export function ApiKeySection() {
                 <Input 
                   placeholder="e.g., Daily CRM Sync" 
                   value={newKeyName}
-                  onChange={(e) => setNewKeyName(e.target.value)}
+                  onChange={(e) => setNewKeyName(sanitizeLabel(e.target.value))}
+                  maxLength={INPUT_LIMITS.NAME}
                   className="h-11 bg-background border-muted/50 rounded-xl"
                 />
               </div>

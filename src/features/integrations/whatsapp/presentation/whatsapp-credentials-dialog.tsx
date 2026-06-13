@@ -7,6 +7,7 @@ import { ExternalLink, Check, Copy, ChevronRight, ChevronLeft, Bot, AlertCircle,
 import { toast } from "sonner";
 import { useCreateWhatsAppCredential } from "../hooks/use-whatsapp-credentials";
 import { whatsappCredentialsApi } from "../api/whatsapp-credentials.api";
+import { sanitizeLabel, sanitizeNumeric, INPUT_LIMITS } from "@/lib/input-validation";
 
 type ApiLikeError = {
   response?: {
@@ -373,14 +374,18 @@ export function WhatsAppCredentialsDialog({ open, onOpenChange, orgId, onNewCred
                         </div>
                         <div className="space-y-1.5">
                             <Label>Account Name / Label</Label>
-                            <Input value={phoneNumberName} onChange={(e) => setPhoneNumberName(e.target.value)} />
+                            <Input
+                              value={phoneNumberName}
+                              onChange={(e) => setPhoneNumberName(sanitizeLabel(e.target.value))}
+                              maxLength={INPUT_LIMITS.NAME}
+                            />
                             <p className="text-xs text-muted-foreground">Auto-filled from Meta if left empty.</p>
                         </div>
                         <div className="space-y-1.5">
                             <Label>WhatsApp Business Account (WABA) ID <span className="text-[10px] text-muted-foreground font-normal">(Optional)</span></Label>
                             <Input 
                               value={whatsappBusinessAccountId} 
-                              onChange={(e) => setWhatsappBusinessAccountId(e.target.value)}
+                              onChange={(e) => setWhatsappBusinessAccountId(sanitizeNumeric(e.target.value))}
                               placeholder="e.g., 942080224962111"
                             />
                             <p className="text-xs text-muted-foreground">Directly configure this WABA ID to bypass Graph API lookups and avoid Meta permission limits.</p>
