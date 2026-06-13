@@ -100,11 +100,12 @@ export function CampaignTable({ campaigns, isLoading, onRerunCampaign }: Campaig
                 <Table>
                     <TableHeader>
                         <TableRow className="hover:bg-transparent">
-                            <TableHead className="w-[40%]">Title</TableHead>
-                            <TableHead className="w-[15%]">Status</TableHead>
-                            <TableHead className="w-[15%]">Mode</TableHead>
-                            <TableHead className="w-[18%]">Created</TableHead>
-                            <TableHead className="w-[12%] text-right">Actions</TableHead>
+                            <TableHead className="w-[35%]">Title</TableHead>
+                            <TableHead className="w-[12%]">Status</TableHead>
+                            <TableHead className="w-[12%]">Mode</TableHead>
+                            <TableHead className="w-[15%]">User</TableHead>
+                            <TableHead className="w-[15%]">Created</TableHead>
+                            <TableHead className="w-[11%] text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -125,6 +126,9 @@ export function CampaignTable({ campaigns, isLoading, onRerunCampaign }: Campaig
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">
                                     {c.scheduleTime ? "Scheduled" : "Immediate"}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                    {c.flow?.creator?.name || c.flow?.creator?.email?.split('@')[0] || "System"}
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">
                                     {format(new Date(c.createdAt), "MMM d, yyyy")}

@@ -16,6 +16,13 @@ export interface Campaign {
   filters?: any;
   createdAt: string;
   updatedAt: string;
+  flow?: {
+    creator?: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  };
 }
 
 export interface CreateCampaignResponse {

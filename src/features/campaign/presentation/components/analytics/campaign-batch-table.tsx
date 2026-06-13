@@ -1,71 +1,30 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { CheckCircle2, XCircle, Clock, Users, Calendar, Activity, ChevronLeft, ChevronRight } from "lucide-react";
-
-// TODO: Replace this with real data fetched from the backend later.
-// Currently returning dummy data for the UI as requested.
-function fetchDummyBatchData(campaignId: string) {
-    return [
-        {
-            id: "batch_1",
-            campaignId: campaignId,
-            launchedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-            targetCount: 2000,
-            status: "success",
-            successCount: 2000,
-            failedCount: 0,
-        },
-        {
-            id: "batch_2",
-            campaignId: campaignId,
-            launchedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
-            targetCount: 10000,
-            status: "success",
-            successCount: 9980,
-            failedCount: 20,
-        },
-        {
-            id: "batch_3",
-            campaignId: campaignId,
-            launchedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1), // 1 day ago
-            targetCount: 100000,
-            status: "success",
-            successCount: 99950,
-            failedCount: 50,
-        },
-        {
-            id: "batch_4",
-            campaignId: campaignId,
-            launchedAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-            targetCount: 50000,
-            status: "failed",
-            successCount: 10000,
-            failedCount: 40000,
-        },
-        {
-            id: "batch_5",
-            campaignId: campaignId,
-            launchedAt: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-            targetCount: 100,
-            status: "running",
-            successCount: 45,
-            failedCount: 0,
-        }
-    ];
-}
+import { useCampaignBatches } from "../../../api/campaign-queries";
 
 interface CampaignBatchTableProps {
     campaignId: string;
 }
 
 export function CampaignBatchTable({ campaignId }: CampaignBatchTableProps) {
-    const batches = fetchDummyBatchData(campaignId).sort((a, b) => b.launchedAt.getTime() - a.launchedAt.getTime());
+    const { data: fetchedBatches = [], isLoading } = useCampaignBatches(campaignId);
+    // The backend already sorts by launchedAt desc, but we can ensure it here
+    const batches = [...fetchedBatches].sort((a, b) => b.launchedAt.getTime() - a.launchedAt.getTime());
     
     // Simple pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
     const totalPages = Math.ceil(batches.length / itemsPerPage);
     const paginatedBatches = batches.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    if (isLoading && batches.length === 0) {
+        return <div className="animate-pulse h-64 bg-muted rounded-2xl border border-border shadow-sm"></div>;
+    }
+
+    if (batches.length === 0) {
+        return null; // Or some empty state UI
+    }
 
     return (
         <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">

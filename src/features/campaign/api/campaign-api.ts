@@ -46,4 +46,9 @@ export const campaignApi = {
         return data;
     },
 
+    getBatchHistory: async (id: string): Promise<any[]> => {
+        const { data } = await apiClient.get<any[]>(`${BASE}/${id}/batches`);
+        return data;
+    },
+
 } as const;

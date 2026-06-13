@@ -50,6 +50,18 @@ export function useCampaignAnalytics(id: string | undefined) {
     });
 }
 
+export function useCampaignBatches(campaignId: string) {
+    return useQuery({
+        queryKey: ["campaign-batches", campaignId],
+        queryFn: async () => {
+            const data = await campaignApi.getBatchHistory(campaignId);
+            return data.map(b => ({ ...b, launchedAt: new Date(b.launchedAt) }));
+        },
+        enabled: !!campaignId,
+        refetchInterval: 5000, 
+    });
+}
+
 export function useCreateCampaign() {
     const qc = useQueryClient();
     return useMutation({
