@@ -16,7 +16,7 @@ const frontendSecurityHeaders = {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "script-src 'self' 'unsafe-inline'",
+    "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
@@ -28,6 +28,12 @@ const frontendSecurityHeaders = {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), tsconfigPaths()],
+  build: {
+    // Vite's module-preload polyfill is injected as an inline <script>, which the
+    // production CSP blocks now that script-src no longer allows 'unsafe-inline'.
+    // Modern target browsers support modulepreload natively, so drop the polyfill.
+    modulePreload: { polyfill: false },
+  },
   server: {
     headers: frontendSecurityHeaders,
   },
