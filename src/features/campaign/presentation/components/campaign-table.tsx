@@ -9,6 +9,7 @@ import {
     Ban,
     MegaphoneIcon,
     RotateCw,
+    Repeat,
 } from "lucide-react";
 
 import {
@@ -81,9 +82,10 @@ interface CampaignTableProps {
     campaigns: Campaign[] | undefined;
     isLoading: boolean;
     onRerunCampaign?: (campaign: Campaign) => void;
+    onLaunchRenudge?: (campaign: Campaign) => void;
 }
 
-export function CampaignTable({ campaigns, isLoading, onRerunCampaign }: CampaignTableProps) {
+export function CampaignTable({ campaigns, isLoading, onRerunCampaign, onLaunchRenudge }: CampaignTableProps) {
     const navigate = useNavigate();
     const deleteMutation = useDeleteCampaign();
     const startMutation = useStartCampaign();
@@ -168,6 +170,12 @@ export function CampaignTable({ campaigns, isLoading, onRerunCampaign }: Campaig
                                                     <DropdownMenuItem onClick={() => onRerunCampaign(c)}>
                                                         <RotateCw className="size-4 mr-2" />
                                                         Rerun Campaign
+                                                    </DropdownMenuItem>
+                                                )}
+                                                {onLaunchRenudge && (
+                                                    <DropdownMenuItem onClick={() => onLaunchRenudge(c)}>
+                                                        <Repeat className="size-4 mr-2" />
+                                                        Launch Renudge
                                                     </DropdownMenuItem>
                                                 )}
                                                 <DropdownMenuSeparator />
