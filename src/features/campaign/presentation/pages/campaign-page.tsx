@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useCampaigns } from "../../api/campaign-queries";
 import { CampaignTable } from "../components/campaign-table";
 import { CreateCampaignDialog } from "../components/create-campaign-dialog";
+import { LaunchRenudgeSheet } from "../components/launch-renudge-sheet";
 
 import type { Campaign } from "../../types";
 
@@ -13,6 +14,8 @@ export function CampaignPage() {
   const { data: campaigns, isLoading } = useCampaigns();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [rerunCampaign, setRerunCampaign] = useState<Campaign | null>(null);
+  const [renudgeCampaign, setRenudgeCampaign] = useState<Campaign | null>(null);
+  const [renudgeSheetOpen, setRenudgeSheetOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -38,6 +41,10 @@ export function CampaignPage() {
           setRerunCampaign(c);
           setDialogOpen(true);
         }}
+        onLaunchRenudge={(c) => {
+          setRenudgeCampaign(c);
+          setRenudgeSheetOpen(true);
+        }}
       />
 
       {/* Create Dialog */}
@@ -48,6 +55,16 @@ export function CampaignPage() {
           setDialogOpen(open);
         }}
         initialCampaign={rerunCampaign}
+      />
+
+      {/* Renudge Sheet */}
+      <LaunchRenudgeSheet
+        open={renudgeSheetOpen}
+        onOpenChange={(open) => {
+          if (!open) setRenudgeCampaign(null);
+          setRenudgeSheetOpen(open);
+        }}
+        campaign={renudgeCampaign}
       />
     </div>
   );
