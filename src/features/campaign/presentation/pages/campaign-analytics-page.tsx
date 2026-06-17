@@ -22,6 +22,7 @@ import { MetricCard, RateCard } from "../components/analytics/metric-card";
 // import { ConversionFunnel } from "../components/analytics/conversion-funnel";
 // import { StatsTable } from "../components/analytics/stats-table";
 import { CampaignBatchTable } from "../components/analytics/campaign-batch-table";
+import { RenudgeHistoryTable } from "../components/analytics/renudge-history-table";
 
 export function CampaignAnalyticsPage() {
     const { id } = useParams({ strict: false });
@@ -122,6 +123,11 @@ export function CampaignAnalyticsPage() {
             {/* Batch Launch History Table (For Karix Rate Limits) */}
             <div className="mb-6 mt-6">
                 <CampaignBatchTable campaignId={id as string} />
+            </div>
+
+            {/* Renudge History Table */}
+            <div className="mb-6 mt-6">
+                <RenudgeHistoryTable campaignId={id as string} />
             </div>
 
             {/* Core Funnel and Distribution */}

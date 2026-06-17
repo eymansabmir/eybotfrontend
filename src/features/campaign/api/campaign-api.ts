@@ -51,4 +51,9 @@ export const campaignApi = {
         return data;
     },
 
+    getRenudges: async (id: string): Promise<any[]> => {
+        const { data } = await apiClient.get<any[]>(`${BASE}/${id}/renudges`);
+        return data;
+    },
+
 } as const;
