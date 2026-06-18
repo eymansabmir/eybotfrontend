@@ -1,10 +1,24 @@
-import { format } from "date-fns";
 import { Repeat } from "lucide-react";
 import { useCampaignRenudges } from "../../../api/campaign-queries";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { apiClient } from "@/lib/api-client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
     const { data: renudges, isLoading } = useCampaignRenudges(campaignId);
+    const queryClient = useQueryClient();
+
+    const stopRenudge = async (renudgeId: string) => {
+        try {
+            await apiClient.post(`/campaigns/${campaignId}/renudges/${renudgeId}/stop`);
+            toast.success("Renudge stopped successfully");
+            queryClient.invalidateQueries({ queryKey: ["campaign-renudges", campaignId] });
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || "Failed to stop renudge");
+        }
+    };
 
     if (isLoading) return null;
     if (!renudges || renudges.length === 0) return null;
@@ -20,25 +34,29 @@ export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
                 <table className="w-full text-sm text-left">
                     <thead className="bg-muted/30 text-muted-foreground">
                         <tr>
-                            <th className="px-4 py-3 font-medium">Scheduled For</th>
+                            <th className="px-4 py-3 font-medium">Delay</th>
                             <th className="px-4 py-3 font-medium">Bot Flow</th>
                             <th className="px-4 py-3 font-medium">Status</th>
                             <th className="px-4 py-3 font-medium">Delivery Stats</th>
                             <th className="px-4 py-3 font-medium">Positive / Negative Responses</th>
+                            <th className="px-4 py-3 font-medium">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                         {renudges.map((renudge) => (
                             <tr key={renudge.id} className="hover:bg-muted/10 transition-colors">
-                                <td className="px-4 py-3 font-medium">
-                                    {format(new Date(renudge.scheduledAt), "MMM d, yyyy h:mm a")}
+                                <td className="px-4 py-3 font-medium text-xs">
+                                    {renudge.delayMinutes >= 60
+                                        ? `${Math.floor(renudge.delayMinutes / 60)}h ${renudge.delayMinutes % 60}m`
+                                        : `${renudge.delayMinutes}m`}
+                                    <span className="block text-muted-foreground">after interaction</span>
                                 </td>
                                 <td className="px-4 py-3">
                                     {renudge.bot?.name || "Unknown Bot"}
                                 </td>
                                 <td className="px-4 py-3">
                                     <Badge 
-                                        variant={renudge.status === 'pending' ? 'secondary' : 'default'} 
+                                        variant={renudge.status === 'pending' || renudge.status === 'stopped' ? 'secondary' : 'default'} 
                                         className={`capitalize ${renudge.status === 'completed' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}`}
                                     >
                                         {renudge.status}
@@ -56,6 +74,18 @@ export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
                                         <span className="text-emerald-500">{renudge.yesCount.toLocaleString()} Yes</span>
                                         <span className="text-rose-500">{renudge.noCount.toLocaleString()} No</span>
                                     </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                    {(renudge.status === 'active' || renudge.status === 'processing') && (
+                                        <Button 
+                                            variant="destructive" 
+                                            size="sm" 
+                                            className="h-8 text-xs"
+                                            onClick={() => stopRenudge(renudge.id)}
+                                        >
+                                            Stop
+                                        </Button>
+                                    )}
                                 </td>
                             </tr>
                         ))}

@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { format } from "date-fns";
 import { Bot, Calendar, Clock, Loader2, Moon, Users, Play } from "lucide-react";
 
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
@@ -9,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { useBots, useBot } from "@/features/bots/data/queries/use-bots";
 import { useCampaignAnalytics } from "../../api/campaign-queries";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -45,9 +43,8 @@ export function LaunchRenudgeSheet({ open, onOpenChange, campaign }: LaunchRenud
     const { control, handleSubmit, watch, reset } = useForm<RenudgeFormData>({
         defaultValues: {
             botId: "",
-            scheduledAt: format(new Date(), "yyyy-MM-dd"),
-            scheduledTime: format(new Date(Date.now() + 15 * 60000), "HH:mm"),
-            staggerHours: 0,
+            scheduledAt: "",
+            scheduledTime: "",
             useQuietHours: false,
             quietHourStart: "22:00",
             quietHourEnd: "08:00",
@@ -90,7 +87,6 @@ export function LaunchRenudgeSheet({ open, onOpenChange, campaign }: LaunchRenud
     }, [availableButtons, reset]);
 
     const useQuietHours = watch("useQuietHours");
-    const staggerHours = watch("staggerHours");
 
     const launchMutation = useMutation({
         mutationFn: async (data: any) => {
@@ -111,12 +107,14 @@ export function LaunchRenudgeSheet({ open, onOpenChange, campaign }: LaunchRenud
 
     const onSubmit = (data: RenudgeFormData) => {
         setIsSubmitting(true);
-        const datetime = new Date(`${data.scheduledAt}T${data.scheduledTime}`);
+        let datetimeStr = undefined;
+        if (data.scheduledAt && data.scheduledTime) {
+            datetimeStr = new Date(`${data.scheduledAt}T${data.scheduledTime}`).toISOString();
+        }
         
         launchMutation.mutate({
             botId: data.botId,
-            scheduledAt: datetime.toISOString(),
-            staggerHours: data.staggerHours,
+            scheduledAt: datetimeStr,
             quietHourStart: data.useQuietHours ? data.quietHourStart : null,
             quietHourEnd: data.useQuietHours ? data.quietHourEnd : null,
             positiveButtonId: data.positiveButtonId,
@@ -260,7 +258,7 @@ export function LaunchRenudgeSheet({ open, onOpenChange, campaign }: LaunchRenud
 
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-3">
-                                        <Label className="text-sm font-bold">Launch Date</Label>
+                                        <Label className="text-sm font-bold">Scheduled Date (Optional)</Label>
                                         <Controller
                                             name="scheduledAt"
                                             control={control}
@@ -269,7 +267,7 @@ export function LaunchRenudgeSheet({ open, onOpenChange, campaign }: LaunchRenud
                                     </div>
                                     <div className="space-y-3">
                                         <Label className="text-sm font-bold flex items-center gap-2">
-                                            <Clock className="size-3.5 text-muted-foreground" /> Launch Time
+                                            <Clock className="size-3.5 text-muted-foreground" /> Scheduled Time (Optional)
                                         </Label>
                                         <Controller
                                             name="scheduledTime"
@@ -278,40 +276,9 @@ export function LaunchRenudgeSheet({ open, onOpenChange, campaign }: LaunchRenud
                                         />
                                     </div>
                                 </div>
-
-                                {/* Staggering */}
-                                <div className="space-y-5 p-6 rounded-2xl bg-muted/20 border border-border/40">
-                                    <div className="flex justify-between items-center">
-                                        <div className="space-y-1">
-                                            <Label className="text-sm font-bold">Stagger Delivery</Label>
-                                            <p className="text-xs text-muted-foreground">Distribute messages over time to prevent rate limits.</p>
-                                        </div>
-                                        <span className="text-sm font-bold bg-background px-3 py-1 rounded-lg border border-border/50 shadow-sm">
-                                            {staggerHours === 0 ? "Immediate" : `${staggerHours} Hours`}
-                                        </span>
-                                    </div>
-                                    <div className="pt-2">
-                                        <Controller
-                                            name="staggerHours"
-                                            control={control}
-                                            render={({ field }) => (
-                                                <Slider
-                                                    value={[field.value]}
-                                                    onValueChange={([val]) => field.onChange(val)}
-                                                    max={24}
-                                                    step={1}
-                                                    className="py-2"
-                                                />
-                                            )}
-                                        />
-                                    </div>
-                                    {staggerHours > 0 && targetAudience > 0 && (
-                                        <div className="bg-primary/5 text-primary text-xs font-semibold px-4 py-2.5 rounded-lg border border-primary/10 flex items-center gap-2">
-                                            <Loader2 className="size-3.5 animate-spin" />
-                                            ~{Math.round(targetAudience / staggerHours).toLocaleString()} messages will be sent per hour.
-                                        </div>
-                                    )}
-                                </div>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    If left blank, a default delay of 2 hours will be applied after the user's last interaction. If a future date/time is provided, the time difference will be used as the per-user delay.
+                                </p>
 
                                 {/* Quiet Hours */}
                                 <div className="space-y-5 p-6 rounded-2xl border border-border/40 transition-colors data-[active=true]:bg-muted/20 data-[active=true]:border-primary/20" data-active={useQuietHours}>
