@@ -73,6 +73,18 @@ export function useCampaignBatches(campaignId: string) {
     });
 }
 
+export function useCampaignRenudges(campaignId: string) {
+    return useQuery({
+        queryKey: ["campaign-renudges", campaignId],
+        queryFn: async () => {
+            const data = await campaignApi.getRenudges(campaignId);
+            return data.map(b => ({ ...b, scheduledAt: new Date(b.scheduledAt), createdAt: new Date(b.createdAt) }));
+        },
+        enabled: !!campaignId,
+        refetchInterval: 15_000, 
+    });
+}
+
 export function useCreateCampaign() {
     const qc = useQueryClient();
     return useMutation({
