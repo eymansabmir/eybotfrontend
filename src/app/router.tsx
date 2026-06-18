@@ -7,6 +7,7 @@ import { DashboardPage } from "@/features/dashboard/presentation/pages/dashboard
 import { BotsPage } from "@/features/bots/presentation/pages/bots-page"
 import { CampaignPage } from "@/features/campaign/presentation/pages/campaign-page"
 import { CampaignAnalyticsPage } from "@/features/campaign/presentation/pages/campaign-analytics-page"
+import { CampaignAuditLogsPage } from "@/features/campaign/presentation/pages/campaign-audit-logs-page"
 import { UsersPage } from "@/features/users/presentation/pages/users-page"
 import { SettingsPage } from "@/features/settings/presentation/pages/settings-page"
 import { BotEditorPage } from "@/features/bots/presentation/pages/bot-editor-page"
@@ -125,6 +126,12 @@ const campaignAnalyticsRoute = createRoute({
   component: CampaignAnalyticsPage,
 })
 
+const campaignAuditLogsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "campaign/$id/audit-logs",
+  component: CampaignAuditLogsPage,
+})
+
 const usersRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "users",
@@ -213,6 +220,7 @@ const routeTree = rootRoute.addChildren([
   voiceTechRoutingAnalyticsRoute,
   voiceTechExecuteRoute,
   campaignAnalyticsRoute,
+  campaignAuditLogsRoute,
 
   usersRoute,
   settingsRoute,

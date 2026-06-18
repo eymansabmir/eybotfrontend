@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client";
-import type { Campaign, CreateCampaignInput, CampaignAnalytics } from "../types";
+import type { Campaign, CreateCampaignInput, CampaignAnalytics, CampaignAuditLogFilter, CampaignAuditLogResponse } from "../types";
 
 const BASE = "/campaigns";
 
@@ -48,6 +48,18 @@ export const campaignApi = {
 
     getBatchHistory: async (id: string): Promise<any[]> => {
         const { data } = await apiClient.get<any[]>(`${BASE}/${id}/batches`);
+        return data;
+    },
+
+    getAuditLogs: async (id: string, filter: CampaignAuditLogFilter = {}): Promise<CampaignAuditLogResponse> => {
+        const params = new URLSearchParams();
+        Object.entries(filter).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== "") {
+                params.append(key, value.toString());
+            }
+        });
+        const qs = params.toString();
+        const { data } = await apiClient.get<CampaignAuditLogResponse>(`${BASE}/${id}/audit-logs${qs ? `?${qs}` : ""}`);
         return data;
     },
 

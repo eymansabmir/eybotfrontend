@@ -7,26 +7,34 @@ const devCspConnectSrc = process.env.VITE_API_URL
   ? `'self' ${new URL(process.env.VITE_API_URL).origin}`
   : "'self' http://localhost:3000"
 
-const frontendSecurityHeaders = {
-  'X-Frame-Options': 'DENY',
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': [
-    "default-src 'self'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "script-src 'self'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data:",
-    `connect-src ${devCspConnectSrc}`,
-    "object-src 'none'",
-  ].join('; '),
-}
-
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command, mode }) => {
+  // Vite dev injects inline scripts for HMR / React Refresh; production build uses
+  // external module scripts only (modulePreload polyfill disabled below).
+  const isDevServer = command === 'serve' && mode === 'development';
+  const scriptSrc = isDevServer
+    ? "script-src 'self' 'unsafe-inline'"
+    : "script-src 'self'";
+
+  const frontendSecurityHeaders = {
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      scriptSrc,
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data:",
+      `connect-src ${devCspConnectSrc}`,
+      "object-src 'none'",
+    ].join('; '),
+  };
+
+  return {
   plugins: [react(), tailwindcss(), tsconfigPaths()],
   build: {
     // Vite's module-preload polyfill is injected as an inline <script>, which the
@@ -43,4 +51,5 @@ export default defineConfig({
       'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
     },
   },
+  };
 })

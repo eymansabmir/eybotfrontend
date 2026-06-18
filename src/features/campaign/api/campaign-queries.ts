@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { campaignApi } from "./campaign-api";
-import type { CreateCampaignInput } from "../types";
+import type { CreateCampaignInput, CampaignAuditLogFilter } from "../types";
 import { toast } from "sonner";
 
 const CAMPAIGN_KEYS = {
     all: ["campaigns"] as const,
     detail: (id: string) => ["campaigns", id] as const,
     stats: (id: string) => ["campaigns", id, "stats"] as const,
+    auditLogs: (id: string, filter: CampaignAuditLogFilter) => ["campaigns", id, "audit-logs", filter] as const,
 };
 
 export function useCampaigns() {
@@ -46,6 +47,16 @@ export function useCampaignAnalytics(id: string | undefined) {
         queryKey: CAMPAIGN_KEYS.stats(id || ""),
         queryFn: () => campaignApi.getAnalytics(id!),
         enabled: !!id,
+        refetchInterval: 15_000,
+    });
+}
+
+export function useCampaignAuditLogs(id: string | undefined, filter: CampaignAuditLogFilter) {
+    return useQuery({
+        queryKey: CAMPAIGN_KEYS.auditLogs(id || "", filter),
+        queryFn: () => campaignApi.getAuditLogs(id!, filter),
+        enabled: !!id,
+        placeholderData: (previousData) => previousData,
         refetchInterval: 15_000,
     });
 }

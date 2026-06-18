@@ -41,6 +41,27 @@ export interface CreateCampaignInput {
   scheduleTime?: string;
 }
 
+export interface VerifiedFunnel {
+  /** Cumulative: sent + everything past it. */
+  sent: number;
+  /** Cumulative: delivered + read + replied. */
+  delivered: number;
+  /** Cumulative: read + replied. */
+  read: number;
+  replied: number;
+  failed: number;
+  pending: number;
+  /** Mutually-exclusive current-state counts. */
+  currentSent: number;
+  currentDelivered: number;
+  currentRead: number;
+}
+
+export interface FailureBreakdown {
+  byCategory: Record<string, number>;
+  byCode: Array<{ code: string; category: string | null; reason: string | null; count: number }>;
+}
+
 export interface RecipientStats {
   total: number;
   initiated: number;
@@ -52,6 +73,12 @@ export interface RecipientStats {
   failed: number;
   pending: number;
   queued: number;
+  read?: number;
+  replied?: number;
+  /** Verified, webhook-derived mutually-exclusive funnel (when analytics pipeline is enabled). */
+  verified?: VerifiedFunnel;
+  /** Failure breakdown by KARIX category and code (when analytics pipeline is enabled). */
+  failureBreakdown?: FailureBreakdown;
 }
 
 export interface NpsData {
@@ -70,4 +97,47 @@ export interface CampaignAnalytics {
   analytics: RecipientStats & {
     nps: NpsData | null;
   };
+}
+
+export interface CampaignAuditLog {
+  id: string;
+  orgId: string | null;
+  campaignId: string | null;
+  campaignRecipientId: string | null;
+  messageId: string | null;
+  waId: string | null;
+  bspName: string;
+  eventType: string;
+  level: 'info' | 'warning' | 'error' | string;
+  category: string | null;
+  status: string | null;
+  mappedErrorCode: string | null;
+  channelErrorCode: string | null;
+  reason: string | null;
+  eventAt: string | null;
+  createdAt: string;
+}
+
+export interface CampaignAuditLogFilter {
+  level?: string;
+  category?: string;
+  status?: string;
+  eventType?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface CampaignAuditLogSummary {
+  total: number;
+  byLevel: Record<string, number>;
+  byCategory: Record<string, number>;
+  byStatus: Record<string, number>;
+}
+
+export interface CampaignAuditLogResponse {
+  logs: CampaignAuditLog[];
+  total: number;
+  summary: CampaignAuditLogSummary;
 }
