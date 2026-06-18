@@ -79,6 +79,8 @@ export interface RecipientStats {
   verified?: VerifiedFunnel;
   /** Failure breakdown by KARIX category and code (when analytics pipeline is enabled). */
   failureBreakdown?: FailureBreakdown;
+  /** Whether engagement metrics come from verified webhook funnel or legacy counters. */
+  analyticsSource?: 'verified' | 'legacy';
 }
 
 export interface NpsData {
