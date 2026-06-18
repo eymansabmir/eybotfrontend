@@ -1,12 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { campaignApi } from "./campaign-api";
-import type { CreateCampaignInput } from "../types";
+import type { CreateCampaignInput, CampaignAuditLogFilter } from "../types";
 import { toast } from "sonner";
 
 const CAMPAIGN_KEYS = {
     all: ["campaigns"] as const,
     detail: (id: string) => ["campaigns", id] as const,
     stats: (id: string) => ["campaigns", id, "stats"] as const,
+    auditLogs: (id: string, filter: CampaignAuditLogFilter) => ["campaigns", id, "audit-logs", filter] as const,
 };
 
 export function useCampaigns() {
@@ -50,6 +51,16 @@ export function useCampaignAnalytics(id: string | undefined) {
     });
 }
 
+export function useCampaignAuditLogs(id: string | undefined, filter: CampaignAuditLogFilter) {
+    return useQuery({
+        queryKey: CAMPAIGN_KEYS.auditLogs(id || "", filter),
+        queryFn: () => campaignApi.getAuditLogs(id!, filter),
+        enabled: !!id,
+        placeholderData: (previousData) => previousData,
+        refetchInterval: 15_000,
+    });
+}
+
 export function useCampaignBatches(campaignId: string) {
     return useQuery({
         queryKey: ["campaign-batches", campaignId],
@@ -70,7 +81,27 @@ export function useCampaignRenudges(campaignId: string) {
             return data.map(b => ({ ...b, scheduledAt: new Date(b.scheduledAt), createdAt: new Date(b.createdAt) }));
         },
         enabled: !!campaignId,
-        refetchInterval: 15_000, 
+        refetchInterval: 15_000,
+    });
+}
+
+export function useCampaignRecipients(
+    campaignId: string,
+    params: { cursor?: string; status?: string; limit?: number } = {},
+) {
+    return useQuery({
+        queryKey: ["campaign-recipients", campaignId, params],
+        queryFn: () => campaignApi.listRecipients(campaignId, params),
+        enabled: !!campaignId,
+        placeholderData: keepPreviousData,
+    });
+}
+
+export function useRecipientConversation(campaignId: string, recipientId: string | null) {
+    return useQuery({
+        queryKey: ["recipient-conversation", campaignId, recipientId],
+        queryFn: () => campaignApi.getRecipientConversation(campaignId, recipientId as string),
+        enabled: !!campaignId && !!recipientId,
     });
 }
 

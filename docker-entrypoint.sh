@@ -81,6 +81,7 @@ cat > /etc/nginx/conf.d/default.conf <<EOF
 server {
     listen 8080 default_server;
     server_name _;
+${SECURITY_HEADERS}
     return 403;
 }
 

@@ -36,6 +36,10 @@ COPY vite.config.ts ./
 COPY postcss.config.js ./
 RUN npm run build
 
+# Copy entrypoint and fix line endings (CRLF to LF) for Windows compatibility
+COPY docker-entrypoint.sh ./
+RUN sed -i 's/\r$//' docker-entrypoint.sh
+
 # Production Stage
 FROM nginxinc/nginx-unprivileged:alpine AS runner
 
@@ -50,7 +54,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Runtime host allowlist (set ALLOWED_HOSTS at build or deploy time)
 # --chmod avoids RUN chmod, which fails on nginx-unprivileged (non-root USER)
-COPY --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
+COPY --from=builder --chmod=755 /app/docker-entrypoint.sh /docker-entrypoint.sh
 
 EXPOSE 8080
 

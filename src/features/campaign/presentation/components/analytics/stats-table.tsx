@@ -101,7 +101,8 @@ export function StatsTable({ stats }: StatsTableProps) {
                 </TableHeader>
                 <TableBody>
                     {STATUS_ROWS.map((row) => {
-                        const value = stats[row.key] ?? 0;
+                        const raw = stats[row.key];
+                        const value = typeof raw === "number" ? raw : 0;
                         const pct = ((value / total) * 100).toFixed(1);
                         const hasValue = value > 0;
 
