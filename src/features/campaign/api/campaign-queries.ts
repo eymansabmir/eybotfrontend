@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { campaignApi } from "./campaign-api";
 import type { CreateCampaignInput, CampaignAuditLogFilter } from "../types";
 import { toast } from "sonner";
@@ -81,7 +81,27 @@ export function useCampaignRenudges(campaignId: string) {
             return data.map(b => ({ ...b, scheduledAt: new Date(b.scheduledAt), createdAt: new Date(b.createdAt) }));
         },
         enabled: !!campaignId,
-        refetchInterval: 15_000, 
+        refetchInterval: 15_000,
+    });
+}
+
+export function useCampaignRecipients(
+    campaignId: string,
+    params: { cursor?: string; status?: string; limit?: number } = {},
+) {
+    return useQuery({
+        queryKey: ["campaign-recipients", campaignId, params],
+        queryFn: () => campaignApi.listRecipients(campaignId, params),
+        enabled: !!campaignId,
+        placeholderData: keepPreviousData,
+    });
+}
+
+export function useRecipientConversation(campaignId: string, recipientId: string | null) {
+    return useQuery({
+        queryKey: ["recipient-conversation", campaignId, recipientId],
+        queryFn: () => campaignApi.getRecipientConversation(campaignId, recipientId as string),
+        enabled: !!campaignId && !!recipientId,
     });
 }
 

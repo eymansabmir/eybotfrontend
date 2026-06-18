@@ -24,6 +24,7 @@ import { MetricCard, RateCard } from "../components/analytics/metric-card";
 // import { StatsTable } from "../components/analytics/stats-table";
 import { CampaignBatchTable } from "../components/analytics/campaign-batch-table";
 import { RenudgeHistoryTable } from "../components/analytics/renudge-history-table";
+import { CampaignRecipientsTable } from "../components/analytics/campaign-recipients-table";
 
 export function CampaignAnalyticsPage() {
     const { id } = useParams({ strict: false });
@@ -171,6 +172,10 @@ export function CampaignAnalyticsPage() {
             {/* Renudge History Table */}
             <div className="mb-6 mt-6">
                 <RenudgeHistoryTable campaignId={id as string} />
+                </div>
+            {/* Per-recipient status + reconstructed conversations */}
+            <div className="mb-6 mt-6">
+                <CampaignRecipientsTable campaignId={id as string} />
             </div>
 
             {/* Core Funnel and Distribution */}

@@ -141,3 +141,64 @@ export interface CampaignAuditLogResponse {
   total: number;
   summary: CampaignAuditLogSummary;
 }
+
+export type RecipientStatus =
+  | 'pending'
+  | 'sent'
+  | 'failed'
+  | 'completed'
+  | 'delivered'
+  | 'read'
+  | 'replied';
+
+export interface CampaignRecipient {
+  id: string;
+  waId: string;
+  status: RecipientStatus;
+  sentAt: string | null;
+  deliveredAt: string | null;
+  readAt: string | null;
+  repliedAt: string | null;
+  createdAt: string;
+  variables: Record<string, unknown> | null;
+}
+
+export interface CampaignRecipientsPage {
+  total: number;
+  nextCursor: string | null;
+  recipients: CampaignRecipient[];
+}
+
+export interface ConversationMessage {
+  direction: 'outbound' | 'inbound';
+  nodeId: string;
+  nodeType: string;
+  kind: string;
+  text?: string;
+  mediaUrl?: string;
+  caption?: string;
+  options?: string[];
+  at: string;
+}
+
+export interface RecipientConversation {
+  recipient: {
+    id: string;
+    waId: string;
+    status: RecipientStatus;
+    sentAt: string | null;
+    deliveredAt: string | null;
+    readAt: string | null;
+    repliedAt: string | null;
+  };
+  session: {
+    id: string;
+    status: string;
+    flowId: string;
+    currentNodeId: string;
+    startedAt: string | null;
+    updatedAt: string | null;
+  } | null;
+  messages: ConversationMessage[];
+  reconstructed: boolean;
+}

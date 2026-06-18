@@ -1,5 +1,9 @@
 import { apiClient } from "@/lib/api-client";
 import type { Campaign, CreateCampaignInput, CampaignAnalytics, CampaignAuditLogFilter, CampaignAuditLogResponse } from "../types";
+import type {
+    CampaignRecipientsPage,
+    RecipientConversation,
+} from "../types";
 
 const BASE = "/campaigns";
 
@@ -67,4 +71,19 @@ export const campaignApi = {
         const { data } = await apiClient.get<any[]>(`${BASE}/${id}/renudges`);
         return data.map(b => ({ ...b, scheduledAt: new Date(b.scheduledAt), createdAt: new Date(b.createdAt) }));
     },
+    listRecipients: async (
+        id: string,
+        params: { cursor?: string; status?: string; limit?: number } = {},
+    ): Promise<CampaignRecipientsPage> => {
+        const { data } = await apiClient.get<CampaignRecipientsPage>(`${BASE}/${id}/recipients`, { params });
+        return data;
+    },
+
+    getRecipientConversation: async (id: string, recipientId: string): Promise<RecipientConversation> => {
+        const { data } = await apiClient.get<RecipientConversation>(
+            `${BASE}/${id}/recipients/${recipientId}/conversation`,
+        );
+        return data;
+    },
+
 } as const;
