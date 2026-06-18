@@ -50,13 +50,16 @@ export function CampaignAnalyticsPage() {
         queued: 0,
     };
 
-    // Prefer the verified, webhook-derived funnel when the analytics pipeline is on.
+    // Prefer verified webhook-derived funnel when analytics pipeline has data.
     const verified = (stats as typeof stats & { verified?: import("../../types").VerifiedFunnel }).verified;
+    const analyticsSource = (stats as typeof stats & { analyticsSource?: 'verified' | 'legacy' }).analyticsSource;
+    const useVerified = analyticsSource === 'verified' && verified;
     const failureBreakdown = (stats as typeof stats & { failureBreakdown?: import("../../types").FailureBreakdown }).failureBreakdown;
-    const sentValue = verified?.sent ?? stats.sent;
-    const deliveredValue = verified?.delivered ?? stats.delivered;
-    const readValue = verified?.read ?? stats.opened;
-    const failedValue = verified?.failed ?? stats.failed;
+    const sentValue = useVerified ? verified.sent : stats.sent;
+    const deliveredValue = useVerified ? verified.delivered : stats.delivered;
+    const readValue = useVerified ? verified.read : stats.opened;
+    const startedValue = useVerified ? verified.replied : stats.started;
+    const failedValue = useVerified ? verified.failed : stats.failed;
 
     const deliveryRate = sentValue > 0 ? (deliveredValue / sentValue) * 100 : 0;
     const openRate = deliveredValue > 0 ? (readValue / deliveredValue) * 100 : 0;
@@ -121,15 +124,15 @@ export function CampaignAnalyticsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <MetricCard title="Total Recipients" value={stats.total} total={stats.total} icon={Users} color="#3b82f6" description="Targeted contacts in campaign" />
                 <MetricCard title="Messages Sent" value={sentValue} total={stats.total} icon={Send} color="#22c55e" description="Successfully pushed to gateway" />
-                <MetricCard title="Delivered" value={deliveredValue} total={stats.total} icon={Mail} color="#a855f7" description={verified ? "Confirmed via webhook" : "Received by user devices"} />
+                <MetricCard title="Delivered" value={deliveredValue} total={stats.total} icon={Mail} color="#a855f7" description={useVerified ? "Confirmed via webhook" : "Received by user devices"} />
                 <MetricCard title="Opened" value={readValue} total={stats.total} icon={Eye} color="#f97316" description="Read by recipients" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <MetricCard title="Conversation Started" value={stats.started} total={stats.total} icon={PlayCircle} color="#6366f1" description="Users who replied to the bot" />
+                <MetricCard title="Conversation Started" value={startedValue} total={stats.total} icon={PlayCircle} color="#6366f1" description="Users who replied to the bot" />
                 <MetricCard title="Completed Flow" value={stats.completed} total={stats.total} icon={CheckCircle2} color="#ec4899" description="Users reached end of campaign" />
                 {/* <MetricCard title="Current Queue" value={stats.pending + stats.queued} total={stats.total} icon={Clock} color="#94a3b8" description="Pending/Queued for execution" /> */}
-                <MetricCard title="Failed / Bounced" value={failedValue} total={stats.total} icon={XCircle} color="#ef4444" description={verified ? "Mapped from BSP delivery errors" : "Errors and delivery failures"} />
+                <MetricCard title="Failed / Bounced" value={failedValue} total={stats.total} icon={XCircle} color="#ef4444" description={useVerified ? "Mapped from BSP delivery errors" : "Errors and delivery failures"} />
             </div>
 
             {/* Failure Breakdown (verified analytics pipeline) */}
