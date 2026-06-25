@@ -13,7 +13,7 @@ import {
     useCampaignRenudges,
 } from "../../api/campaign-queries";
 import { exportCampaignCsv } from "../../api/campaign-export";
-import type { CampaignAnalyticsDateFilter } from "../../types";
+import type { CampaignAnalyticsDateFilter, RecipientStats } from "../../types";
 import type { AnalyticsSection } from "../../lib/campaign-analytics-metrics";
 
 import { CampaignStatusBadge } from "../components/campaign-status-badge";
@@ -26,6 +26,19 @@ import { CampaignRecentRunsTeaser } from "../components/analytics/campaign-recen
 import { CustomApiIngestProgressCard } from "../components/analytics/custom-api-ingest-progress";
 import { RenudgeHistoryTable } from "../components/analytics/renudge-history-table";
 import { CampaignRecipientsTable } from "../components/analytics/campaign-recipients-table";
+
+const EMPTY_RECIPIENT_STATS: RecipientStats = {
+    total: 0,
+    initiated: 0,
+    sent: 0,
+    delivered: 0,
+    opened: 0,
+    started: 0,
+    completed: 0,
+    failed: 0,
+    pending: 0,
+    queued: 0,
+};
 
 export function CampaignAnalyticsPage() {
     const { id } = useParams({ strict: false });
@@ -50,18 +63,7 @@ export function CampaignAnalyticsPage() {
         return <AnalyticsSkeleton />;
     }
 
-    const stats = analyticsData?.analytics ?? {
-        total: 0,
-        initiated: 0,
-        sent: 0,
-        delivered: 0,
-        opened: 0,
-        started: 0,
-        completed: 0,
-        failed: 0,
-        pending: 0,
-        queued: 0,
-    };
+    const stats: RecipientStats = analyticsData?.analytics ?? EMPTY_RECIPIENT_STATS;
 
     const hasDateFilter = Boolean(dateFilter.startDate || dateFilter.endDate);
 

@@ -56,6 +56,10 @@ describe("resolveCampaignMetricValues", () => {
                 read: 44,
                 replied: 28,
                 failed: 3,
+                pending: 0,
+                currentSent: 0,
+                currentDelivered: 0,
+                currentRead: 0,
             },
         });
 
