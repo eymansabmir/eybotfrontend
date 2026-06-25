@@ -115,6 +115,7 @@ export function CreateCampaignDialog({ open, onOpenChange, initialCampaign }: Cr
                     id: initialCampaign.id,
                     input: {
                         fieldMapping: updatedFieldMapping,
+                        filters: filters.length > 0 ? filters : undefined,
                         scheduleTime: executionMode === "SCHEDULED" ? new Date(executeAt).toISOString() : null,
                     } as any
                 });
