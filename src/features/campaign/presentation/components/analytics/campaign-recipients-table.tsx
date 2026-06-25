@@ -22,9 +22,17 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
 
 interface CampaignRecipientsTableProps {
     campaignId: string;
+    versionId?: string;
+    startDate?: string;
+    endDate?: string;
 }
 
-export function CampaignRecipientsTable({ campaignId }: CampaignRecipientsTableProps) {
+export function CampaignRecipientsTable({
+    campaignId,
+    versionId,
+    startDate,
+    endDate,
+}: CampaignRecipientsTableProps) {
     const [statusFilter, setStatusFilter] = useState("");
     // Cursor stack so we can paginate forwards and backwards through the keyset.
     const [cursorStack, setCursorStack] = useState<(string | undefined)[]>([undefined]);
@@ -37,6 +45,9 @@ export function CampaignRecipientsTable({ campaignId }: CampaignRecipientsTableP
         limit: PAGE_SIZE,
         ...(currentCursor ? { cursor: currentCursor } : {}),
         ...(statusFilter ? { status: statusFilter } : {}),
+        ...(versionId ? { versionId } : {}),
+        ...(startDate ? { startDate } : {}),
+        ...(endDate ? { endDate } : {}),
     });
 
     const recipients = data?.recipients ?? [];

@@ -103,12 +103,12 @@ export function CreateCampaignDialog({ open, onOpenChange, initialCampaign }: Cr
     const handleSubmit = async () => {
         try {
             if (isRerunMode && initialCampaign) {
-                // Update the limits and reset the page
+                // Reset runtime pagination cursors only; __startPage / __endPage are user-configured per rerun.
                 const { apiTotalPages, apiTotalRecords, ...restFieldMapping } = fieldMapping as Record<string, any>;
                 const updatedFieldMapping = {
                     ...restFieldMapping,
-                    apiCurrentPage: 0, // Force reset to page 1 (backend adds 1)
-                    apiIngestedInCurrentRun: 0, // Reset run-specific record counter
+                    apiCurrentPage: 0,
+                    apiIngestedInCurrentRun: 0,
                 };
                 
                 await updateMutation.mutateAsync({

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { campaignApi } from "./campaign-api";
-import type { CreateCampaignInput, CampaignAuditLogFilter } from "../types";
+import type { CreateCampaignInput, CampaignAuditLogFilter, CampaignAnalyticsDateFilter } from "../types";
 import { toast } from "sonner";
 
 const CAMPAIGN_KEYS = {
@@ -17,11 +17,13 @@ export function useCampaigns() {
     });
 }
 
-export function useCustomFilters() {
+export function useCustomFilters(enabled = true) {
     return useQuery({
         queryKey: ["custom-filters"],
         queryFn: campaignApi.getCustomFilters,
         staleTime: Infinity,
+        enabled,
+        retry: 1,
     });
 }
 
@@ -38,15 +40,31 @@ export function useCampaignPolling(id: string, enabled: boolean) {
         queryKey: CAMPAIGN_KEYS.detail(id),
         queryFn: () => campaignApi.getById(id),
         enabled,
-        refetchInterval: enabled ? 15_000 : false,
+        refetchInterval: (query) => {
+            if (!enabled) return false;
+            const campaign = query.state.data;
+            if (campaign?.dataSourceId === "CUSTOM_API" && campaign.status === "running") {
+                return 5_000;
+            }
+            return 15_000;
+        },
     });
 }
 
-export function useCampaignAnalytics(id: string | undefined) {
+export function useCampaignAnalytics(id: string | undefined, filter: CampaignAnalyticsDateFilter = {}) {
     return useQuery({
-        queryKey: CAMPAIGN_KEYS.stats(id || ""),
-        queryFn: () => campaignApi.getAnalytics(id!),
+        queryKey: [...CAMPAIGN_KEYS.stats(id || ""), filter],
+        queryFn: () => campaignApi.getAnalytics(id!, filter),
         enabled: !!id,
+        refetchInterval: 15_000,
+    });
+}
+
+export function useBatchAnalytics(campaignId: string | undefined, versionId: string | undefined) {
+    return useQuery({
+        queryKey: ["campaign-batch-analytics", campaignId, versionId],
+        queryFn: () => campaignApi.getBatchAnalytics(campaignId!, versionId!),
+        enabled: !!campaignId && !!versionId,
         refetchInterval: 15_000,
     });
 }
@@ -87,7 +105,14 @@ export function useCampaignRenudges(campaignId: string) {
 
 export function useCampaignRecipients(
     campaignId: string,
-    params: { cursor?: string; status?: string; limit?: number } = {},
+    params: {
+        cursor?: string;
+        status?: string;
+        limit?: number;
+        versionId?: string;
+        startDate?: string;
+        endDate?: string;
+    } = {},
 ) {
     return useQuery({
         queryKey: ["campaign-recipients", campaignId, params],

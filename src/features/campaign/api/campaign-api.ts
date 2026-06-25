@@ -1,10 +1,17 @@
 import { apiClient } from "@/lib/api-client";
-import type { Campaign, CreateCampaignInput, CampaignAnalytics, CampaignAuditLogFilter, CampaignAuditLogResponse } from "../types";
 import type {
+    Campaign,
+    CreateCampaignInput,
+    CampaignAnalytics,
+    CampaignAuditLogFilter,
+    CampaignAuditLogResponse,
+    CampaignBatch,
+    BatchAnalyticsResponse,
+    CampaignAnalyticsDateFilter,
     CampaignRecipientsPage,
+    CustomCampaignFilter,
     RecipientConversation,
 } from "../types";
-
 const BASE = "/campaigns";
 
 export const campaignApi = {
@@ -13,8 +20,8 @@ export const campaignApi = {
         return data;
     },
 
-    getCustomFilters: async (): Promise<{ id: string; name: string; key: string; value: string }[]> => {
-        const { data } = await apiClient.get<{ id: string; name: string; key: string; value: string }[]>(`${BASE}/custom-filters`);
+    getCustomFilters: async (): Promise<CustomCampaignFilter[]> => {
+        const { data } = await apiClient.get<CustomCampaignFilter[]>(`${BASE}/custom-filters`);
         return data;
     },
 
@@ -45,13 +52,22 @@ export const campaignApi = {
         await apiClient.delete(`${BASE}/${id}`);
     },
 
-    getAnalytics: async (id: string): Promise<CampaignAnalytics> => {
-        const { data } = await apiClient.get<CampaignAnalytics>(`${BASE}/${id}/stats`);
+    getAnalytics: async (id: string, filter: CampaignAnalyticsDateFilter = {}): Promise<CampaignAnalytics> => {
+        const params = new URLSearchParams();
+        if (filter.startDate) params.append("startDate", filter.startDate);
+        if (filter.endDate) params.append("endDate", filter.endDate);
+        const qs = params.toString();
+        const { data } = await apiClient.get<CampaignAnalytics>(`${BASE}/${id}/stats${qs ? `?${qs}` : ""}`);
         return data;
     },
 
-    getBatchHistory: async (id: string): Promise<any[]> => {
-        const { data } = await apiClient.get<any[]>(`${BASE}/${id}/batches`);
+    getBatchAnalytics: async (campaignId: string, versionId: string): Promise<BatchAnalyticsResponse> => {
+        const { data } = await apiClient.get<BatchAnalyticsResponse>(`${BASE}/${campaignId}/batches/${versionId}/stats`);
+        return data;
+    },
+
+    getBatchHistory: async (id: string): Promise<CampaignBatch[]> => {
+        const { data } = await apiClient.get<CampaignBatch[]>(`${BASE}/${id}/batches`);
         return data;
     },
 
@@ -73,7 +89,14 @@ export const campaignApi = {
     },
     listRecipients: async (
         id: string,
-        params: { cursor?: string; status?: string; limit?: number } = {},
+        params: {
+            cursor?: string;
+            status?: string;
+            limit?: number;
+            versionId?: string;
+            startDate?: string;
+            endDate?: string;
+        } = {},
     ): Promise<CampaignRecipientsPage> => {
         const { data } = await apiClient.get<CampaignRecipientsPage>(`${BASE}/${id}/recipients`, { params });
         return data;

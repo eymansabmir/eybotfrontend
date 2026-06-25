@@ -80,7 +80,17 @@ export interface RecipientStats {
   /** Failure breakdown by KARIX category and code (when analytics pipeline is enabled). */
   failureBreakdown?: FailureBreakdown;
   /** Whether engagement metrics come from verified webhook funnel or legacy counters. */
-  analyticsSource?: 'verified' | 'legacy';
+  analyticsSource?: 'verified' | 'legacy' | 'filtered';
+}
+
+export interface CampaignAnalyticsDateFilter {
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface BatchAnalyticsResponse {
+  batch: CampaignBatch;
+  analytics: RecipientStats & { nps: null };
 }
 
 export interface NpsData {
@@ -99,6 +109,58 @@ export interface CampaignAnalytics {
   analytics: RecipientStats & {
     nps: NpsData | null;
   };
+}
+
+export interface BatchAnalytics {
+  total: number;
+  pending: number;
+  sent: number;
+  delivered: number;
+  read: number;
+  opened: number;
+  replied: number;
+  started: number;
+  completed: number;
+  failed: number;
+}
+
+export interface CampaignBatch {
+  id: string;
+  campaignId: string;
+  versionNumber: number;
+  launchedAt: string;
+  targetCount: number;
+  status: 'success' | 'failed' | 'running';
+  successCount: number;
+  failedCount: number;
+  analytics: BatchAnalytics;
+}
+
+export interface CustomCampaignFilter {
+  id: string;
+  name: string;
+  key: string;
+  value: number;
+}
+
+export type CustomApiIngestPhase = "idle" | "starting" | "fetching" | "dispatching" | "finished";
+
+/** Live CUSTOM_API pagination state derived from campaign.fieldMapping. */
+export interface CustomApiIngestProgress {
+  startPage: number;
+  configuredEndPage: number | null;
+  effectiveEndPage: number | null;
+  /** Last page fetched this run; 0 means not started yet. */
+  currentPage: number;
+  apiTotalPages: number | null;
+  ingestedThisRun: number;
+  maxRecords: number | null;
+  pageSize: number | null;
+  pagesFetched: number;
+  pagesInRange: number | null;
+  pageProgressPct: number | null;
+  phase: CustomApiIngestPhase;
+  isActive: boolean;
 }
 
 export interface CampaignAuditLog {

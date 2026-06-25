@@ -7,6 +7,7 @@ import { DashboardPage } from "@/features/dashboard/presentation/pages/dashboard
 import { BotsPage } from "@/features/bots/presentation/pages/bots-page"
 import { CampaignPage } from "@/features/campaign/presentation/pages/campaign-page"
 import { CampaignAnalyticsPage } from "@/features/campaign/presentation/pages/campaign-analytics-page"
+import { CampaignBatchAnalyticsPage } from "@/features/campaign/presentation/pages/campaign-batch-analytics-page"
 import { CampaignAuditLogsPage } from "@/features/campaign/presentation/pages/campaign-audit-logs-page"
 import { UsersPage } from "@/features/users/presentation/pages/users-page"
 import { SettingsPage } from "@/features/settings/presentation/pages/settings-page"
@@ -27,6 +28,7 @@ import { CreateAgentPage } from "@/features/voice-tech/presentation/pages/create
 import { CreateBotPage } from "../features/bots/presentation/pages/create-bot-page"
 import { ActivityLogPage } from "@/features/activity-log/presentation/pages/activity-log-page"
 import { ConnectorsPage } from "@/features/integrations/presentation/pages/connectors-page"
+import { parseAnalyticsTab } from "@/features/campaign/lib/campaign-analytics-metrics"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -123,7 +125,19 @@ const voiceTechCreateAgentRoute = createRoute({
 const campaignAnalyticsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "campaign/$id/analytics",
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: parseAnalyticsTab(search.tab),
+  }),
   component: CampaignAnalyticsPage,
+})
+
+const campaignBatchAnalyticsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "campaign/$id/analytics/batch/$versionId",
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: parseAnalyticsTab(search.tab),
+  }),
+  component: CampaignBatchAnalyticsPage,
 })
 
 const campaignAuditLogsRoute = createRoute({
@@ -220,6 +234,7 @@ const routeTree = rootRoute.addChildren([
   voiceTechRoutingAnalyticsRoute,
   voiceTechExecuteRoute,
   campaignAnalyticsRoute,
+  campaignBatchAnalyticsRoute,
   campaignAuditLogsRoute,
 
   usersRoute,

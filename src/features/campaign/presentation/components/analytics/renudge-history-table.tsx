@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Repeat } from "lucide-react";
 import { useCampaignRenudges } from "../../../api/campaign-queries";
 import { Badge } from "@/components/ui/badge";
@@ -5,10 +6,14 @@ import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { TablePagination } from "./table-pagination";
+
+const ITEMS_PER_PAGE = 10;
 
 export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
-    const { data: renudges, isLoading } = useCampaignRenudges(campaignId);
+    const { data: renudges = [], isLoading } = useCampaignRenudges(campaignId);
     const queryClient = useQueryClient();
+    const [currentPage, setCurrentPage] = useState(1);
 
     const stopRenudge = async (renudgeId: string) => {
         try {
@@ -21,15 +26,23 @@ export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
     };
 
     if (isLoading) return null;
-    if (!renudges || renudges.length === 0) return null;
+    if (renudges.length === 0) return null;
+
+    const totalPages = Math.ceil(renudges.length / ITEMS_PER_PAGE);
+    const paginatedRenudges = renudges.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     return (
         <div className="space-y-4">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-                <Repeat className="size-5 text-primary" />
-                Follow-up Renudges
-            </h3>
-            
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                    <Repeat className="size-5 text-primary" />
+                    Follow-up Renudges
+                </h3>
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    {renudges.length} total
+                </span>
+            </div>
+
             <div className="rounded-xl border border-border bg-card overflow-hidden">
                 <table className="w-full text-sm text-left">
                     <thead className="bg-muted/30 text-muted-foreground">
@@ -43,7 +56,7 @@ export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                        {renudges.map((renudge) => (
+                        {paginatedRenudges.map((renudge) => (
                             <tr key={renudge.id} className="hover:bg-muted/10 transition-colors">
                                 <td className="px-4 py-3 font-medium text-xs">
                                     {renudge.delayMinutes >= 60
@@ -55,9 +68,9 @@ export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
                                     {renudge.bot?.name || "Unknown Bot"}
                                 </td>
                                 <td className="px-4 py-3">
-                                    <Badge 
-                                        variant={renudge.status === 'pending' || renudge.status === 'stopped' ? 'secondary' : 'default'} 
-                                        className={`capitalize ${renudge.status === 'completed' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}`}
+                                    <Badge
+                                        variant={renudge.status === "pending" || renudge.status === "stopped" ? "secondary" : "default"}
+                                        className={`capitalize ${renudge.status === "completed" ? "bg-emerald-500 hover:bg-emerald-600" : ""}`}
                                     >
                                         {renudge.status}
                                     </Badge>
@@ -76,10 +89,10 @@ export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
                                     </div>
                                 </td>
                                 <td className="px-4 py-3">
-                                    {(renudge.status === 'active' || renudge.status === 'processing') && (
-                                        <Button 
-                                            variant="destructive" 
-                                            size="sm" 
+                                    {(renudge.status === "active" || renudge.status === "processing") && (
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
                                             className="h-8 text-xs"
                                             onClick={() => stopRenudge(renudge.id)}
                                         >
@@ -91,6 +104,14 @@ export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
                         ))}
                     </tbody>
                 </table>
+                <TablePagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={renudges.length}
+                    itemsPerPage={ITEMS_PER_PAGE}
+                    onPageChange={setCurrentPage}
+                    itemLabel="renudges"
+                />
             </div>
         </div>
     );

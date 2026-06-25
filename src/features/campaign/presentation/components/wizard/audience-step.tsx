@@ -73,7 +73,7 @@ export function AudienceStep({
     
     const { data: tables = [], isLoading: loadingTables } = useDiscover(selectedDataSourceId);
     const { data: columns = [], isLoading: loadingColumns } = useDiscoverColumns(selectedDataSourceId, selectedView);
-    const { data: predefinedFilters = [], isLoading: loadingFilters } = useCustomFilters();
+    const { data: predefinedFilters = [], isLoading: loadingFilters, isError: filtersError } = useCustomFilters(sourceType === 'CUSTOM_API');
     
     const botVariables = useMemo(() => {
         if (!bot?.nodes) return [];
@@ -107,7 +107,11 @@ export function AudienceStep({
             });
             const hasCategory = Boolean(filters && filters.length > 0);
             const hasBatchSize = Boolean(fieldMapping['__batchSize'] && Number(fieldMapping['__batchSize']) > 0);
-            return { valid: Boolean(missing.length === 0 && hasCategory && hasBatchSize), missing };
+            const startPage = Number(fieldMapping['__startPage']) || 1;
+            const endPageRaw = fieldMapping['__endPage'];
+            const endPage = endPageRaw ? Number(endPageRaw) : null;
+            const hasValidPageRange = startPage >= 1 && (endPage == null || endPage >= startPage);
+            return { valid: Boolean(missing.length === 0 && hasCategory && hasBatchSize && hasValidPageRange), missing };
         }
         
         const isSelected = sourceType === 'CSV' ? filePath : selectedView;
@@ -562,34 +566,89 @@ export function AudienceStep({
                                 </div>
                                 <div className="space-y-3">
                                     <Select 
-                                        value={filters[0] || ""} 
+                                        value={filters[0] || undefined} 
                                         onValueChange={(val) => {
-                                            if (!val) {
-                                                onFiltersChange?.([]);
-                                            } else {
-                                                onFiltersChange?.([val]);
-                                            }
+                                            onFiltersChange?.([val]);
                                         }}
-                                        disabled={loadingFilters || isRerunMode}
+                                        disabled={loadingFilters || isRerunMode || filtersError}
                                     >
                                         <SelectTrigger className={cn("w-full bg-background border rounded-md", !filters[0] && "border-destructive/30")}>
-                                            <SelectValue placeholder={loadingFilters ? "Loading categories..." : "Select a category"} />
+                                            <SelectValue placeholder={loadingFilters ? "Loading categories..." : filtersError ? "Failed to load categories" : "Select a category"} />
                                         </SelectTrigger>
-                                        <SelectContent>
-                                            {predefinedFilters.map((f: any) => (
+                                        <SelectContent position="popper" className="z-[200]">
+                                            {predefinedFilters.map((f) => (
                                                 <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    {filtersError && (
+                                        <p className="text-xs text-destructive">
+                                            Could not load audience categories. Ensure Custom Campaign API is enabled on the server.
+                                        </p>
+                                    )}
+                                    {!filtersError && !loadingFilters && predefinedFilters.length === 0 && (
+                                        <p className="text-xs text-muted-foreground">No categories configured.</p>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Batch Limits Section */}
                             <div className="p-5 rounded-2xl bg-card border flex flex-col gap-4">
                                 <div>
-                                    <h4 className="text-sm font-bold tracking-tight">API Import Limits</h4>
+                                    <h4 className="text-sm font-bold tracking-tight">API Fetch Window</h4>
                                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                        Configure the batch size per API call and the absolute maximum number of unique records to fetch.
+                                        Define which API pages to fetch this run. On rerun, numbers already contacted by this bot are skipped automatically.
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs">Start Page (Required)</Label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            className="w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
+                                            placeholder="1"
+                                            value={fieldMapping['__startPage'] ?? '1'}
+                                            maxLength={6}
+                                            onChange={(e) => {
+                                                if (onFieldMappingChange) {
+                                                    onFieldMappingChange({
+                                                        ...fieldMapping,
+                                                        __startPage: sanitizeNumeric(e.target.value),
+                                                    });
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs">End Page (Optional)</Label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            className="w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
+                                            placeholder="Leave blank for all pages"
+                                            value={fieldMapping['__endPage'] || ''}
+                                            maxLength={6}
+                                            onChange={(e) => {
+                                                if (onFieldMappingChange) {
+                                                    const next = { ...fieldMapping };
+                                                    const value = sanitizeNumeric(e.target.value);
+                                                    if (value) {
+                                                        next.__endPage = value;
+                                                    } else {
+                                                        delete next.__endPage;
+                                                    }
+                                                    onFieldMappingChange(next);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-sm font-bold tracking-tight">Per-Request & Run Limits</h4>
+                                    <p className="text-[11px] text-muted-foreground leading-relaxed mt-1">
+                                        Page size controls records per API call. Max records caps new recipients inserted after dedup.
                                     </p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
