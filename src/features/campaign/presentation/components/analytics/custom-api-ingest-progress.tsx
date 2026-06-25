@@ -1,7 +1,6 @@
 import { Database, Loader2 } from "lucide-react";
 import type { Campaign, CustomApiIngestPhase } from "../../../types";
 import { getCustomApiIngestProgress } from "../../../lib/custom-api-ingest-progress";
-import { cn } from "@/lib/utils";
 
 interface CustomApiIngestProgressCardProps {
     campaign: Campaign;
@@ -10,15 +9,15 @@ interface CustomApiIngestProgressCardProps {
 function phaseLabel(phase: CustomApiIngestPhase): string {
     switch (phase) {
         case "starting":
-            return "Starting API fetch…";
+            return "Starting…";
         case "fetching":
-            return "Fetching pages from external API";
+            return "Fetching pages";
         case "dispatching":
-            return "Pages fetched — sending messages";
+            return "Dispatching messages";
         case "finished":
-            return "API import complete for this run";
+            return "Import complete";
         default:
-            return "Waiting to start";
+            return "Waiting";
     }
 }
 
@@ -27,86 +26,64 @@ export function CustomApiIngestProgressCard({ campaign }: CustomApiIngestProgres
     if (!progress) return null;
 
     const rangeLabel = progress.configuredEndPage != null
-        ? `pages ${progress.startPage}–${progress.configuredEndPage}`
-        : `from page ${progress.startPage}`;
+        ? `p.${progress.startPage}–${progress.configuredEndPage}`
+        : `from p.${progress.startPage}`;
 
     const currentPageLabel =
         progress.currentPage > 0
             ? `Page ${progress.currentPage}`
             : progress.isActive
-              ? `Starting at page ${progress.startPage}…`
-              : "Not started";
-
-    const targetPagesLabel =
-        progress.pagesInRange != null
-            ? `${progress.pagesFetched} / ${progress.pagesInRange} pages in range`
-            : progress.apiTotalPages != null
-              ? `${progress.pagesFetched} pages fetched (API total: ${progress.apiTotalPages})`
-              : `${progress.pagesFetched} pages fetched`;
+              ? `Starting…`
+              : "Idle";
 
     const showBar = progress.pageProgressPct != null && progress.isActive;
 
     return (
-        <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6 shadow-sm">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
-                        {progress.isActive ? (
-                            <Loader2 className="size-4 text-primary animate-spin" />
-                        ) : (
-                            <Database className="size-4 text-primary" />
-                        )}
-                        Custom API Ingest
-                    </h3>
-                    <p className="text-xs text-muted-foreground">{phaseLabel(progress.phase)}</p>
-                </div>
-                <div className="text-right">
-                    <div className="text-2xl font-black tabular-nums text-primary">{currentPageLabel}</div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mt-0.5">
-                        Configured: {rangeLabel}
-                    </div>
-                </div>
-            </div>
-
-            {showBar && (
-                <div className="mt-4 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{targetPagesLabel}</span>
-                        <span className="font-semibold tabular-nums">{progress.pageProgressPct!.toFixed(0)}%</span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                        <div
-                            className="h-full bg-primary transition-all duration-500 rounded-full"
-                            style={{ width: `${progress.pageProgressPct}%` }}
-                        />
-                    </div>
-                </div>
+        <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/[0.04] px-3 py-2.5">
+            {progress.isActive ? (
+                <Loader2 className="size-4 text-primary animate-spin shrink-0" />
+            ) : (
+                <Database className="size-4 text-primary shrink-0" />
             )}
 
-            <div className={cn("mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs")}>
-                <Stat label="New recipients" value={progress.ingestedThisRun.toLocaleString()} />
-                <Stat
-                    label="Max records"
-                    value={progress.maxRecords != null ? progress.maxRecords.toLocaleString() : "No limit"}
-                />
-                <Stat
-                    label="Page size"
-                    value={progress.pageSize != null ? progress.pageSize.toLocaleString() : "—"}
-                />
-                <Stat
-                    label="API total pages"
-                    value={progress.apiTotalPages != null ? progress.apiTotalPages.toLocaleString() : "—"}
-                />
-            </div>
-        </div>
-    );
-}
+            <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-semibold text-foreground truncate">
+                        Custom API · {phaseLabel(progress.phase)}
+                    </span>
+                    <span className="text-muted-foreground shrink-0 tabular-nums">{currentPageLabel}</span>
+                </div>
 
-function Stat({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="rounded-xl border border-border/60 bg-background/60 px-3 py-2">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{label}</div>
-            <div className="font-bold tabular-nums text-foreground mt-0.5">{value}</div>
+                {showBar ? (
+                    <div className="flex items-center gap-2">
+                        <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                            <div
+                                className="h-full bg-primary transition-all duration-500 rounded-full"
+                                style={{ width: `${progress.pageProgressPct}%` }}
+                            />
+                        </div>
+                        <span className="text-[10px] font-semibold tabular-nums text-primary shrink-0 w-8 text-right">
+                            {progress.pageProgressPct!.toFixed(0)}%
+                        </span>
+                    </div>
+                ) : (
+                    <p className="text-[10px] text-muted-foreground truncate">
+                        {rangeLabel}
+                        {progress.ingestedThisRun > 0 && ` · ${progress.ingestedThisRun.toLocaleString()} ingested`}
+                    </p>
+                )}
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 text-[10px] text-muted-foreground shrink-0 border-l border-border/60 pl-3">
+                <span className="tabular-nums">
+                    <span className="font-bold text-foreground">{progress.ingestedThisRun.toLocaleString()}</span> new
+                </span>
+                {progress.pagesInRange != null && (
+                    <span className="tabular-nums">
+                        {progress.pagesFetched}/{progress.pagesInRange} pg
+                    </span>
+                )}
+            </div>
         </div>
     );
 }

@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,12 @@ import { exportCampaignCsv } from "../../api/campaign-export";
 import { CampaignStatusBadge } from "../components/campaign-status-badge";
 import { CampaignAnalyticsDashboard } from "../components/analytics/campaign-analytics-dashboard";
 import { CampaignRecipientsTable } from "../components/analytics/campaign-recipients-table";
+import type { AnalyticsSection } from "../../lib/campaign-analytics-metrics";
 
 export function CampaignBatchAnalyticsPage() {
     const { id, versionId } = useParams({ strict: false });
     const navigate = useNavigate();
+    const { tab: returnTab } = useSearch({ strict: false }) as { tab: AnalyticsSection };
 
     const { data: campaign, isLoading: isLoadingCampaign } = useCampaign(id ?? "");
     const { data: batchData, isLoading: isLoadingBatch } = useBatchAnalytics(id, versionId);
@@ -40,7 +42,13 @@ export function CampaignBatchAnalyticsPage() {
                         variant="ghost"
                         size="icon"
                         className="rounded-full bg-background/50 hover:bg-background shadow-sm"
-                        onClick={() => navigate({ to: `/campaign/${id}/analytics` as string })}
+                        onClick={() =>
+                            navigate({
+                                to: "/campaign/$id/analytics",
+                                params: { id: id as string },
+                                search: { tab: returnTab },
+                            })
+                        }
                     >
                         <ArrowLeft className="size-4" />
                     </Button>

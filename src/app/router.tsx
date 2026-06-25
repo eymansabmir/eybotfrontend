@@ -28,6 +28,7 @@ import { CreateAgentPage } from "@/features/voice-tech/presentation/pages/create
 import { CreateBotPage } from "../features/bots/presentation/pages/create-bot-page"
 import { ActivityLogPage } from "@/features/activity-log/presentation/pages/activity-log-page"
 import { ConnectorsPage } from "@/features/integrations/presentation/pages/connectors-page"
+import { parseAnalyticsTab } from "@/features/campaign/lib/campaign-analytics-metrics"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -124,12 +125,18 @@ const voiceTechCreateAgentRoute = createRoute({
 const campaignAnalyticsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "campaign/$id/analytics",
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: parseAnalyticsTab(search.tab),
+  }),
   component: CampaignAnalyticsPage,
 })
 
 const campaignBatchAnalyticsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "campaign/$id/analytics/batch/$versionId",
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: parseAnalyticsTab(search.tab),
+  }),
   component: CampaignBatchAnalyticsPage,
 })
 

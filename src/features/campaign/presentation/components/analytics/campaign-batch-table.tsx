@@ -12,10 +12,12 @@ import {
 } from "lucide-react";
 import { useCampaignBatches } from "../../../api/campaign-queries";
 import { TablePagination } from "./table-pagination";
+import type { AnalyticsSection } from "../../../lib/campaign-analytics-metrics";
 
 interface CampaignBatchTableProps {
     campaignId: string;
     campaignName?: string;
+    returnTab?: AnalyticsSection;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -30,7 +32,7 @@ function MetricCell({ value, total }: { value: number; total: number }) {
     );
 }
 
-export function CampaignBatchTable({ campaignId, campaignName }: CampaignBatchTableProps) {
+export function CampaignBatchTable({ campaignId, campaignName, returnTab = "runs" }: CampaignBatchTableProps) {
     const navigate = useNavigate();
     const { data: fetchedBatches = [], isLoading } = useCampaignBatches(campaignId);
     const batches = [...fetchedBatches].sort((a, b) => b.launchedAt.getTime() - a.launchedAt.getTime());
@@ -48,7 +50,11 @@ export function CampaignBatchTable({ campaignId, campaignName }: CampaignBatchTa
     }
 
     const openBatchAnalytics = (batchId: string) => {
-        navigate({ to: `/campaign/${campaignId}/analytics/batch/${batchId}` as string });
+        navigate({
+            to: "/campaign/$id/analytics/batch/$versionId",
+            params: { id: campaignId, versionId: batchId },
+            search: { tab: returnTab },
+        });
     };
 
     return (
