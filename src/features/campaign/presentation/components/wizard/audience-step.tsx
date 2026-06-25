@@ -50,6 +50,8 @@ export interface AudienceStepProps {
 
 const PHONE_ALIASES = ['phone', 'wa_id', 'mobile', 'recipient', 'waid', 'phone_number', 'number', 'to'];
 
+const CUSTOM_API_MAX_BATCH_SIZE = 1000;
+
 export function AudienceStep({ 
     filePath, 
     onFileUploaded, 
@@ -561,7 +563,9 @@ export function AudienceStep({
                                 <div>
                                     <h4 className="text-sm font-bold tracking-tight">Audience Category</h4>
                                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                        Select the exact category of users to target for this campaign (Required).
+                                        {isRerunMode
+                                            ? "Review or update the audience category for this rerun. The selected category is saved and used when the campaign starts."
+                                            : "Select the exact category of users to target for this campaign (Required)."}
                                     </p>
                                 </div>
                                 <div className="space-y-3">
@@ -570,7 +574,7 @@ export function AudienceStep({
                                         onValueChange={(val) => {
                                             onFiltersChange?.([val]);
                                         }}
-                                        disabled={loadingFilters || isRerunMode || filtersError}
+                                        disabled={loadingFilters || filtersError}
                                     >
                                         <SelectTrigger className={cn("w-full bg-background border rounded-md", !filters[0] && "border-destructive/30")}>
                                             <SelectValue placeholder={loadingFilters ? "Loading categories..." : filtersError ? "Failed to load categories" : "Select a category"} />
@@ -648,7 +652,7 @@ export function AudienceStep({
                                 <div>
                                     <h4 className="text-sm font-bold tracking-tight">Per-Request & Run Limits</h4>
                                     <p className="text-[11px] text-muted-foreground leading-relaxed mt-1">
-                                        Page size controls records per API call. Max records caps new recipients inserted after dedup.
+                                        Page size controls records per API call (max {CUSTOM_API_MAX_BATCH_SIZE}). Max records caps new recipients inserted after dedup.
                                     </p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -657,15 +661,20 @@ export function AudienceStep({
                                         <input 
                                             type="number" 
                                             min="1"
+                                            max={CUSTOM_API_MAX_BATCH_SIZE}
                                             className="w-full bg-background border rounded-md px-3 py-1.5 text-xs focus:ring-1 focus:ring-primary focus:outline-none transition-shadow"
-                                            placeholder="e.g. 1000"
+                                            placeholder={`e.g. ${CUSTOM_API_MAX_BATCH_SIZE}`}
                                             value={fieldMapping['__batchSize'] || ''}
                                             maxLength={7}
                                             onChange={(e) => {
                                                 if (onFieldMappingChange) {
+                                                    const raw = sanitizeNumeric(e.target.value);
+                                                    const capped = raw
+                                                        ? String(Math.min(Number(raw), CUSTOM_API_MAX_BATCH_SIZE))
+                                                        : raw;
                                                     onFieldMappingChange({
                                                         ...fieldMapping,
-                                                        __batchSize: sanitizeNumeric(e.target.value)
+                                                        __batchSize: capped
                                                     });
                                                 }
                                             }}
