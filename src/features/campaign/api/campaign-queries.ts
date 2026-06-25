@@ -17,11 +17,13 @@ export function useCampaigns() {
     });
 }
 
-export function useCustomFilters() {
+export function useCustomFilters(enabled = true) {
     return useQuery({
         queryKey: ["custom-filters"],
         queryFn: campaignApi.getCustomFilters,
         staleTime: Infinity,
+        enabled,
+        retry: 1,
     });
 }
 
@@ -38,7 +40,14 @@ export function useCampaignPolling(id: string, enabled: boolean) {
         queryKey: CAMPAIGN_KEYS.detail(id),
         queryFn: () => campaignApi.getById(id),
         enabled,
-        refetchInterval: enabled ? 15_000 : false,
+        refetchInterval: (query) => {
+            if (!enabled) return false;
+            const campaign = query.state.data;
+            if (campaign?.dataSourceId === "CUSTOM_API" && campaign.status === "running") {
+                return 5_000;
+            }
+            return 15_000;
+        },
     });
 }
 

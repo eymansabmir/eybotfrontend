@@ -23,6 +23,7 @@ import { MetricCard, RateCard } from "../components/analytics/metric-card";
 // import { ConversionFunnel } from "../components/analytics/conversion-funnel";
 // import { StatsTable } from "../components/analytics/stats-table";
 import { CampaignBatchTable } from "../components/analytics/campaign-batch-table";
+import { CustomApiIngestProgressCard } from "../components/analytics/custom-api-ingest-progress";
 import { RenudgeHistoryTable } from "../components/analytics/renudge-history-table";
 import { CampaignRecipientsTable } from "../components/analytics/campaign-recipients-table";
 
@@ -111,6 +112,10 @@ export function CampaignAnalyticsPage() {
             </div>
 
             <CampaignDetailNav campaignId={id as string} active="analytics" />
+
+            {campaign.dataSourceId === "CUSTOM_API" && (
+                <CustomApiIngestProgressCard campaign={campaign} />
+            )}
 
             {/* Performance Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -1,10 +1,15 @@
 import { apiClient } from "@/lib/api-client";
-import type { Campaign, CreateCampaignInput, CampaignAnalytics, CampaignAuditLogFilter, CampaignAuditLogResponse } from "../types";
 import type {
+    Campaign,
+    CreateCampaignInput,
+    CampaignAnalytics,
+    CampaignAuditLogFilter,
+    CampaignAuditLogResponse,
+    CampaignBatch,
     CampaignRecipientsPage,
+    CustomCampaignFilter,
     RecipientConversation,
 } from "../types";
-
 const BASE = "/campaigns";
 
 export const campaignApi = {
@@ -13,8 +18,8 @@ export const campaignApi = {
         return data;
     },
 
-    getCustomFilters: async (): Promise<{ id: string; name: string; key: string; value: string }[]> => {
-        const { data } = await apiClient.get<{ id: string; name: string; key: string; value: string }[]>(`${BASE}/custom-filters`);
+    getCustomFilters: async (): Promise<CustomCampaignFilter[]> => {
+        const { data } = await apiClient.get<CustomCampaignFilter[]>(`${BASE}/custom-filters`);
         return data;
     },
 
@@ -50,8 +55,8 @@ export const campaignApi = {
         return data;
     },
 
-    getBatchHistory: async (id: string): Promise<any[]> => {
-        const { data } = await apiClient.get<any[]>(`${BASE}/${id}/batches`);
+    getBatchHistory: async (id: string): Promise<CampaignBatch[]> => {
+        const { data } = await apiClient.get<CampaignBatch[]>(`${BASE}/${id}/batches`);
         return data;
     },
 
