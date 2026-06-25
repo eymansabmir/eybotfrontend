@@ -80,7 +80,17 @@ export interface RecipientStats {
   /** Failure breakdown by KARIX category and code (when analytics pipeline is enabled). */
   failureBreakdown?: FailureBreakdown;
   /** Whether engagement metrics come from verified webhook funnel or legacy counters. */
-  analyticsSource?: 'verified' | 'legacy';
+  analyticsSource?: 'verified' | 'legacy' | 'filtered';
+}
+
+export interface CampaignAnalyticsDateFilter {
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface BatchAnalyticsResponse {
+  batch: CampaignBatch;
+  analytics: RecipientStats & { nps: null };
 }
 
 export interface NpsData {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
+import { useNavigate } from "@tanstack/react-router";
 import {
     CheckCircle2,
     XCircle,
@@ -7,14 +8,17 @@ import {
     Users,
     Calendar,
     Activity,
-    ChevronLeft,
     ChevronRight,
 } from "lucide-react";
 import { useCampaignBatches } from "../../../api/campaign-queries";
+import { TablePagination } from "./table-pagination";
 
 interface CampaignBatchTableProps {
     campaignId: string;
+    campaignName?: string;
 }
+
+const ITEMS_PER_PAGE = 10;
 
 function MetricCell({ value, total }: { value: number; total: number }) {
     const pct = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
@@ -26,14 +30,14 @@ function MetricCell({ value, total }: { value: number; total: number }) {
     );
 }
 
-export function CampaignBatchTable({ campaignId }: CampaignBatchTableProps) {
+export function CampaignBatchTable({ campaignId, campaignName }: CampaignBatchTableProps) {
+    const navigate = useNavigate();
     const { data: fetchedBatches = [], isLoading } = useCampaignBatches(campaignId);
     const batches = [...fetchedBatches].sort((a, b) => b.launchedAt.getTime() - a.launchedAt.getTime());
 
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
-    const totalPages = Math.ceil(batches.length / itemsPerPage);
-    const paginatedBatches = batches.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const totalPages = Math.ceil(batches.length / ITEMS_PER_PAGE);
+    const paginatedBatches = batches.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     if (isLoading && batches.length === 0) {
         return <div className="animate-pulse h-64 bg-muted rounded-2xl border border-border shadow-sm" />;
@@ -43,36 +47,41 @@ export function CampaignBatchTable({ campaignId }: CampaignBatchTableProps) {
         return null;
     }
 
+    const openBatchAnalytics = (batchId: string) => {
+        navigate({ to: `/campaign/${campaignId}/analytics/batch/${batchId}` as string });
+    };
+
     return (
         <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
             <div className="p-6 border-b border-border bg-muted/20 flex items-center justify-between">
                 <div>
                     <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                         <Activity className="size-5 text-primary" />
-                        Campaign Launch History (Batches)
+                        Campaign Launch History (Runs)
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Per-batch delivery funnel — each row is a launch or rerun with its own recipient set.
+                        Click a run to open full analytics for that batch.
                     </p>
                 </div>
                 <div className="bg-primary/10 text-primary text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
                     <Users className="size-3.5" />
-                    Total Batches: {batches.length}
+                    Total Runs: {batches.length}
                 </div>
             </div>
 
             <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left min-w-[960px]">
+                <table className="w-full text-sm text-left min-w-[1024px]">
                     <thead className="bg-muted/40 text-muted-foreground text-xs uppercase font-semibold">
                         <tr>
-                            <th className="px-4 py-4 rounded-tl-lg">Batch</th>
+                            <th className="px-4 py-4 rounded-tl-lg">Run</th>
                             <th className="px-4 py-4">Status</th>
                             <th className="px-4 py-4">Recipients</th>
                             <th className="px-4 py-4">Sent</th>
                             <th className="px-4 py-4">Delivered</th>
                             <th className="px-4 py-4">Opened</th>
                             <th className="px-4 py-4">Started</th>
-                            <th className="px-4 py-4 rounded-tr-lg">Completed</th>
+                            <th className="px-4 py-4">Completed</th>
+                            <th className="px-4 py-4 rounded-tr-lg w-12" />
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -91,15 +100,21 @@ export function CampaignBatchTable({ campaignId }: CampaignBatchTableProps) {
                             };
 
                             return (
-                                <tr key={batch.id} className="hover:bg-muted/30 transition-colors group">
+                                <tr
+                                    key={batch.id}
+                                    className="hover:bg-muted/30 transition-colors group cursor-pointer"
+                                    onClick={() => openBatchAnalytics(batch.id)}
+                                >
                                     <td className="px-4 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-3">
                                             <div className="bg-background border border-border p-2 rounded-lg text-muted-foreground group-hover:text-primary group-hover:border-primary/30 transition-colors">
                                                 <Calendar className="size-4" />
                                             </div>
                                             <div>
-                                                <div className="font-medium text-foreground">
-                                                    Run #{batch.versionNumber ?? "—"}
+                                                <div className="font-medium text-foreground group-hover:text-primary transition-colors">
+                                                    {campaignName
+                                                        ? `${campaignName} - Run ${batch.versionNumber ?? "—"}`
+                                                        : `Run #${batch.versionNumber ?? "—"}`}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                                                     <Clock className="size-3" />
@@ -151,6 +166,9 @@ export function CampaignBatchTable({ campaignId }: CampaignBatchTableProps) {
                                     <td className="px-4 py-4">
                                         <MetricCell value={stats.completed} total={stats.total} />
                                     </td>
+                                    <td className="px-4 py-4 text-muted-foreground group-hover:text-primary">
+                                        <ChevronRight className="size-4" />
+                                    </td>
                                 </tr>
                             );
                         })}
@@ -158,34 +176,14 @@ export function CampaignBatchTable({ campaignId }: CampaignBatchTableProps) {
                 </table>
             </div>
 
-            {totalPages > 1 && (
-                <div className="px-6 py-4 border-t border-border flex items-center justify-between bg-muted/10">
-                    <span className="text-sm text-muted-foreground">
-                        Showing{" "}
-                        <span className="font-medium text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
-                        <span className="font-medium text-foreground">
-                            {Math.min(currentPage * itemsPerPage, batches.length)}
-                        </span>{" "}
-                        of <span className="font-medium text-foreground">{batches.length}</span> batches
-                    </span>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                            disabled={currentPage === 1}
-                            className="p-1.5 rounded-md border border-border text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <ChevronLeft className="size-4" />
-                        </button>
-                        <button
-                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                            disabled={currentPage === totalPages}
-                            className="p-1.5 rounded-md border border-border text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <ChevronRight className="size-4" />
-                        </button>
-                    </div>
-                </div>
-            )}
+            <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={batches.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+                itemLabel="runs"
+            />
         </div>
     );
 }

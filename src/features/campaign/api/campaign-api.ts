@@ -6,6 +6,8 @@ import type {
     CampaignAuditLogFilter,
     CampaignAuditLogResponse,
     CampaignBatch,
+    BatchAnalyticsResponse,
+    CampaignAnalyticsDateFilter,
     CampaignRecipientsPage,
     CustomCampaignFilter,
     RecipientConversation,
@@ -50,8 +52,17 @@ export const campaignApi = {
         await apiClient.delete(`${BASE}/${id}`);
     },
 
-    getAnalytics: async (id: string): Promise<CampaignAnalytics> => {
-        const { data } = await apiClient.get<CampaignAnalytics>(`${BASE}/${id}/stats`);
+    getAnalytics: async (id: string, filter: CampaignAnalyticsDateFilter = {}): Promise<CampaignAnalytics> => {
+        const params = new URLSearchParams();
+        if (filter.startDate) params.append("startDate", filter.startDate);
+        if (filter.endDate) params.append("endDate", filter.endDate);
+        const qs = params.toString();
+        const { data } = await apiClient.get<CampaignAnalytics>(`${BASE}/${id}/stats${qs ? `?${qs}` : ""}`);
+        return data;
+    },
+
+    getBatchAnalytics: async (campaignId: string, versionId: string): Promise<BatchAnalyticsResponse> => {
+        const { data } = await apiClient.get<BatchAnalyticsResponse>(`${BASE}/${campaignId}/batches/${versionId}/stats`);
         return data;
     },
 
@@ -78,7 +89,14 @@ export const campaignApi = {
     },
     listRecipients: async (
         id: string,
-        params: { cursor?: string; status?: string; limit?: number } = {},
+        params: {
+            cursor?: string;
+            status?: string;
+            limit?: number;
+            versionId?: string;
+            startDate?: string;
+            endDate?: string;
+        } = {},
     ): Promise<CampaignRecipientsPage> => {
         const { data } = await apiClient.get<CampaignRecipientsPage>(`${BASE}/${id}/recipients`, { params });
         return data;
