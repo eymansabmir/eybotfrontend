@@ -71,7 +71,8 @@ export function CampaignEngagementPanel({
     }
 
     const timeSeries = data.timeSeries;
-    const interactionSeries = data.interactions[0];
+    const interactionSeries =
+        data.interactions.find((series) => series.label === "All runs") ?? data.interactions[0];
     const readsData = mergeMetricSeries(timeSeries, "reads", data.granularity);
     const repliesData = mergeMetricSeries(timeSeries, "replies", data.granularity);
     const lineKeys = timeSeries.map((s) => s.label);

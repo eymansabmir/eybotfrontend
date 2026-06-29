@@ -19,7 +19,7 @@ import type { AnalyticsSection } from "../../lib/campaign-analytics-metrics";
 
 import { CampaignStatusBadge } from "../components/campaign-status-badge";
 import { CampaignDetailNav } from "../components/campaign-detail-nav";
-import { CampaignAnalyticsOverview } from "../components/analytics/campaign-analytics-overview";
+import { CampaignAnalyticsDashboard } from "../components/analytics/campaign-analytics-dashboard";
 import { CampaignAnalyticsDateFilterBar } from "../components/analytics/campaign-analytics-date-filter";
 import { CampaignAnalyticsScopeBanner } from "../components/analytics/campaign-analytics-scope-banner";
 import { CampaignBatchTable } from "../components/analytics/campaign-batch-table";
@@ -142,13 +142,16 @@ export function CampaignAnalyticsPage() {
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-6 mt-0">
-                    <CampaignAnalyticsScopeBanner dateFilter={dateFilter} scope="filtered" />
+                    <CampaignAnalyticsScopeBanner
+                        dateFilter={dateFilter}
+                        scope={hasDateFilter ? "filtered" : "lifetime"}
+                    />
 
                     {campaign.dataSourceId === "CUSTOM_API" && !hasDateFilter && (
                         <CustomApiIngestProgressCard campaign={campaign} />
                     )}
 
-                    <CampaignAnalyticsOverview stats={stats} failureBreakdown={stats.failureBreakdown} />
+                    <CampaignAnalyticsDashboard stats={stats} failureBreakdown={stats.failureBreakdown} />
 
                     <CampaignRecentRunsTeaser
                         campaignId={id as string}
