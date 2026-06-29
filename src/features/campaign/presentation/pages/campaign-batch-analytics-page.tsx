@@ -5,13 +5,14 @@ import { ArrowLeft, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { useCampaign, useBatchAnalytics } from "../../api/campaign-queries";
+import { useCampaign, useBatchAnalytics, useCampaignEngagementAnalytics } from "../../api/campaign-queries";
 import { exportCampaignCsv } from "../../api/campaign-export";
 
 import { BatchStatusBadge } from "../components/campaign-status-badge";
 import { CampaignAnalyticsDashboard } from "../components/analytics/campaign-analytics-dashboard";
 import { CampaignRecipientsTable } from "../components/analytics/campaign-recipients-table";
 import { BatchRunRenudgesSection } from "../components/analytics/batch-run-renudges-section";
+import { CampaignEngagementPanel } from "../components/analytics/campaign-engagement-panel";
 import type { AnalyticsSection } from "../../lib/campaign-analytics-metrics";
 
 export function CampaignBatchAnalyticsPage() {
@@ -21,6 +22,10 @@ export function CampaignBatchAnalyticsPage() {
 
     const { data: campaign, isLoading: isLoadingCampaign } = useCampaign(id ?? "");
     const { data: batchData, isLoading: isLoadingBatch } = useBatchAnalytics(id, versionId);
+    const { data: engagementData, isLoading: isLoadingEngagement } = useCampaignEngagementAnalytics(id, {
+        versionId,
+        granularity: "hour",
+    });
 
     if (isLoadingCampaign || isLoadingBatch || !campaign || !batchData) {
         return (
@@ -90,6 +95,12 @@ export function CampaignBatchAnalyticsPage() {
             <CampaignAnalyticsDashboard
                 stats={stats}
                 failureBreakdown={stats.failureBreakdown}
+            />
+
+            <CampaignEngagementPanel
+                data={engagementData}
+                isLoading={isLoadingEngagement}
+                showRunComparison={false}
             />
 
             <BatchRunRenudgesSection renudges={renudges} />

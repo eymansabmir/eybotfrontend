@@ -10,6 +10,7 @@ import {
     useCampaignPolling,
     useCampaignAnalytics,
     useCampaignBatches,
+    useCampaignEngagementAnalytics,
     useCampaignRenudges,
 } from "../../api/campaign-queries";
 import { exportCampaignCsv } from "../../api/campaign-export";
@@ -26,6 +27,7 @@ import { CampaignRecentRunsTeaser } from "../components/analytics/campaign-recen
 import { CustomApiIngestProgressCard } from "../components/analytics/custom-api-ingest-progress";
 import { RenudgeHistoryTable } from "../components/analytics/renudge-history-table";
 import { CampaignRecipientsTable } from "../components/analytics/campaign-recipients-table";
+import { CampaignEngagementPanel } from "../components/analytics/campaign-engagement-panel";
 
 const EMPTY_RECIPIENT_STATS: RecipientStats = {
     total: 0,
@@ -50,6 +52,10 @@ export function CampaignAnalyticsPage() {
     const { data: analyticsData, isLoading: isLoadingAnalytics } = useCampaignAnalytics(id, dateFilter);
     const { data: batches = [] } = useCampaignBatches(id ?? "");
     const { data: renudges = [] } = useCampaignRenudges(id ?? "");
+    const { data: engagementData, isLoading: isLoadingEngagement } = useCampaignEngagementAnalytics(id, {
+        groupByVersion: true,
+        granularity: "day",
+    });
 
     const setSection = (tab: AnalyticsSection) => {
         navigate({
@@ -121,6 +127,9 @@ export function CampaignAnalyticsPage() {
                     <TabsTrigger value="overview" className="rounded-none px-4 py-2.5">
                         Overview
                     </TabsTrigger>
+                    <TabsTrigger value="engagement" className="rounded-none px-4 py-2.5">
+                        Engagement
+                    </TabsTrigger>
                     <TabsTrigger value="runs" className="rounded-none px-4 py-2.5">
                         Runs{batches.length > 0 && ` (${batches.length})`}
                     </TabsTrigger>
@@ -146,6 +155,15 @@ export function CampaignAnalyticsPage() {
                         campaignName={campaign.name}
                         returnTab={section}
                         onViewAllRuns={() => setSection("runs")}
+                    />
+                </TabsContent>
+
+                <TabsContent value="engagement" className="space-y-6 mt-0">
+                    <CampaignAnalyticsScopeBanner dateFilter={dateFilter} scope="lifetime" />
+                    <CampaignEngagementPanel
+                        data={engagementData}
+                        isLoading={isLoadingEngagement}
+                        showRunComparison
                     />
                 </TabsContent>
 

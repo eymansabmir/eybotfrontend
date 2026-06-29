@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { campaignApi } from "./campaign-api";
-import type { CreateCampaignInput, CampaignAuditLogFilter, CampaignAnalyticsDateFilter } from "../types";
+import type { CreateCampaignInput, CampaignAuditLogFilter, CampaignAnalyticsDateFilter, CampaignEngagementAnalyticsFilter } from "../types";
 import { toast } from "sonner";
 
 const CAMPAIGN_KEYS = {
@@ -57,6 +57,18 @@ export function useCampaignAnalytics(id: string | undefined, filter: CampaignAna
         queryFn: () => campaignApi.getAnalytics(id!, filter),
         enabled: !!id,
         refetchInterval: 15_000,
+    });
+}
+
+export function useCampaignEngagementAnalytics(
+    campaignId: string | undefined,
+    filter: CampaignEngagementAnalyticsFilter = {},
+) {
+    return useQuery({
+        queryKey: ["campaign-engagement-analytics", campaignId, filter],
+        queryFn: () => campaignApi.getEngagementAnalytics(campaignId!, filter),
+        enabled: !!campaignId,
+        refetchInterval: 30_000,
     });
 }
 

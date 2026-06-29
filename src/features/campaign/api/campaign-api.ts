@@ -12,6 +12,8 @@ import type {
     CustomCampaignFilter,
     RecipientConversation,
     CampaignRenudge,
+    CampaignEngagementAnalytics,
+    CampaignEngagementAnalyticsFilter,
 } from "../types";
 const BASE = "/campaigns";
 
@@ -59,6 +61,21 @@ export const campaignApi = {
         if (filter.endDate) params.append("endDate", filter.endDate);
         const qs = params.toString();
         const { data } = await apiClient.get<CampaignAnalytics>(`${BASE}/${id}/stats${qs ? `?${qs}` : ""}`);
+        return data;
+    },
+
+    getEngagementAnalytics: async (
+        id: string,
+        filter: CampaignEngagementAnalyticsFilter = {},
+    ): Promise<CampaignEngagementAnalytics> => {
+        const params = new URLSearchParams();
+        if (filter.versionId) params.append("versionId", filter.versionId);
+        if (filter.granularity) params.append("granularity", filter.granularity);
+        if (filter.groupByVersion) params.append("groupByVersion", "true");
+        const qs = params.toString();
+        const { data } = await apiClient.get<CampaignEngagementAnalytics>(
+            `${BASE}/${id}/engagement-analytics${qs ? `?${qs}` : ""}`,
+        );
         return data;
     },
 

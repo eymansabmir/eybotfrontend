@@ -315,3 +315,77 @@ export interface RecipientConversation {
   messages: ConversationMessage[];
   reconstructed: boolean;
 }
+
+export type EngagementGranularity = 'hour' | 'day';
+
+export interface EngagementTimeSeriesPoint {
+  bucket: string;
+  reads: number;
+  replies: number;
+  completions: number;
+}
+
+export interface EngagementTimeSeriesSeries {
+  versionId?: string;
+  versionNumber?: number;
+  label: string;
+  points: EngagementTimeSeriesPoint[];
+}
+
+export interface EngagementInteractionPoint {
+  bucket: string;
+  interactions: number;
+  cumulative: number;
+}
+
+export interface EngagementInteractionSeries {
+  versionId?: string;
+  versionNumber?: number;
+  label: string;
+  points: EngagementInteractionPoint[];
+}
+
+export interface RetentionCurvePoint {
+  depth: number;
+  count: number;
+  percent: number;
+}
+
+export interface FlowDepthSummary {
+  sessionCount: number;
+  avgNodesVisited: number;
+  medianNodesVisited: number;
+  avgUserInteractions: number;
+}
+
+export interface LanguageDistributionItem {
+  language: string;
+  label: string;
+  count: number;
+  percent: number;
+}
+
+export interface LanguageEngagementSummary {
+  reached: number;
+  selected: number;
+  selectionRate: number;
+  topLanguage: LanguageDistributionItem | null;
+  distribution: LanguageDistributionItem[];
+}
+
+export interface CampaignEngagementAnalytics {
+  scope: 'campaign' | 'version';
+  granularity: EngagementGranularity;
+  repliers: number;
+  timeSeries: EngagementTimeSeriesSeries[];
+  interactions: EngagementInteractionSeries[];
+  retentionCurve: RetentionCurvePoint[];
+  flowDepth: FlowDepthSummary;
+  language: LanguageEngagementSummary;
+}
+
+export interface CampaignEngagementAnalyticsFilter {
+  versionId?: string;
+  granularity?: EngagementGranularity;
+  groupByVersion?: boolean;
+}
