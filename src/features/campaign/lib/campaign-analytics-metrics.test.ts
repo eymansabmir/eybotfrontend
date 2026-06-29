@@ -70,4 +70,25 @@ describe("resolveCampaignMetricValues", () => {
         expect(result.failed).toBe(3);
         expect(result.useVerified).toBe(true);
     });
+
+    it("uses failure breakdown when recipient failed count is lower", () => {
+        const result = resolveCampaignMetricValues({
+            total: 100,
+            sent: 90,
+            delivered: 80,
+            opened: 50,
+            started: 30,
+            completed: 20,
+            failed: 0,
+            initiated: 0,
+            pending: 0,
+            queued: 0,
+            failureBreakdown: {
+                byCategory: { Invalid: 6 },
+                byCode: [{ code: "702", category: "Invalid", reason: "Throttled", count: 6 }],
+            },
+        });
+
+        expect(result.failed).toBe(6);
+    });
 });
