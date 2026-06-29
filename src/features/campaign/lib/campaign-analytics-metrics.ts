@@ -1,9 +1,10 @@
 import type { RecipientStats } from "../types";
 
-export type AnalyticsSection = "overview" | "runs" | "follow-ups" | "recipients";
+export type AnalyticsSection = "overview" | "engagement" | "runs" | "follow-ups" | "recipients";
 
 export const ANALYTICS_TAB_VALUES: AnalyticsSection[] = [
     "overview",
+    "engagement",
     "runs",
     "follow-ups",
     "recipients",

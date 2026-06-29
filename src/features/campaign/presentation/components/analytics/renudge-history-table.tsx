@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { format } from "date-fns";
 import { Repeat } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useCampaignRenudges } from "../../../api/campaign-queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +11,13 @@ import { toast } from "sonner";
 import { TablePagination } from "./table-pagination";
 
 const ITEMS_PER_PAGE = 10;
+
+function formatDelay(minutes: number) {
+    if (minutes >= 60) {
+        return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+    }
+    return `${minutes}m`;
+}
 
 export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
     const { data: renudges = [], isLoading } = useCampaignRenudges(campaignId);
@@ -43,10 +52,13 @@ export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
                 </span>
             </div>
 
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
-                <table className="w-full text-sm text-left">
+            <div className="rounded-xl border border-border bg-card overflow-hidden overflow-x-auto">
+                <table className="w-full text-sm text-left min-w-[1100px]">
                     <thead className="bg-muted/30 text-muted-foreground">
                         <tr>
+                            <th className="px-4 py-3 font-medium">Run</th>
+                            <th className="px-4 py-3 font-medium">Run Date</th>
+                            <th className="px-4 py-3 font-medium">Renudge Launched</th>
                             <th className="px-4 py-3 font-medium">Delay</th>
                             <th className="px-4 py-3 font-medium">Bot Flow</th>
                             <th className="px-4 py-3 font-medium">Status</th>
@@ -56,52 +68,90 @@ export function RenudgeHistoryTable({ campaignId }: { campaignId: string }) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                        {paginatedRenudges.map((renudge) => (
-                            <tr key={renudge.id} className="hover:bg-muted/10 transition-colors">
-                                <td className="px-4 py-3 font-medium text-xs">
-                                    {renudge.delayMinutes >= 60
-                                        ? `${Math.floor(renudge.delayMinutes / 60)}h ${renudge.delayMinutes % 60}m`
-                                        : `${renudge.delayMinutes}m`}
-                                    <span className="block text-muted-foreground">after interaction</span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    {renudge.bot?.name || "Unknown Bot"}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <Badge
-                                        variant={renudge.status === "pending" || renudge.status === "stopped" ? "secondary" : "default"}
-                                        className={`capitalize ${renudge.status === "completed" ? "bg-emerald-500 hover:bg-emerald-600" : ""}`}
-                                    >
-                                        {renudge.status}
-                                    </Badge>
-                                </td>
-                                <td className="px-4 py-3 font-mono text-xs">
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-muted-foreground">Sent: <span className="text-foreground">{renudge.sentCount.toLocaleString()}</span></span>
-                                        <span className="text-rose-500">Failed: {renudge.failedCount?.toLocaleString() || 0}</span>
-                                        <span className="text-emerald-500">Delivered: {renudge.deliveredCount.toLocaleString()}</span>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center gap-3 font-mono">
-                                        <span className="text-emerald-500">{renudge.yesCount.toLocaleString()} Yes</span>
-                                        <span className="text-rose-500">{renudge.noCount.toLocaleString()} No</span>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                    {(renudge.status === "active" || renudge.status === "processing") && (
-                                        <Button
-                                            variant="destructive"
-                                            size="sm"
-                                            className="h-8 text-xs"
-                                            onClick={() => stopRenudge(renudge.id)}
+                        {paginatedRenudges.map((renudge) => {
+                            const primaryRun = renudge.primaryRun ?? renudge.runs[0];
+                            const runLabel =
+                                renudge.runs.length === 0
+                                    ? "—"
+                                    : renudge.runs.length === 1
+                                      ? `Run ${renudge.runs[0].versionNumber}`
+                                      : renudge.runs.map((r) => `Run ${r.versionNumber}`).join(", ");
+
+                            return (
+                                <tr key={renudge.id} className="hover:bg-muted/10 transition-colors">
+                                    <td className="px-4 py-3 font-medium text-xs">
+                                        {primaryRun && renudge.runs.length === 1 ? (
+                                            <Link
+                                                to="/campaign/$id/analytics/batch/$versionId"
+                                                params={{
+                                                    id: campaignId,
+                                                    versionId: primaryRun.versionId,
+                                                }}
+                                                search={{ tab: "follow-ups" }}
+                                                className="text-primary hover:underline"
+                                            >
+                                                {runLabel}
+                                            </Link>
+                                        ) : (
+                                            runLabel
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3 text-xs whitespace-nowrap text-muted-foreground">
+                                        {primaryRun
+                                            ? format(new Date(primaryRun.launchedAt), "MMM dd, yyyy · hh:mm a")
+                                            : "—"}
+                                    </td>
+                                    <td className="px-4 py-3 text-xs whitespace-nowrap">
+                                        {format(new Date(renudge.createdAt), "MMM dd, yyyy · hh:mm a")}
+                                    </td>
+                                    <td className="px-4 py-3 font-medium text-xs">
+                                        {formatDelay(renudge.delayMinutes)}
+                                        <span className="block text-muted-foreground">after interaction</span>
+                                    </td>
+                                    <td className="px-4 py-3">{renudge.bot?.name || "Unknown Bot"}</td>
+                                    <td className="px-4 py-3">
+                                        <Badge
+                                            variant={renudge.status === "pending" || renudge.status === "stopped" ? "secondary" : "default"}
+                                            className={`capitalize ${renudge.status === "completed" ? "bg-emerald-500 hover:bg-emerald-600" : ""}`}
                                         >
-                                            Stop
-                                        </Button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
+                                            {renudge.status}
+                                        </Badge>
+                                    </td>
+                                    <td className="px-4 py-3 font-mono text-xs">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-muted-foreground">
+                                                Sent:{" "}
+                                                <span className="text-foreground">{renudge.sentCount.toLocaleString()}</span>
+                                            </span>
+                                            <span className="text-rose-500">
+                                                Failed: {renudge.failedCount?.toLocaleString() || 0}
+                                            </span>
+                                            <span className="text-emerald-500">
+                                                Delivered: {renudge.deliveredCount.toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-3 font-mono text-xs">
+                                            <span className="text-emerald-500">{renudge.yesCount.toLocaleString()} Yes</span>
+                                            <span className="text-rose-500">{renudge.noCount.toLocaleString()} No</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {(renudge.status === "active" || renudge.status === "processing") && (
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                className="h-8 text-xs"
+                                                onClick={() => stopRenudge(renudge.id)}
+                                            >
+                                                Stop
+                                            </Button>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
                 <TablePagination

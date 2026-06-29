@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { campaignApi } from "./campaign-api";
-import type { CreateCampaignInput, CampaignAuditLogFilter, CampaignAnalyticsDateFilter } from "../types";
+import type { CreateCampaignInput, CampaignAuditLogFilter, CampaignAnalyticsDateFilter, CampaignEngagementAnalyticsFilter } from "../types";
 import { toast } from "sonner";
 
 const CAMPAIGN_KEYS = {
@@ -60,6 +60,18 @@ export function useCampaignAnalytics(id: string | undefined, filter: CampaignAna
     });
 }
 
+export function useCampaignEngagementAnalytics(
+    campaignId: string | undefined,
+    filter: CampaignEngagementAnalyticsFilter = {},
+) {
+    return useQuery({
+        queryKey: ["campaign-engagement-analytics", campaignId, filter],
+        queryFn: () => campaignApi.getEngagementAnalytics(campaignId!, filter),
+        enabled: !!campaignId,
+        refetchInterval: 30_000,
+    });
+}
+
 export function useBatchAnalytics(campaignId: string | undefined, versionId: string | undefined) {
     return useQuery({
         queryKey: ["campaign-batch-analytics", campaignId, versionId],
@@ -84,7 +96,12 @@ export function useCampaignBatches(campaignId: string) {
         queryKey: ["campaign-batches", campaignId],
         queryFn: async () => {
             const data = await campaignApi.getBatchHistory(campaignId);
-            return data.map(b => ({ ...b, launchedAt: new Date(b.launchedAt) }));
+            return data.map((b) => ({
+                ...b,
+                launchedAt: new Date(b.launchedAt),
+                startedAt: b.startedAt ? new Date(b.startedAt) : new Date(b.launchedAt),
+                endedAt: b.endedAt ? new Date(b.endedAt) : null,
+            }));
         },
         enabled: !!campaignId,
         refetchInterval: 5000, 
@@ -94,10 +111,7 @@ export function useCampaignBatches(campaignId: string) {
 export function useCampaignRenudges(campaignId: string) {
     return useQuery({
         queryKey: ["campaign-renudges", campaignId],
-        queryFn: async () => {
-            const data = await campaignApi.getRenudges(campaignId);
-            return data.map(b => ({ ...b, scheduledAt: new Date(b.scheduledAt), createdAt: new Date(b.createdAt) }));
-        },
+        queryFn: () => campaignApi.getRenudges(campaignId),
         enabled: !!campaignId,
         refetchInterval: 15_000,
     });

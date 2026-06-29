@@ -88,9 +88,56 @@ export interface CampaignAnalyticsDateFilter {
   endDate?: string;
 }
 
+export interface BatchRunRef {
+  versionId: string;
+  versionNumber: number;
+  launchedAt: string;
+}
+
+export interface RenudgeForBatch {
+  id: string;
+  createdAt: string;
+  scheduledAt: string | null;
+  status: string;
+  delayMinutes: number;
+  bot?: { name: string };
+  taskCount: number;
+  executedCount: number;
+  sentCount: number;
+  failedCount: number;
+  deliveredCount: number;
+  yesCount: number;
+  noCount: number;
+}
+
+export interface CampaignRenudge {
+  id: string;
+  campaignId: string;
+  botId: string;
+  scheduledAt: string | null;
+  status: string;
+  delayMinutes: number;
+  sentCount: number;
+  failedCount: number;
+  deliveredCount: number;
+  readCount: number;
+  yesCount: number;
+  noCount: number;
+  positiveButtonId: string | null;
+  negativeButtonId: string | null;
+  quietHourStart: string | null;
+  quietHourEnd: string | null;
+  createdAt: string;
+  updatedAt: string;
+  bot?: { name: string };
+  runs: BatchRunRef[];
+  primaryRun?: BatchRunRef;
+}
+
 export interface BatchAnalyticsResponse {
   batch: CampaignBatch;
   analytics: RecipientStats & { nps: null };
+  renudges: RenudgeForBatch[];
 }
 
 export interface NpsData {
@@ -129,6 +176,8 @@ export interface CampaignBatch {
   campaignId: string;
   versionNumber: number;
   launchedAt: string;
+  startedAt?: string;
+  endedAt?: string | null;
   targetCount: number;
   status: 'success' | 'failed' | 'running';
   successCount: number;
@@ -265,4 +314,78 @@ export interface RecipientConversation {
   } | null;
   messages: ConversationMessage[];
   reconstructed: boolean;
+}
+
+export type EngagementGranularity = 'hour' | 'day';
+
+export interface EngagementTimeSeriesPoint {
+  bucket: string;
+  reads: number;
+  replies: number;
+  completions: number;
+}
+
+export interface EngagementTimeSeriesSeries {
+  versionId?: string;
+  versionNumber?: number;
+  label: string;
+  points: EngagementTimeSeriesPoint[];
+}
+
+export interface EngagementInteractionPoint {
+  bucket: string;
+  interactions: number;
+  cumulative: number;
+}
+
+export interface EngagementInteractionSeries {
+  versionId?: string;
+  versionNumber?: number;
+  label: string;
+  points: EngagementInteractionPoint[];
+}
+
+export interface RetentionCurvePoint {
+  depth: number;
+  count: number;
+  percent: number;
+}
+
+export interface FlowDepthSummary {
+  sessionCount: number;
+  avgNodesVisited: number;
+  medianNodesVisited: number;
+  avgUserInteractions: number;
+}
+
+export interface LanguageDistributionItem {
+  language: string;
+  label: string;
+  count: number;
+  percent: number;
+}
+
+export interface LanguageEngagementSummary {
+  reached: number;
+  selected: number;
+  selectionRate: number;
+  topLanguage: LanguageDistributionItem | null;
+  distribution: LanguageDistributionItem[];
+}
+
+export interface CampaignEngagementAnalytics {
+  scope: 'campaign' | 'version';
+  granularity: EngagementGranularity;
+  repliers: number;
+  timeSeries: EngagementTimeSeriesSeries[];
+  interactions: EngagementInteractionSeries[];
+  retentionCurve: RetentionCurvePoint[];
+  flowDepth: FlowDepthSummary;
+  language: LanguageEngagementSummary;
+}
+
+export interface CampaignEngagementAnalyticsFilter {
+  versionId?: string;
+  granularity?: EngagementGranularity;
+  groupByVersion?: boolean;
 }
