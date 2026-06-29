@@ -8,6 +8,8 @@ import {
     XCircle,
 } from "lucide-react";
 
+export type BatchStatus = "success" | "failed" | "running";
+
 const STATUS_CONFIG: Record<
     CampaignStatus,
     { label: string; bg: string; text: string; icon: typeof Clock }
@@ -63,6 +65,54 @@ export function CampaignStatusBadge({ status, className }: CampaignStatusBadgePr
             )}
         >
             <Icon className="size-3" />
+            {config.label}
+        </span>
+    );
+}
+
+const BATCH_STATUS_CONFIG: Record<
+    BatchStatus,
+    { label: string; bg: string; text: string; icon: typeof CheckCircle2 }
+> = {
+    success: {
+        label: "Success",
+        bg: "bg-green-100 dark:bg-green-900/30",
+        text: "text-green-800 dark:text-green-400",
+        icon: CheckCircle2,
+    },
+    failed: {
+        label: "Failed",
+        bg: "bg-red-100 dark:bg-red-900/30",
+        text: "text-red-800 dark:text-red-400",
+        icon: XCircle,
+    },
+    running: {
+        label: "In Progress",
+        bg: "bg-blue-100 dark:bg-blue-900/30",
+        text: "text-blue-800 dark:text-blue-400",
+        icon: RefreshCw,
+    },
+};
+
+interface BatchStatusBadgeProps {
+    status: BatchStatus;
+    className?: string;
+}
+
+export function BatchStatusBadge({ status, className }: BatchStatusBadgeProps) {
+    const config = BATCH_STATUS_CONFIG[status] ?? BATCH_STATUS_CONFIG.running;
+    const Icon = config.icon;
+
+    return (
+        <span
+            className={cn(
+                "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium",
+                config.bg,
+                config.text,
+                className
+            )}
+        >
+            <Icon className={cn("size-3", status === "running" && "animate-spin")} />
             {config.label}
         </span>
     );

@@ -88,9 +88,56 @@ export interface CampaignAnalyticsDateFilter {
   endDate?: string;
 }
 
+export interface BatchRunRef {
+  versionId: string;
+  versionNumber: number;
+  launchedAt: string;
+}
+
+export interface RenudgeForBatch {
+  id: string;
+  createdAt: string;
+  scheduledAt: string | null;
+  status: string;
+  delayMinutes: number;
+  bot?: { name: string };
+  taskCount: number;
+  executedCount: number;
+  sentCount: number;
+  failedCount: number;
+  deliveredCount: number;
+  yesCount: number;
+  noCount: number;
+}
+
+export interface CampaignRenudge {
+  id: string;
+  campaignId: string;
+  botId: string;
+  scheduledAt: string | null;
+  status: string;
+  delayMinutes: number;
+  sentCount: number;
+  failedCount: number;
+  deliveredCount: number;
+  readCount: number;
+  yesCount: number;
+  noCount: number;
+  positiveButtonId: string | null;
+  negativeButtonId: string | null;
+  quietHourStart: string | null;
+  quietHourEnd: string | null;
+  createdAt: string;
+  updatedAt: string;
+  bot?: { name: string };
+  runs: BatchRunRef[];
+  primaryRun?: BatchRunRef;
+}
+
 export interface BatchAnalyticsResponse {
   batch: CampaignBatch;
   analytics: RecipientStats & { nps: null };
+  renudges: RenudgeForBatch[];
 }
 
 export interface NpsData {
@@ -129,6 +176,8 @@ export interface CampaignBatch {
   campaignId: string;
   versionNumber: number;
   launchedAt: string;
+  startedAt?: string;
+  endedAt?: string | null;
   targetCount: number;
   status: 'success' | 'failed' | 'running';
   successCount: number;

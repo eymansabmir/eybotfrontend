@@ -11,6 +11,7 @@ import type {
     CampaignRecipientsPage,
     CustomCampaignFilter,
     RecipientConversation,
+    CampaignRenudge,
 } from "../types";
 const BASE = "/campaigns";
 
@@ -83,9 +84,25 @@ export const campaignApi = {
         return data;
     },
 
-    getRenudges: async (id: string): Promise<any[]> => {
-        const { data } = await apiClient.get<any[]>(`${BASE}/${id}/renudges`);
-        return data.map(b => ({ ...b, scheduledAt: new Date(b.scheduledAt), createdAt: new Date(b.createdAt) }));
+    getRenudges: async (id: string): Promise<CampaignRenudge[]> => {
+        const { data } = await apiClient.get<CampaignRenudge[]>(`${BASE}/${id}/renudges`);
+        return data.map((b) => ({
+            ...b,
+            scheduledAt: b.scheduledAt ? new Date(b.scheduledAt).toISOString() : null,
+            createdAt: new Date(b.createdAt).toISOString(),
+            runs: (b.runs ?? []).map((r) => ({
+                ...r,
+                launchedAt: new Date(r.launchedAt).toISOString(),
+            })),
+            ...(b.primaryRun
+                ? {
+                      primaryRun: {
+                          ...b.primaryRun,
+                          launchedAt: new Date(b.primaryRun.launchedAt).toISOString(),
+                      },
+                  }
+                : {}),
+        }));
     },
     listRecipients: async (
         id: string,

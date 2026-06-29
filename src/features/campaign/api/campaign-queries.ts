@@ -84,7 +84,12 @@ export function useCampaignBatches(campaignId: string) {
         queryKey: ["campaign-batches", campaignId],
         queryFn: async () => {
             const data = await campaignApi.getBatchHistory(campaignId);
-            return data.map(b => ({ ...b, launchedAt: new Date(b.launchedAt) }));
+            return data.map((b) => ({
+                ...b,
+                launchedAt: new Date(b.launchedAt),
+                startedAt: b.startedAt ? new Date(b.startedAt) : new Date(b.launchedAt),
+                endedAt: b.endedAt ? new Date(b.endedAt) : null,
+            }));
         },
         enabled: !!campaignId,
         refetchInterval: 5000, 
@@ -94,10 +99,7 @@ export function useCampaignBatches(campaignId: string) {
 export function useCampaignRenudges(campaignId: string) {
     return useQuery({
         queryKey: ["campaign-renudges", campaignId],
-        queryFn: async () => {
-            const data = await campaignApi.getRenudges(campaignId);
-            return data.map(b => ({ ...b, scheduledAt: new Date(b.scheduledAt), createdAt: new Date(b.createdAt) }));
-        },
+        queryFn: () => campaignApi.getRenudges(campaignId),
         enabled: !!campaignId,
         refetchInterval: 15_000,
     });

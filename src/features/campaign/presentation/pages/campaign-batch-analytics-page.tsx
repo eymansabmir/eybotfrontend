@@ -8,9 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCampaign, useBatchAnalytics } from "../../api/campaign-queries";
 import { exportCampaignCsv } from "../../api/campaign-export";
 
-import { CampaignStatusBadge } from "../components/campaign-status-badge";
+import { BatchStatusBadge } from "../components/campaign-status-badge";
 import { CampaignAnalyticsDashboard } from "../components/analytics/campaign-analytics-dashboard";
 import { CampaignRecipientsTable } from "../components/analytics/campaign-recipients-table";
+import { BatchRunRenudgesSection } from "../components/analytics/batch-run-renudges-section";
 import type { AnalyticsSection } from "../../lib/campaign-analytics-metrics";
 
 export function CampaignBatchAnalyticsPage() {
@@ -30,9 +31,11 @@ export function CampaignBatchAnalyticsPage() {
         );
     }
 
-    const { batch, analytics } = batchData;
+    const { batch, analytics, renudges = [] } = batchData;
     const stats = analytics;
     const batchTitle = `${campaign.name} - Run ${batch.versionNumber}`;
+    const startedAt = batch.startedAt ?? batch.launchedAt;
+    const endedAt = batch.endedAt ?? null;
 
     return (
         <div className="space-y-8 pb-12">
@@ -57,11 +60,19 @@ export function CampaignBatchAnalyticsPage() {
                             <h1 className="text-2xl font-black text-foreground tracking-tight">
                                 {batchTitle}
                             </h1>
-                            <CampaignStatusBadge status={campaign.status} />
+                            <BatchStatusBadge status={batch.status} />
                         </div>
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                            Batch Analytics · {format(new Date(batch.launchedAt), "MMM dd, yyyy · hh:mm a")}
-                        </p>
+                        <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest space-y-0.5">
+                            <p>
+                                Started · {format(new Date(startedAt), "MMM dd, yyyy · hh:mm a")}
+                            </p>
+                            <p>
+                                Ended ·{" "}
+                                {endedAt
+                                    ? format(new Date(endedAt), "MMM dd, yyyy · hh:mm a")
+                                    : "In progress"}
+                            </p>
+                        </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -76,7 +87,12 @@ export function CampaignBatchAnalyticsPage() {
                 </div>
             </div>
 
-            <CampaignAnalyticsDashboard stats={stats} />
+            <CampaignAnalyticsDashboard
+                stats={stats}
+                failureBreakdown={stats.failureBreakdown}
+            />
+
+            <BatchRunRenudgesSection renudges={renudges} />
 
             <CampaignRecipientsTable campaignId={id as string} versionId={versionId as string} />
         </div>

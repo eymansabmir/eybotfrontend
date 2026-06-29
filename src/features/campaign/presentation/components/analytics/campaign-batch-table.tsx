@@ -124,8 +124,14 @@ export function CampaignBatchTable({ campaignId, campaignName, returnTab = "runs
                                                 </div>
                                                 <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                                                     <Clock className="size-3" />
-                                                    {format(batch.launchedAt, "MMM dd, yyyy · hh:mm a")}
+                                                    {format(batch.startedAt ?? batch.launchedAt, "MMM dd, yyyy · hh:mm a")}
                                                 </div>
+                                                {batch.endedAt && (
+                                                    <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                                        <CheckCircle2 className="size-3" />
+                                                        Ended {format(batch.endedAt, "MMM dd, yyyy · hh:mm a")}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </td>
