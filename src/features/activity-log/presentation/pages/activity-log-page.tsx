@@ -88,6 +88,7 @@ export function ActivityLogPage() {
     if (typeof metadata === "string") return metadata;
     
     return Object.entries(metadata)
+      .filter(([key]) => key !== 'displayUser')
       .map(([key, value]) => {
         const val = Array.isArray(value) ? value.join(", ") : String(value);
         return `${key}: ${val}`;
@@ -205,7 +206,7 @@ export function ActivityLogPage() {
                             <User className="size-3" />
                           </div>
                           <span className="text-xs font-medium truncate max-w-[100px]">
-                            {log.userId ? "Admin" : "System"}
+                            {log.metadata?.displayUser || "System"}
                           </span>
                         </div>
                       </TableCell>
