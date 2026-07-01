@@ -27,6 +27,7 @@ type LocalizationSettings = {
     isEnabled: boolean;
     languages: string[];
     defaultLanguage?: string;
+    translationProvider?: "google" | "bhashini";
 };
 
 
