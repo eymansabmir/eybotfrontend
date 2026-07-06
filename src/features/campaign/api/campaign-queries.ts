@@ -72,6 +72,14 @@ export function useCampaignEngagementAnalytics(
     });
 }
 
+export function usePmvbrAnalytics() {
+    return useQuery({
+        queryKey: ["pmvbr-analytics"],
+        queryFn: campaignApi.getPmvbrAnalytics,
+        refetchInterval: 60_000,
+    });
+}
+
 export function useBatchAnalytics(campaignId: string | undefined, versionId: string | undefined) {
     return useQuery({
         queryKey: ["campaign-batch-analytics", campaignId, versionId],

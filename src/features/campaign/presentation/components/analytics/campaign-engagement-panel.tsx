@@ -3,12 +3,13 @@ import { format } from "date-fns";
 import {
     Area,
     AreaChart,
-    Bar,
-    BarChart,
     CartesianGrid,
+    Cell,
     Legend,
     Line,
     LineChart,
+    Pie,
+    PieChart,
     ResponsiveContainer,
     Tooltip,
     XAxis,
@@ -20,6 +21,7 @@ import type {
     EngagementTimeSeriesSeries,
 } from "../../../types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CampaignFlowHeatmapPanel } from "./campaign-flow-heatmap-panel";
 
 const RUN_COLORS = ["#6366f1", "#f97316", "#14b8a6", "#ec4899", "#eab308", "#3b82f6"];
 
@@ -150,19 +152,70 @@ export function CampaignEngagementPanel({
                     />
                 </div>
                 {data.language.distribution.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={260}>
-                        <BarChart data={data.language.distribution} layout="vertical" margin={{ left: 20 }}>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                            <XAxis type="number" tick={{ fontSize: 11 }} />
-                            <YAxis type="category" dataKey="label" width={100} tick={{ fontSize: 11 }} />
-                            <Tooltip formatter={(value: number, _name, item) => [`${value} (${item.payload.percent}%)`, "Selections"]} />
-                            <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} name="Selections" />
-                        </BarChart>
-                    </ResponsiveContainer>
+                    <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 items-center">
+                        <div className="relative mx-auto h-64 w-full max-w-xs">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={data.language.distribution}
+                                        dataKey="count"
+                                        nameKey="label"
+                                        innerRadius={58}
+                                        outerRadius={92}
+                                        paddingAngle={3}
+                                    >
+                                        {data.language.distribution.map((entry, index) => (
+                                            <Cell
+                                                key={entry.language}
+                                                fill={RUN_COLORS[index % RUN_COLORS.length]}
+                                            />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        formatter={(value: number, _name, item) => [
+                                            `${value} (${item.payload.percent}%)`,
+                                            "Selections",
+                                        ]}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-3xl font-black text-foreground">
+                                    {data.language.selected}
+                                </span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                    Selected
+                                </span>
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            {data.language.distribution.map((entry, index) => (
+                                <div key={entry.language} className="flex items-center justify-between gap-4">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <span
+                                            className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                            style={{ backgroundColor: RUN_COLORS[index % RUN_COLORS.length] }}
+                                        />
+                                        <span className="truncate text-sm font-medium text-foreground">
+                                            {entry.label}
+                                        </span>
+                                    </div>
+                                    <div className="shrink-0 text-right">
+                                        <p className="text-sm font-semibold text-foreground">
+                                            {entry.count.toLocaleString()}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">{entry.percent}%</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 ) : (
                     <EmptyChart message="No language selections recorded yet" />
                 )}
             </ChartCard>
+
+            <CampaignFlowHeatmapPanel heatmap={data.nodeHeatmap} />
         </div>
     );
 }
