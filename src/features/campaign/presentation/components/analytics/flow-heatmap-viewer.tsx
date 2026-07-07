@@ -13,7 +13,7 @@ import {
 import "@xyflow/react/dist/style.css";
 
 import { nodeTypes as baseNodeTypes } from "@/features/nodes/registry";
-import type { FlowHeatmapGraph, NodeHeatmapStat } from "../../types";
+import type { FlowHeatmapGraph, NodeHeatmapStat } from "../../../types";
 
 const HEAT_COLOR = "rgba(99, 102, 241";
 
@@ -60,7 +60,7 @@ function mapGraphEdgeToFrontend(edge: FlowHeatmapGraph["graphEdges"][number]): E
 }
 
 function HeatmapNodeWrapper(props: NodeProps) {
-    const Component = baseNodeTypes[props.type ?? ""] as ComponentType<NodeProps> | undefined;
+    const Component = (baseNodeTypes as Record<string, ComponentType<NodeProps>>)[props.type ?? ""];
     if (!Component) {
         return (
             <div className="rounded-xl border border-dashed border-border px-3 py-2 text-xs">
