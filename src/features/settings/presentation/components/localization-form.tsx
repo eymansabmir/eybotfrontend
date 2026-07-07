@@ -24,6 +24,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -34,6 +41,7 @@ interface LocalizationSettings {
   isEnabled: boolean;
   languages: string[];
   defaultLanguage?: string;
+  translationProvider?: "google" | "bhashini";
 }
 
 interface Props {
@@ -54,6 +62,17 @@ export function LocalizationForm({ localization, onChange }: Props) {
         isEnabled: checked, 
         languages: enabledLanguages,
         defaultLanguage
+    });
+  };
+
+  const setTranslationProvider = (provider: "google" | "bhashini" | "default") => {
+    const updatedProvider = provider === "default" ? undefined : provider;
+    onChange({
+        ...localization,
+        isEnabled,
+        languages: enabledLanguages,
+        defaultLanguage,
+        translationProvider: updatedProvider,
     });
   };
 
@@ -123,6 +142,29 @@ export function LocalizationForm({ localization, onChange }: Props) {
 
       {isEnabled && (
         <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+          {/* Translation Provider Section */}
+          <div className="space-y-3">
+            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Translation Provider
+            </Label>
+            <Select 
+              value={localization?.translationProvider || "default"} 
+              onValueChange={(val: any) => setTranslationProvider(val)}
+            >
+              <SelectTrigger className="w-full h-11 rounded-xl">
+                <SelectValue placeholder="Select Translation Provider" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Workspace Default</SelectItem>
+                <SelectItem value="google">Google Translate API</SelectItem>
+                <SelectItem value="bhashini">Bhashini (NMT) API</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground px-1">
+              Select the translation engine to use for this bot. Bhashini provides better accuracy for Indian regional languages.
+            </p>
+          </div>
+
           {/* Add Language Section */}
           <div className="space-y-3">
             <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground px-1">

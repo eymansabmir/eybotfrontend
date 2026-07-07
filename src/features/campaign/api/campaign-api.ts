@@ -14,6 +14,7 @@ import type {
     CampaignRenudge,
     CampaignEngagementAnalytics,
     CampaignEngagementAnalyticsFilter,
+    PmvbrAnalytics,
 } from "../types";
 const BASE = "/campaigns";
 
@@ -140,6 +141,11 @@ export const campaignApi = {
         const { data } = await apiClient.get<RecipientConversation>(
             `${BASE}/${id}/recipients/${recipientId}/conversation`,
         );
+        return data;
+    },
+
+    getPmvbrAnalytics: async (): Promise<PmvbrAnalytics> => {
+        const { data } = await apiClient.get<PmvbrAnalytics>(`${BASE}/pmvbr/analytics`);
         return data;
     },
 

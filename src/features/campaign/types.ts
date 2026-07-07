@@ -382,10 +382,67 @@ export interface CampaignEngagementAnalytics {
   retentionCurve: RetentionCurvePoint[];
   flowDepth: FlowDepthSummary;
   language: LanguageEngagementSummary;
+  nodeHeatmap: NodeHeatmapResponse;
 }
 
 export interface CampaignEngagementAnalyticsFilter {
   versionId?: string;
   granularity?: EngagementGranularity;
   groupByVersion?: boolean;
+}
+
+export interface PmvbrBotAnalytics {
+  botId: string;
+  botName: string;
+  total: number;
+  launched: number;
+  failed: number;
+  percent: number;
+}
+
+export interface PmvbrAnalytics {
+  total: number;
+  launched: number;
+  failed: number;
+  byBot: PmvbrBotAnalytics[];
+}
+
+export interface NodeHeatmapStat {
+  nodeId: string;
+  nodeType: string;
+  label: string;
+  reachCount: number;
+  interactionCount: number;
+  totalHits: number;
+}
+
+export interface FlowHeatmapGraphNode {
+  id: string;
+  type: string;
+  label: string;
+  position: { x: number; y: number };
+  data: Record<string, unknown>;
+  branches: Array<{ key: string; label: string }>;
+}
+
+export interface FlowHeatmapGraphEdge {
+  id: string;
+  sourceNodeId: string;
+  sourceBranchKey: string;
+  targetNodeId: string;
+}
+
+export interface FlowHeatmapGraph {
+  flowId: string;
+  flowName: string;
+  childFlowIds: string[];
+  nodes: NodeHeatmapStat[];
+  graphNodes: FlowHeatmapGraphNode[];
+  graphEdges: FlowHeatmapGraphEdge[];
+}
+
+export interface NodeHeatmapResponse {
+  rootFlowId: string;
+  sessionCount: number;
+  flows: FlowHeatmapGraph[];
 }

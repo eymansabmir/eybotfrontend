@@ -18,6 +18,7 @@ import { useBots } from "@/features/bots/data/queries/use-bots"
 import { useCampaigns } from "@/features/campaign/api/campaign-queries"
 import type { Bot } from "@/features/bots/data/schemas/bot.schema"
 import type { Campaign } from "@/features/campaign/types"
+import { PmvbrAnalyticsPanel } from "@/features/dashboard/presentation/components/pmvbr-analytics-panel"
 
 type DashboardEventTone = "success" | "warning" | "neutral"
 
@@ -335,6 +336,8 @@ export function DashboardPage() {
           )
         })}
       </section>
+
+      <PmvbrAnalyticsPanel />
 
       <section className="grid gap-4 xl:grid-cols-[1.7fr_1fr]">
         <Card className="border-slate-200/80 dark:border-white/10">
