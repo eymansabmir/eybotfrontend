@@ -28,6 +28,7 @@ import { CreateAgentPage } from "@/features/voice-tech/presentation/pages/create
 import { CreateBotPage } from "../features/bots/presentation/pages/create-bot-page"
 import { ActivityLogPage } from "@/features/activity-log/presentation/pages/activity-log-page"
 import { ConnectorsPage } from "@/features/integrations/presentation/pages/connectors-page"
+import { CreateUserPage } from "@/features/auth/presentation/pages/create-user-page"
 import { parseAnalyticsTab } from "@/features/campaign/lib/campaign-analytics-metrics"
 
 
@@ -212,6 +213,12 @@ const loginRoute = createRoute({
   component: EmailOtpLoginPage,
 })
 
+const createUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "create-user",
+  component: CreateUserPage,
+})
+
 const activityLogsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "activity-logs",
@@ -247,6 +254,7 @@ const routeTree = rootRoute.addChildren([
   botSettingsRoute,
   botTestRoute,
   loginRoute,
+  createUserRoute,
   voiceTechVendorsRoute,
   voiceTechVendorAgentsRoute,
   voiceTechCreateRoute,
