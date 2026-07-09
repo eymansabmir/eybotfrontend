@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { EYLogo } from "@/components/branding/ey-logo"
-import { ENV } from "@/config/env"
 import { authClient } from "@/lib/auth-client"
+import { useCreateUser } from "@/features/auth/hooks/use-create-user"
 
 const EMAIL_REGEX = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\.[A-Za-z]{2,24}$/
 
@@ -18,123 +18,71 @@ type FormStage = "email" | "details"
 export function CreateUserPage() {
   const navigate = useNavigate()
   const { data: session, isPending } = authClient.useSession()
-  const [mounted, setMounted] = useState(false)
-
   const [stage, setStage] = useState<FormStage>("email")
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")
   const [role, setRole] = useState("CLIENTMEMBER")
-
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+  const [clientError, setClientError] = useState<string | null>(null)
 
   const normalizedEmail = useMemo(() => email.trim().toLowerCase(), [email])
 
+  const createUserMutation = useCreateUser()
+
   useEffect(() => {
-    setMounted(true)
+    // intentionally empty – keeps the component mounted for SSR hydration safety
   }, [])
 
   useEffect(() => {
-    if (!isPending && (!session || session.user?.role !== "SUPERADMIN")) {
-      navigate({ to: "/login" })
+    if (!isPending && (!session || (session.user as any)?.role !== "SUPERADMIN")) {
+      navigate({ to: "/" })
     }
   }, [session, isPending, navigate])
 
-  if (isPending || !session || session.user?.role !== "SUPERADMIN") {
+  if (isPending || !session || (session.user as any)?.role !== "SUPERADMIN") {
     return null
   }
 
+  const error = clientError || (createUserMutation.isError ? (createUserMutation.error as Error).message : null)
+  const success = createUserMutation.isSuccess ? createUserMutation.data.message : null
+
   function handleEmailSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError(null)
-    setSuccess(null)
+    setClientError(null)
+    createUserMutation.reset()
 
     if (!normalizedEmail) {
-      setError("Email is required")
+      setClientError("Email is required")
       return
     }
 
     if (!EMAIL_REGEX.test(normalizedEmail)) {
-      setError("Enter a valid email address")
+      setClientError("Enter a valid email address")
       return
     }
 
     setStage("details")
   }
 
-  async function handleCreateUser(event: FormEvent<HTMLFormElement>) {
+  function handleCreateUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError(null)
-    setSuccess(null)
+    setClientError(null)
 
     if (!name.trim()) {
-      setError("Name is required")
+      setClientError("Name is required")
       return
     }
 
-    setIsLoading(true)
-    try {
-      // 1. Get backend token
-      const baseApiUrl = ENV.API_URL.replace(/\/api$/, '')
-      const tokenRes = await fetch(`${baseApiUrl}/api/v1/auth/token`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          appId: "roi_live_406dbf1349fa85f8",
-          appSecret: "d55bf04610900360f4cb4693b896be95"
-        })
-      })
-
-      if (!tokenRes.ok) {
-        const errData = await tokenRes.json().catch(() => ({}))
-        throw new Error(errData.message || errData.error || "Failed to authenticate with backend.")
-      }
-
-      const tokenData = await tokenRes.json()
-      const token = tokenData.token || tokenData.accessToken || tokenData.data?.token || tokenData.data?.accessToken
-
-      if (!token) {
-        throw new Error("Could not parse access token from backend response.")
-      }
-
-      // 2. Create User
-      const createUserRes = await fetch(`${ENV.API_URL}/auth/create-user`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+    createUserMutation.mutate(
+      { email: normalizedEmail, name: name.trim(), role },
+      {
+        onSuccess: () => {
+          setEmail("")
+          setName("")
+          setRole("CLIENTMEMBER")
+          setStage("email")
         },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          name: name.trim(),
-          role: role
-        })
-      })
-
-      const createData = await createUserRes.json().catch(() => ({}))
-
-      if (!createUserRes.ok) {
-        let errMsg = createData.message || createData.error || "Failed to create user."
-        if (createData.errors && Array.isArray(createData.errors)) {
-          errMsg = createData.errors.map((e: any) => e.message || e.msg || String(e)).join(", ")
-        } else if (createData.details) {
-            errMsg += " " + JSON.stringify(createData.details)
-        }
-        throw new Error(errMsg)
       }
-
-      setSuccess(createData.message || "User successfully registered!")
-      // Reset form and return to first stage
-      setEmail("")
-      setName("")
-      setRole("CLIENTMEMBER")
-      setStage("email")
-    } catch (err: any) {
-      setError(err.message || "Something went wrong while creating the user.")
-    } finally {
-      setIsLoading(false)
-    }
+    )
   }
 
   return (
@@ -189,8 +137,8 @@ export function CreateUserPage() {
                           value={email}
                           onChange={(e) => {
                             setEmail(e.target.value.slice(0, 254))
-                            setError(null)
-                            setSuccess(null)
+                            setClientError(null)
+                            createUserMutation.reset()
                           }}
                           maxLength={254}
                           className="h-12 w-full rounded-xl border-slate-200/60 bg-white/50 pl-11 text-base shadow-sm ring-offset-white transition-all focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-slate-800 dark:bg-black/20 dark:ring-offset-slate-950"
@@ -268,7 +216,7 @@ export function CreateUserPage() {
                           value={name}
                           onChange={(e) => {
                             setName(e.target.value)
-                            setError(null)
+                            setClientError(null)
                           }}
                           className="h-12 w-full rounded-xl border-slate-200/60 bg-white/50 pl-11 text-base shadow-sm ring-offset-white transition-all focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-slate-800 dark:bg-black/20 dark:ring-offset-slate-950"
                           required
@@ -286,7 +234,7 @@ export function CreateUserPage() {
                     value={role}
                     onChange={(e) => {
                       setRole(e.target.value)
-                      setError(null)
+                      setClientError(null)
                     }}
                     className="h-12 w-full rounded-xl border border-slate-200/60 bg-white/50 px-4 text-base shadow-sm ring-offset-white transition-all focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                   >
@@ -304,10 +252,10 @@ export function CreateUserPage() {
 
                 <Button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={createUserMutation.isPending}
                   className="h-13 w-full rounded-xl text-base font-bold shadow-xl shadow-primary/20 transition-all hover:translate-y-[-1px] hover:shadow-primary/30 active:translate-y-0 bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
-                  {isLoading ? (
+                  {createUserMutation.isPending ? (
                     <Spinner className="mr-2 size-5 text-white" />
                   ) : (
                     <>
