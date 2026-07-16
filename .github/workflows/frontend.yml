@@ -50,4 +50,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VITE_API_URL=https://eybotapi.irfworld.com/api
+            VITE_API_URL=https://anacity-app-be-hvaqd5fugje5g4gz.centralindia-01.azurewebsites.net/api
