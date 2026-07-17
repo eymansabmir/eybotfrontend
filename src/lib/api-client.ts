@@ -2,8 +2,10 @@ import axios, { type InternalAxiosRequestConfig } from "axios";
 import { ENV } from "@/config/env";
 
 const STATE_CHANGING_METHODS = new Set(["post", "put", "patch", "delete"]);
-const retriedCsrfConfigs = new WeakSet<InternalAxiosRequestConfig>();
+const CSRF_RETRY_FLAG = "_csrfRetried";
+
 let csrfToken: string | null = null;
+let csrfFetchPromise: Promise<string> | null = null;
 
 export const apiClient = axios.create({
     baseURL: ENV.API_URL,
@@ -13,25 +15,45 @@ export const apiClient = axios.create({
     },
 });
 
-export async function ensureCsrfToken(): Promise<string> {
-    if (csrfToken) {
+async function fetchCsrfToken(force = false): Promise<string> {
+    if (csrfToken && !force) {
         return csrfToken;
     }
 
-    const { data, headers } = await apiClient.get<{ csrfToken: string }>("/csrf-token");
-    const token = data.csrfToken ?? (headers["x-csrf-token"] as string | undefined);
-    if (!token) {
-        throw new Error("Failed to obtain CSRF token");
+    if (csrfFetchPromise && !force) {
+        return csrfFetchPromise;
     }
-    csrfToken = token;
-    return token;
+
+    csrfFetchPromise = (async () => {
+        const { data, headers } = await apiClient.get<{ csrfToken: string }>("/csrf-token");
+        const token = data.csrfToken ?? (headers["x-csrf-token"] as string | undefined);
+        if (!token) {
+            throw new Error("Failed to obtain CSRF token");
+        }
+        csrfToken = token;
+        return token;
+    })();
+
+    try {
+        return await csrfFetchPromise;
+    } finally {
+        csrfFetchPromise = null;
+    }
+}
+
+export async function ensureCsrfToken(force = false): Promise<string> {
+    return fetchCsrfToken(force);
+}
+
+function setCsrfHeader(config: InternalAxiosRequestConfig, token: string): void {
+    config.headers.set("X-CSRF-Token", token);
 }
 
 apiClient.interceptors.request.use(async (config) => {
     const method = config.method?.toLowerCase();
     if (method && STATE_CHANGING_METHODS.has(method)) {
-        const token = csrfToken ?? (await ensureCsrfToken());
-        config.headers.set("X-CSRF-Token", token);
+        const token = await fetchCsrfToken();
+        setCsrfHeader(config, token);
     }
     return config;
 });
@@ -50,7 +72,7 @@ apiClient.interceptors.response.use(
             error.message = backendMessage;
         }
 
-        const config = error.config;
+        const config = error.config as (InternalAxiosRequestConfig & { [CSRF_RETRY_FLAG]?: boolean }) | undefined;
         const method = config?.method?.toLowerCase();
         const isStateChanging = method && STATE_CHANGING_METHODS.has(method);
         const isCsrfFailure =
@@ -58,10 +80,11 @@ apiClient.interceptors.response.use(
             typeof backendMessage === "string" &&
             backendMessage.toLowerCase().includes("csrf");
 
-        if (isStateChanging && isCsrfFailure && config && !retriedCsrfConfigs.has(config)) {
-            retriedCsrfConfigs.add(config);
+        if (isStateChanging && isCsrfFailure && config && !config[CSRF_RETRY_FLAG]) {
+            config[CSRF_RETRY_FLAG] = true;
             csrfToken = null;
-            await ensureCsrfToken();
+            const freshToken = await fetchCsrfToken(true);
+            setCsrfHeader(config, freshToken);
             return apiClient(config);
         }
 
