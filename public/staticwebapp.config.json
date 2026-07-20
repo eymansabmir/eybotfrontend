@@ -5,5 +5,12 @@
       "/assets/*",
       "/*.{css,js,map,ico,png,jpg,jpeg,gif,svg,webp,woff,woff2,txt,json,wasm}"
     ]
-  }
+  },
+  "routes": [
+    {
+      "route": "/api/*",
+      "allowedRoles": ["anonymous", "authenticated"],
+      "rewrite": "https://anacity-app-be-hvaqd5fugje5g4gz.centralindia-01.azurewebsites.net/api/*"
+    }
+  ]
 }

@@ -3,9 +3,17 @@ import react from '@vitejs/plugin-react-swc'
 import tailwindcss from '@tailwindcss/vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
-const devCspConnectSrc = process.env.VITE_API_URL
-  ? `'self' ${new URL(process.env.VITE_API_URL).origin}`
-  : "'self' http://localhost:3000"
+const devCspConnectSrc = (() => {
+  const raw = process.env.VITE_API_URL?.trim()
+  if (!raw || raw.startsWith('/')) {
+    return "'self'"
+  }
+  try {
+    return `'self' ${new URL(raw).origin}`
+  } catch {
+    return "'self' http://localhost:3000"
+  }
+})()
 
 const buildSecurityHeaders = (scriptSrc: string) => ({
   'X-Frame-Options': 'DENY',
