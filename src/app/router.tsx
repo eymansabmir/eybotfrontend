@@ -25,6 +25,8 @@ import { CreateVendorPage } from "@/features/voice-tech/presentation/pages/creat
 import { CreateAgentPage } from "@/features/voice-tech/presentation/pages/create-agent-page"
 import { CreateBotPage } from "../features/bots/presentation/pages/create-bot-page"
 import { PartnerMeetPublicPage } from "@/features/wa-flow-survey/presentation/pages/partner-meet-public-page"
+import { WaFlowSurveyListPage } from "@/features/wa-flow-survey/presentation/pages/wa-flow-survey-list-page"
+import { WaFlowSurveyDetailPage } from "@/features/wa-flow-survey/presentation/pages/wa-flow-survey-detail-page"
 import { ConnectorsPage } from "@/features/integrations/presentation/pages/connectors-page"
 
 
@@ -185,16 +187,22 @@ const loginRoute = createRoute({
   component: EmailOtpLoginPage,
 })
 
-const createUserRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "create-user",
-  // component: CreateUserPage,
-})
-
 const partnerMeetRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "partner-meet",
   component: PartnerMeetPublicPage,
+})
+
+const waFlowSurveysRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "wa-flow-surveys",
+  component: WaFlowSurveyListPage,
+})
+
+const waFlowSurveyDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "wa-flow-surveys/$surveyId",
+  component: WaFlowSurveyDetailPage,
 })
 
 const connectorsRoute = createRoute({
@@ -231,6 +239,8 @@ const routeTree = rootRoute.addChildren([
   voiceTechCreateAgentRoute,
   createBotRoute,
   partnerMeetRoute,
+  waFlowSurveysRoute,
+  waFlowSurveyDetailRoute,
   connectorsRoute,
 ])
 
