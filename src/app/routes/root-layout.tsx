@@ -6,7 +6,8 @@ import { ProtectedLayout } from "@/app/layouts/protected-layout"
 
 export function RootLayout() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
-  const isPublicRoute = pathname.startsWith("/login")
+  const isPublicRoute =
+    pathname.startsWith("/login") || pathname.startsWith("/partner-meet")
 
   if (isPublicRoute) {
     return <Outlet />

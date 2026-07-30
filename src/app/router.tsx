@@ -24,6 +24,7 @@ import { DatasetFieldsPage } from "@/features/voice-tech/presentation/pages/data
 import { CreateVendorPage } from "@/features/voice-tech/presentation/pages/create-vendor-page"
 import { CreateAgentPage } from "@/features/voice-tech/presentation/pages/create-agent-page"
 import { CreateBotPage } from "../features/bots/presentation/pages/create-bot-page"
+import { PartnerMeetPublicPage } from "@/features/wa-flow-survey/presentation/pages/partner-meet-public-page"
 import { ConnectorsPage } from "@/features/integrations/presentation/pages/connectors-page"
 
 
@@ -184,6 +185,18 @@ const loginRoute = createRoute({
   component: EmailOtpLoginPage,
 })
 
+const createUserRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "create-user",
+  // component: CreateUserPage,
+})
+
+const partnerMeetRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "partner-meet",
+  component: PartnerMeetPublicPage,
+})
+
 const connectorsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "connectors",
@@ -217,6 +230,7 @@ const routeTree = rootRoute.addChildren([
   voiceTechCreateVendorRoute,
   voiceTechCreateAgentRoute,
   createBotRoute,
+  partnerMeetRoute,
   connectorsRoute,
 ])
 
