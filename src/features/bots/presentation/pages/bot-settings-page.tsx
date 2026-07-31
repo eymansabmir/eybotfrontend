@@ -298,12 +298,14 @@ export function BotSettingsPage() {
             const latestComparisons = comparisonsRef.current;
             const latestLogicalOperator = logicalOperatorRef.current as "AND" | "OR";
 
+            const hasCredential = Boolean(credentialId && credentialId !== "CONNECT_NEW");
+
             await updateBotMutation.mutateAsync({
                 settings: {
                     ...(bot?.settings || {}),
                     maxSteps: bot?.settings?.maxSteps || 100,
                     timeoutSeconds: timeout * 3600,
-                    credentialId,
+                    ...(hasCredential ? { credentialId } : {}),
                     fallbackMessage: fallbackMessageRef.current,
                     invalidInputMessage: invalidInputMessageRef.current,
                     finishedJourneyMessage: finishedJourneyMessageRef.current,
@@ -325,6 +327,11 @@ export function BotSettingsPage() {
                       },
                 isConfigured: true
             });
+
+            if (!hasCredential) {
+                toast.success("Bot configuration saved. Connect a WhatsApp account when you're ready to go live.");
+                return;
+            }
             
             publishBotMutation.mutate(id, {
                 onSuccess: () => toast.success("Bot published successfully!"),
@@ -653,7 +660,7 @@ export function BotSettingsPage() {
                               <div className="flex items-center justify-between">
                                 <div>
                                     <h2 className="text-2xl font-black tracking-tight">WhatsApp Setup</h2>
-                                    <p className="text-sm text-muted-foreground mt-1 font-medium">Connect your Meta WhatsApp Business account.</p>
+                                    <p className="text-sm text-muted-foreground mt-1 font-medium">Configure bot behavior anytime. Connect a WhatsApp account when you're ready to go live.</p>
                                 </div>
                                 <div className="size-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 flex items-center justify-center border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
                                     <Bot className="size-7" />
@@ -665,10 +672,10 @@ export function BotSettingsPage() {
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-3">
                                         <div className="size-7 rounded-full bg-black dark:bg-white dark:text-black text-white text-[10px] font-bold flex items-center justify-center">1</div>
-                                        <Label className="text-base font-bold">Select WhatsApp Account</Label>
+                                        <Label className="text-base font-bold">Select WhatsApp Account <span className="font-medium text-muted-foreground">(optional)</span></Label>
                                     </div>
                                     <div className="bg-muted/40 dark:bg-muted/10 p-5 rounded-2xl border border-dashed border-black/10 dark:border-white/10 flex flex-col gap-4">
-                                        <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-widest">Available Credentials</p>
+                                        <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-widest">Available Credentials — optional for bot config</p>
                                         <div className="flex items-center gap-3">
                                             <Select 
                                                 value={selectedCredentialId} 
@@ -720,11 +727,11 @@ export function BotSettingsPage() {
                                     onNewCredentials={(newId) => setSelectedCredentialIdSync(newId)}
                                 />
 
-                                {/* Step 2: Configure Integration */}
-                                <div className={`space-y-4 transition-opacity duration-300 ${!selectedCredentialId ? 'opacity-50 pointer-events-none' : ''}`}>
+                                {/* Step 2: Configure Integration — editable without a WhatsApp account */}
+                                <div className="space-y-4">
                                     <div className="flex items-center gap-3">
                                         <div className="size-7 rounded-full bg-black dark:bg-white dark:text-black text-white text-[10px] font-bold flex items-center justify-center">2</div>
-                                        <Label className="text-base font-bold">Configure Integration</Label>
+                                        <Label className="text-base font-bold">Configure Bot</Label>
                                     </div>
                                     <Accordion type="single" collapsible defaultValue="configure" className="w-full border rounded-2xl overflow-hidden bg-white dark:bg-muted/5 shadow-sm">
                                         <AccordionItem value="configure" className="border-none">
@@ -871,12 +878,18 @@ export function BotSettingsPage() {
                                         
                                         <div className="flex items-center justify-between bg-white dark:bg-muted/10 p-4 rounded-xl shadow-sm border border-black/5 dark:border-white/5 font-medium">
                                             <div className="space-y-0.5">
-                                                <p className="text-sm font-bold">Push to Production</p>
-                                                <p className="text-[11px] text-muted-foreground">This will make your bot live on the selected number.</p>
+                                                <p className="text-sm font-bold">
+                                                    {selectedCredentialId ? "Push to Production" : "Save Bot Configuration"}
+                                                </p>
+                                                <p className="text-[11px] text-muted-foreground">
+                                                    {selectedCredentialId
+                                                        ? "This will make your bot live on the selected number."
+                                                        : "Save timeout, triggers, and other settings now. Connect a WhatsApp account later to publish live."}
+                                                </p>
                                             </div>
                                             <Button 
                                                 onClick={handleSaveAndPublish} 
-                                                disabled={publishBotMutation.isPending || updateBotMutation.isPending || !selectedCredentialId}
+                                                disabled={publishBotMutation.isPending || updateBotMutation.isPending}
                                                 className={`h-10 px-8 rounded-full font-bold transition-all hover:scale-105 active:scale-95 disabled:grayscale ${
                                                     bot.status === "published"
                                                        ? "bg-white/40 dark:bg-white/10 backdrop-blur-md text-foreground border border-white/50 dark:border-white/20 shadow-none hover:bg-white/60" 
@@ -884,8 +897,12 @@ export function BotSettingsPage() {
                                                 }`}
                                             >
                                                 {publishBotMutation.isPending || updateBotMutation.isPending 
-                                                   ? (bot.status === "published" ? "Updating..." : "Publishing...") 
-                                                   : (bot.status === "published" ? "Published" : "Publish Now")}
+                                                   ? (selectedCredentialId
+                                                       ? (bot.status === "published" ? "Updating..." : "Publishing...")
+                                                       : "Saving...")
+                                                   : (selectedCredentialId
+                                                       ? (bot.status === "published" ? "Published" : "Publish Now")
+                                                       : "Save Configuration")}
                                             </Button>
                                         </div>
                                     </div>
