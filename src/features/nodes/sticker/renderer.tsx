@@ -5,6 +5,7 @@ import type { StickerNodeData } from "./schema";
 import { stickerNode } from "./index";
 import { MediaUploader, useResolveUrl } from "@/lib/storage";
 import { ENV } from "@/config/env";
+import { ensureCsrfToken } from "@/lib/api-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useReactFlow } from "@xyflow/react";
 import { NodeFrame } from "@/features/nodes/presentation/components/node-frame";
@@ -42,9 +43,14 @@ export function StickerNodeRenderer({ id, data, selected }: NodeProps & { data: 
 
         try {
             setIsUploadingToMeta(true);
+            const csrfToken = await ensureCsrfToken();
             const response = await fetch(`${ENV.API_URL}/whatsapp/upload-media`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken,
+                },
                 body: JSON.stringify({ url, type: 'sticker' }),
             });
 

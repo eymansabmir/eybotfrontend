@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** Figma: EY - Partner meet / Light mode (node 5:2) */
 const PUBLIC_ORG_ID = "68b08633907a113536238290";
 const PREFERRED_TEMPLATE = "partners_connect_flow_test";
-const POLL_MS = 7_000;
+const POLL_MS = 3_000;
 
 const C = {
   page: "#F9F9F9",
@@ -33,12 +33,14 @@ type CardConfig = {
   matchers: string[];
 };
 
+/** Display order matches WhatsApp Flow question order. */
 const CARD_CONFIG: CardConfig[] = [
   {
     id: "focus",
-    eyebrow: "Current Focus",
-    title: "What keeps the client's CXO awake at night?",
+    eyebrow: "Question 1",
+    title: "What keeps your client's CXO awake at night?",
     matchers: [
+      "What keeps your client's CXO awake at night?",
       "What keeps the client's CXO awake at night?",
       "cxo awake",
       "Choose all that apply:",
@@ -46,40 +48,51 @@ const CARD_CONFIG: CardConfig[] = [
   },
   {
     id: "portfolio",
-    eyebrow: "Service Portfolio",
-    title: "Current EY Engagement Mix",
+    eyebrow: "Question 2",
+    title: "What is your current engagement with client?",
     matchers: [
+      "What is your current engagement with client?",
+      "What is our current engagement with the client?",
       "Current EY Engagement Mix",
       "engagement mix",
       "Choose all that apply:_(2)",
     ],
   },
   {
-    id: "maturity",
-    eyebrow: "Market Maturity",
-    title: "Current Outsourcing Status",
-    matchers: ["Current Outsourcing Status", "outsourcing", "Choose one:_(2)"],
-  },
-  {
-    id: "positioning",
-    eyebrow: "Competitive Positioning",
-    title: "Client Disposition towards EY Operations",
-    matchers: [
-      "Client Disposition towards EY Operations",
-      "disposition",
-      "Choose one:",
-    ],
-  },
-  {
     id: "growth",
-    eyebrow: "Growth Opportunities",
-    title: "If EY could take over an area of operations, which one?",
+    eyebrow: "Question 3",
+    title: "If we could take over operations of the client, what would it be?",
     matchers: [
+      "If we could take over operations of the client, what would it be?",
+      "If we could take over operations of the client,what would it be?",
       "If EY could take over an area of operations, which one?",
       "operations_to_take_over",
       "take over an area",
       "operations to take over",
       "Data and AI",
+    ],
+  },
+  {
+    id: "maturity",
+    eyebrow: "Question 4",
+    title: "Does the client already outsource operations?",
+    matchers: [
+      "Does the client already outsource operations?",
+      "Current Outsourcing Status",
+      "outsourcing",
+      "Choose one:_(2)",
+    ],
+  },
+  {
+    id: "positioning",
+    eyebrow: "Question 5",
+    title: "What is the client's disposition to EY as an operations partner?",
+    matchers: [
+      "What is the client's disposition to EY as an operations partner?",
+      "What is the client's disposition to EY as an operations partner.",
+      "Client Disposition towards EY Operations",
+      "disposition",
+      "Choose one:",
     ],
   },
 ];
@@ -290,10 +303,7 @@ export function PartnerMeetPublicPage() {
           </LayoutGroup>
         )}
 
-        <p className="text-center text-[11px]" style={{ color: C.soft }}>
-          Auto-refreshes every {POLL_MS / 1000}s
-          {dataUpdatedAt ? ` · last sync ${new Date(dataUpdatedAt).toLocaleTimeString()}` : ""}
-        </p>
+       
       </main>
     </div>
   );

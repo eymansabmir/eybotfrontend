@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { ENV } from "@/config/env";
+import { ensureCsrfToken } from "@/lib/api-client";
 import { getErrorMessage } from "@/lib/utils";
 
 export function ProfileSettings() {
@@ -55,9 +56,12 @@ export function ProfileSettings() {
       formData.append("file", file);
       formData.append("folder", "uploads");
       
-      // Upload to storage
+      // Upload to storage (raw fetch — must attach CSRF like apiClient)
+      const csrfToken = await ensureCsrfToken();
       const response = await fetch(`${ENV.API_URL}/storage/upload`, {
         method: "POST",
+        credentials: "include",
+        headers: { "X-CSRF-Token": csrfToken },
         body: formData,
       });
       
