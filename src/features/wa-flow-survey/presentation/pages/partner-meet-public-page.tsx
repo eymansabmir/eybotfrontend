@@ -162,7 +162,7 @@ export function PartnerMeetPublicPage() {
     return preferred?.id ?? surveys[0]?.id ?? "";
   }, [listData?.surveys]);
 
-  const { data: analytics, isLoading: analyticsLoading, dataUpdatedAt } =
+  const { data: analytics, isLoading: analyticsLoading } =
     useWaFlowSurveyAnalytics(orgId, surveyId, { refetchInterval: POLL_MS });
 
   const cards = useMemo(() => {
