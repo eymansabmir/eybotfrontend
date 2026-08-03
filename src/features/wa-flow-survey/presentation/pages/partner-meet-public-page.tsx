@@ -10,7 +10,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 /** Figma: EY - Partner meet / Light mode (node 5:2) */
 const PUBLIC_ORG_ID = "68b08633907a113536238290";
-const PREFERRED_TEMPLATE = "partners_connect_flow_test";
+const PREFERRED_TEMPLATES = [
+  "ey_partners_connect_form_final",
+  "partners_connect_flow_test",
+];
 const POLL_MS = 3_000;
 
 const C = {
@@ -26,78 +29,89 @@ const C = {
   soft: "#5E5E5E",
 } as const;
 
+type CardId = "focus" | "portfolio" | "growth" | "maturity" | "positioning";
+
 type CardConfig = {
-  id: string;
+  id: CardId;
   eyebrow: string;
   title: string;
-  matchers: string[];
+  /** Option values unique to this WhatsApp Flow question (fingerprint fallback). */
+  optionFingerprints: string[];
 };
 
-/** Display order matches WhatsApp Flow question order. */
+/**
+ * Display copy for each Partners Connect question.
+ *
+ * Interakt does NOT send screen titles. Multi-select keys are reused/unstable:
+ *   `Choose all that apply:` / `_(2)` can mean Q1, Q2, or Q3 depending on Flow version.
+ * Cards are matched by option fingerprints (Cost Pressure → Q1, Advisory → Q2, Cyber → Q3).
+ * Single-select keys are more stable: `Choose one:_(2)` ≈ Q4, `Choose one:` ≈ Q5.
+ */
 const CARD_CONFIG: CardConfig[] = [
   {
     id: "focus",
     eyebrow: "Question 1",
     title: "What keeps your client's CXO awake at night?",
-    matchers: [
-      "What keeps your client's CXO awake at night?",
-      "What keeps the client's CXO awake at night?",
-      "cxo awake",
-      "Choose all that apply:",
+    optionFingerprints: [
+      "cost pressure",
+      "ai adoption",
+      "talent shortage",
+      "security & operations",
+      "security and operations",
+      "regulation & compliance",
+      "regulation and compliance",
     ],
   },
   {
     id: "portfolio",
     eyebrow: "Question 2",
     title: "What is your current engagement with client?",
-    matchers: [
-      "What is your current engagement with client?",
-      "What is our current engagement with the client?",
-      "Current EY Engagement Mix",
-      "engagement mix",
-      "Choose all that apply:_(2)",
-    ],
+    // Do not fingerprint bare "operations" — collides with "Security & Operations" / IT Ops.
+    optionFingerprints: ["advisory", "transformation", "strategy"],
   },
   {
     id: "growth",
     eyebrow: "Question 3",
     title: "If we could take over operations of the client, what would it be?",
-    matchers: [
-      "If we could take over operations of the client, what would it be?",
-      "If we could take over operations of the client,what would it be?",
-      "If EY could take over an area of operations, which one?",
-      "operations_to_take_over",
-      "take over an area",
-      "operations to take over",
-      "Data and AI",
+    optionFingerprints: [
+      "it operations",
+      "cyber",
+      "data & ai",
+      "data and ai",
+      "business operations",
+      "hr and learning",
     ],
   },
   {
     id: "maturity",
     eyebrow: "Question 4",
     title: "Does the client already outsource operations?",
-    matchers: [
-      "Does the client already outsource operations?",
-      "Current Outsourcing Status",
-      "outsourcing",
-      "Choose one:_(2)",
-    ],
+    optionFingerprints: ["yes", "no", "partially"],
   },
   {
     id: "positioning",
     eyebrow: "Question 5",
     title: "What is the client's disposition to EY as an operations partner?",
-    matchers: [
-      "What is the client's disposition to EY as an operations partner?",
-      "What is the client's disposition to EY as an operations partner.",
-      "Client Disposition towards EY Operations",
-      "disposition",
-      "Choose one:",
+    optionFingerprints: [
+      "open to our offering",
+      "ey not recognized for ops",
+      "prefers sis",
+      "prefers incumbents",
     ],
   },
 ];
 
 type RankedOption = { value: string; count: number; pct: number };
+
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/_/g, " ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 function rankOptions(question: WaFlowQuestionAnalytics | undefined): RankedOption[] {
   if (!question?.options?.length) return [];
@@ -111,35 +125,80 @@ function rankOptions(question: WaFlowQuestionAnalytics | undefined): RankedOptio
     .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
 }
 
+/**
+ * Map a stored Interakt/Meta field onto a Partner Meet card.
+ * Mirrors backend `resolveQuestion` in flow-score.ts — order matters:
+ * specific `_(2)` / operations keys must win over bare "Choose all/one".
+ */
+function resolveCardId(questionKey: string, questionLabel: string): CardId | undefined {
+  const keyNorm = normalize(questionKey);
+  const labelNorm = normalize(questionLabel);
+  const haystack = `${keyNorm} ${labelNorm}`;
+
+  // Q3 — unique key when present (older Flows). Newer Flows put these options under
+  // "Choose all that apply:" — those are resolved via option fingerprints instead.
+  if (
+    questionKey.toLowerCase().includes("operations_to_take_over") ||
+    keyNorm.includes("operations to take over") ||
+    /take over an area|take over operations/.test(haystack)
+  ) {
+    return "growth";
+  }
+
+  // Q4 / Q5 — Choose one keys are stable across known Flow versions.
+  if (
+    /choose one/.test(keyNorm) &&
+    (questionKey.includes("_(2)") || /\b2\b/.test(keyNorm) || /choose one 2/.test(keyNorm))
+  ) {
+    return "maturity";
+  }
+
+  if (
+    (/^choose one$/.test(keyNorm) || /^choose one$/.test(labelNorm)) &&
+    !questionKey.includes("_(2)")
+  ) {
+    return "positioning";
+  }
+
+  // Title-based fallback when Flow starts sending real headings as keys/labels.
+  // Do NOT map bare / _(2) "Choose all that apply" by key — swapped in ey_partners_connect_form_final.
+  if (/cxo awake|awake at night/.test(haystack)) return "focus";
+  if (/current engagement|engagement mix/.test(haystack)) return "portfolio";
+  if (/outsource|outsourcing/.test(haystack)) return "maturity";
+  if (/disposition|operations partner/.test(haystack)) return "positioning";
+
+  return undefined;
+}
+
+function fingerprintScore(question: WaFlowQuestionAnalytics, fingerprints: string[]): number {
+  if (!question.options?.length || !fingerprints.length) return 0;
+  // Exact option match only — substring matching reintroduces Q1↔Q2 swaps.
+  const values = new Set(question.options.map((o) => normalize(o.value)));
+  let hits = 0;
+  for (const fp of fingerprints) {
+    if (values.has(normalize(fp))) hits += 1;
+  }
+  return hits;
+}
+
 function findQuestion(
   questions: WaFlowQuestionAnalytics[],
   config: CardConfig,
   usedKeys: Set<string>,
-  fallbackIndex: number,
 ): WaFlowQuestionAnalytics | undefined {
-  let best: { q: WaFlowQuestionAnalytics; score: number } | undefined;
+  const unused = questions.filter((q) => !usedKeys.has(q.questionKey));
 
-  for (const q of questions) {
-    if (usedKeys.has(q.questionKey)) continue;
-    const hay = `${q.questionLabel} ${q.questionKey}`.toLowerCase();
-    let score = 0;
-    for (const m of config.matchers) {
-      const needle = m.toLowerCase();
-      if (
-        hay === needle ||
-        q.questionKey.toLowerCase() === needle ||
-        q.questionLabel.toLowerCase() === needle
-      ) {
-        score = Math.max(score, 1000 + needle.length);
-      } else if (hay.includes(needle)) {
-        score = Math.max(score, needle.length);
-      }
-    }
+  // 1) Fingerprint by option labels FIRST — Meta reuses "Choose all that apply:" keys
+  //    and ey_partners_connect_form_final swapped which screen owns bare vs _(2).
+  let best: { q: WaFlowQuestionAnalytics; score: number } | undefined;
+  for (const q of unused) {
+    const score = fingerprintScore(q, config.optionFingerprints);
     if (score > 0 && (!best || score > best.score)) best = { q, score };
   }
+  if (best && best.score >= 2) return best.q;
 
-  if (best) return best.q;
-  return questions.filter((q) => !usedKeys.has(q.questionKey))[fallbackIndex];
+  // 2) Key/label resolution (stable for Choose one: / operations_to_take_over only).
+  return unused.find((q) => resolveCardId(q.questionKey, q.questionLabel) === config.id);
 }
 
 /** Bar fill matches the displayed percentage (50% → half the track). */
@@ -157,7 +216,10 @@ export function PartnerMeetPublicPage() {
   const surveyId = useMemo(() => {
     const surveys = listData?.surveys ?? [];
     const preferred = surveys.find(
-      (s) => s.templateName === PREFERRED_TEMPLATE || s.title?.includes("partners_connect"),
+      (s) =>
+        (s.templateName != null && PREFERRED_TEMPLATES.includes(s.templateName)) ||
+        s.templateName?.includes("partners_connect") ||
+        s.title?.includes("partners_connect"),
     );
     return preferred?.id ?? surveys[0]?.id ?? "";
   }, [listData?.surveys]);
@@ -168,11 +230,14 @@ export function PartnerMeetPublicPage() {
   const cards = useMemo(() => {
     const questions = analytics?.questions ?? [];
     const used = new Set<string>();
-    return CARD_CONFIG.map((config, index) => {
-      const question = findQuestion(questions, config, used, index);
-      if (question) used.add(question.questionKey);
-      return { config, options: rankOptions(question) };
-    });
+    const byId = Object.fromEntries(
+      CARD_CONFIG.map((config) => {
+        const question = findQuestion(questions, config, used);
+        if (question) used.add(question.questionKey);
+        return [config.id, { config, options: rankOptions(question) }] as const;
+      }),
+    ) as Record<CardId, { config: CardConfig; options: RankedOption[] }>;
+    return byId;
   }, [analytics?.questions]);
 
   const n = analytics?.survey.submissionCount ?? 0;
@@ -263,39 +328,44 @@ export function PartnerMeetPublicPage() {
         ) : (
           <LayoutGroup>
             <div className="grid gap-6 lg:grid-cols-12">
+              {/* Q1 — many options, hero + grid */}
               <div className="lg:col-span-7">
                 <FocusCard
-                  eyebrow={cards[0]!.config.eyebrow}
-                  title={cards[0]!.config.title}
-                  options={cards[0]!.options}
+                  eyebrow={cards.focus.config.eyebrow}
+                  title={cards.focus.config.title}
+                  options={cards.focus.options}
                 />
               </div>
+              {/* Q2 — engagement mix list */}
               <div className="lg:col-span-5">
                 <ListCard
-                  eyebrow={cards[1]!.config.eyebrow}
-                  title={cards[1]!.config.title}
-                  options={cards[1]!.options}
+                  eyebrow={cards.portfolio.config.eyebrow}
+                  title={cards.portfolio.config.title}
+                  options={cards.portfolio.options}
                 />
               </div>
+              {/* Q4 — yes/no/partial big % */}
               <div className="lg:col-span-5">
                 <MaturityCard
-                  eyebrow={cards[2]!.config.eyebrow}
-                  title={cards[2]!.config.title}
-                  options={cards[2]!.options}
+                  eyebrow={cards.maturity.config.eyebrow}
+                  title={cards.maturity.config.title}
+                  options={cards.maturity.options}
                 />
               </div>
+              {/* Q5 — disposition 2×2 */}
               <div className="lg:col-span-7">
                 <GridCard
-                  eyebrow={cards[3]!.config.eyebrow}
-                  title={cards[3]!.config.title}
-                  options={cards[3]!.options}
+                  eyebrow={cards.positioning.config.eyebrow}
+                  title={cards.positioning.config.title}
+                  options={cards.positioning.options}
                 />
               </div>
+              {/* Q3 — take-over areas as columns */}
               <div className="lg:col-span-12">
                 <ColumnsCard
-                  eyebrow={cards[4]!.config.eyebrow}
-                  title={cards[4]!.config.title}
-                  options={cards[4]!.options}
+                  eyebrow={cards.growth.config.eyebrow}
+                  title={cards.growth.config.title}
+                  options={cards.growth.options}
                   respondents={n}
                 />
               </div>
