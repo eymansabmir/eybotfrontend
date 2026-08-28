@@ -6,5 +6,6 @@ export const ENV = {
     VOICE_TECH: import.meta.env?.VITE_ENABLE_VOICE_TECH !== "false", // Enabled by default
     USERS: import.meta.env?.VITE_ENABLE_USERS !== "false", // Enabled by default
     CAMPAIGNS: import.meta.env?.VITE_ENABLE_CAMPAIGNS !== "false", // Enabled by default
+    MARKETING: import.meta.env?.VITE_ENABLE_MARKETING !== "false", // Enabled by default
   }
 } as const;
