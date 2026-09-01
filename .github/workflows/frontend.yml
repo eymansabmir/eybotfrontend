@@ -2,7 +2,7 @@ name: Build and Push Frontend
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "old-branch" ]
   workflow_dispatch:
 
 env:
