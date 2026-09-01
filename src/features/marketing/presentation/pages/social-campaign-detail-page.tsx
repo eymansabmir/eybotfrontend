@@ -13,7 +13,10 @@ import {
 import { RoadmapBanner } from "../components/shared/roadmap-banner";
 import { KpiStatCard } from "../components/shared/kpi-stat-card";
 import { PerformanceAreaChart, PerformanceBarChart } from "../components/shared/performance-chart";
-import { getSocialCampaignById, platformLabels } from "../../data/social-campaigns.mock";
+import { platformLabels } from "../../data/social-campaigns.mock";
+import { useMarketingStore } from "../../data/marketing-store";
+import { defaultActivity, defaultApprovals, defaultAudience } from "../../data/workflow.mock";
+import { ActivityPanel, ApprovalsPanel, AudiencePanel } from "../components/shared/workflow-panels";
 import {
   Table,
   TableBody,
@@ -58,7 +61,7 @@ function ContentCalendar({ calendar }: { calendar: { date: string; posts: { plat
 
 export function SocialCampaignDetailPage() {
   const { id } = useParams({ strict: false });
-  const campaign = getSocialCampaignById(id ?? "");
+  const campaign = useMarketingStore((s) => s.social.find((c) => c.id === id));
 
   if (!campaign) {
     return <Navigate to="/social-campaigns" />;
@@ -92,6 +95,8 @@ export function SocialCampaignDetailPage() {
           <TabsTrigger value="calendar">Content Calendar</TabsTrigger>
           <TabsTrigger value="posts">Posts</TabsTrigger>
           <TabsTrigger value="audience">Audience</TabsTrigger>
+          <TabsTrigger value="approvals">Approvals</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
@@ -244,6 +249,15 @@ export function SocialCampaignDetailPage() {
               </CardContent>
             </Card>
           )}
+          <div className="pt-2">
+            <AudiencePanel audience={defaultAudience("Targeting: CXO / IT leadership — India", 180000)} />
+          </div>
+        </TabsContent>
+        <TabsContent value="approvals" className="mt-6">
+          <ApprovalsPanel steps={defaultApprovals(campaign.status)} />
+        </TabsContent>
+        <TabsContent value="activity" className="mt-6">
+          <ActivityPanel events={defaultActivity(campaign.status, campaign.name)} />
         </TabsContent>
       </Tabs>
     </div>

@@ -9,6 +9,10 @@ const statusConfig: Record<
     label: "Draft",
     className: "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
   },
+  pending_approval: {
+    label: "Pending approval",
+    className: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  },
   scheduled: {
     label: "Scheduled",
     className: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",

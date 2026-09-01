@@ -1,10 +1,39 @@
 export type CampaignStatus =
   | "draft"
+  | "pending_approval"
   | "scheduled"
   | "running"
   | "completed"
   | "paused"
   | "cancelled";
+
+export type ApprovalDecision = "approved" | "pending" | "rejected";
+
+export interface ApprovalStep {
+  id: string;
+  stage: string;
+  owner: string;
+  role: string;
+  status: ApprovalDecision;
+  decidedAt?: string;
+  note?: string;
+}
+
+export interface AudienceSnapshot {
+  segmentName: string;
+  source: string;
+  total: number;
+  eligible: number;
+  suppressed: number;
+  dndScrubbed?: number;
+}
+
+export interface CampaignActivityEvent {
+  id: string;
+  at: string;
+  actor: string;
+  action: string;
+}
 
 export type SocialPlatform = "linkedin" | "x" | "facebook" | "instagram";
 

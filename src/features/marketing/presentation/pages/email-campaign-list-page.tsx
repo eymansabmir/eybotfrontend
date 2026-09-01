@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Plus, BarChart3, Mail, AlertCircle, UserMinus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,17 +13,24 @@ import {
 import { RoadmapBanner } from "../components/shared/roadmap-banner";
 import { KpiStatCard } from "../components/shared/kpi-stat-card";
 import { CampaignStatusBadge } from "../components/shared/campaign-status-badge";
-import { CreateEmailCampaignDialog } from "../components/email/create-email-campaign-dialog";
-import { MOCK_EMAIL_CAMPAIGNS, EMAIL_LIST_SUMMARY } from "../../data/email-campaigns.mock";
-import type { EmailCampaign } from "../../types";
+import { CampaignPipeline } from "../components/shared/campaign-pipeline";
+import { useMarketingStore } from "../../data/marketing-store";
+import { EMAIL_LIST_SUMMARY } from "../../data/email-campaigns.mock";
+import type { CampaignStatus } from "../../types";
 
 export function EmailCampaignListPage() {
-  const [campaigns, setCampaigns] = useState<EmailCampaign[]>(MOCK_EMAIL_CAMPAIGNS);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const navigate = useNavigate();
+  const campaigns = useMarketingStore((s) => s.emails);
+  const [statusFilter, setStatusFilter] = useState<CampaignStatus | "all">("all");
 
-  const handleCreated = (campaign: EmailCampaign) => {
-    setCampaigns((prev) => [campaign, ...prev]);
-  };
+  const counts = useMemo(() => {
+    const next: Partial<Record<CampaignStatus | "all", number>> = { all: campaigns.length };
+    for (const c of campaigns) next[c.status] = (next[c.status] ?? 0) + 1;
+    return next;
+  }, [campaigns]);
+
+  const filtered =
+    statusFilter === "all" ? campaigns : campaigns.filter((c) => c.status === statusFilter);
 
   return (
     <div className="space-y-6 pb-8">
@@ -34,11 +41,13 @@ export function EmailCampaignListPage() {
           <p className="text-sm text-muted-foreground uppercase tracking-wide">Marketing</p>
           <h1 className="text-2xl font-bold text-foreground">Email Campaigns</h1>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
+        <Button onClick={() => navigate({ to: "/email-campaigns/create" })} className="gap-2">
           <Plus className="size-4" />
           Create Email Campaign
         </Button>
       </div>
+
+      <CampaignPipeline counts={counts} active={statusFilter} onChange={setStatusFilter} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiStatCard label="Sent (30d)" value={EMAIL_LIST_SUMMARY.sent30d} delta="+15% vs prior month" deltaPositive icon={Mail} />
@@ -62,7 +71,7 @@ export function EmailCampaignListPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {campaigns.map((c) => (
+            {filtered.map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">{c.subject}</TableCell>
@@ -77,7 +86,7 @@ export function EmailCampaignListPage() {
                   <Button variant="ghost" size="sm" asChild className="gap-1">
                     <Link to="/email-campaigns/$id" params={{ id: c.id }}>
                       <BarChart3 className="size-4" />
-                      Analytics
+                      {c.status === "draft" || c.status === "pending_approval" ? "Open" : "Analytics"}
                     </Link>
                   </Button>
                 </TableCell>
@@ -87,7 +96,6 @@ export function EmailCampaignListPage() {
         </Table>
       </div>
 
-      <CreateEmailCampaignDialog open={dialogOpen} onOpenChange={setDialogOpen} onCreated={handleCreated} />
     </div>
   );
 }

@@ -209,7 +209,7 @@ export const MOCK_SOCIAL_CAMPAIGNS: SocialCampaign[] = [
     objective: "leads",
     platforms: ["linkedin", "instagram"],
     postsCount: 12,
-    status: "scheduled",
+    status: "pending_approval",
     reach: 0,
     impressions: 0,
     engagementRate: 0,

@@ -35,6 +35,10 @@ import { EmailCampaignDetailPage } from "@/features/marketing/presentation/pages
 import { SocialCampaignListPage } from "@/features/marketing/presentation/pages/social-campaign-list-page"
 import { SocialCampaignDetailPage } from "@/features/marketing/presentation/pages/social-campaign-detail-page"
 import { SentimentAnalysisPage } from "@/features/marketing/presentation/pages/sentiment-analysis-page"
+import { CreateSmsCampaignPage } from "@/features/marketing/presentation/pages/create-sms-campaign-page"
+import { CreateEmailCampaignPage } from "@/features/marketing/presentation/pages/create-email-campaign-page"
+import { CreateSocialCampaignPage } from "@/features/marketing/presentation/pages/create-social-campaign-page"
+import { CreateListenQueryPage } from "@/features/marketing/presentation/pages/create-listen-query-page"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -224,6 +228,12 @@ const smsCampaignsRoute = createRoute({
   component: SmsCampaignListPage,
 })
 
+const smsCampaignCreateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "sms-campaigns/create",
+  component: CreateSmsCampaignPage,
+})
+
 const smsCampaignDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "sms-campaigns/$id",
@@ -234,6 +244,12 @@ const emailCampaignsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "email-campaigns",
   component: EmailCampaignListPage,
+})
+
+const emailCampaignCreateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "email-campaigns/create",
+  component: CreateEmailCampaignPage,
 })
 
 const emailCampaignDetailRoute = createRoute({
@@ -248,6 +264,12 @@ const socialCampaignsRoute = createRoute({
   component: SocialCampaignListPage,
 })
 
+const socialCampaignCreateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "social-campaigns/create",
+  component: CreateSocialCampaignPage,
+})
+
 const socialCampaignDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "social-campaigns/$id",
@@ -258,6 +280,12 @@ const sentimentAnalysisRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "sentiment-analysis",
   component: SentimentAnalysisPage,
+})
+
+const sentimentCreateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "sentiment-analysis/create",
+  component: CreateListenQueryPage,
 })
 
 const routeTree = rootRoute.addChildren([
@@ -292,12 +320,16 @@ const routeTree = rootRoute.addChildren([
   waFlowSurveyDetailRoute,
   connectorsRoute,
   smsCampaignsRoute,
+  smsCampaignCreateRoute,
   smsCampaignDetailRoute,
   emailCampaignsRoute,
+  emailCampaignCreateRoute,
   emailCampaignDetailRoute,
   socialCampaignsRoute,
+  socialCampaignCreateRoute,
   socialCampaignDetailRoute,
   sentimentAnalysisRoute,
+  sentimentCreateRoute,
 ])
 
 const router = createRouter({

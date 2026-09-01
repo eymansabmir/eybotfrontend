@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Plus, BarChart3, Send, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,23 +20,26 @@ import {
 import { RoadmapBanner } from "../components/shared/roadmap-banner";
 import { KpiStatCard } from "../components/shared/kpi-stat-card";
 import { CampaignStatusBadge } from "../components/shared/campaign-status-badge";
-import { CreateSmsCampaignDialog } from "../components/sms/create-sms-campaign-dialog";
-import { MOCK_SMS_CAMPAIGNS, SMS_LIST_SUMMARY } from "../../data/sms-campaigns.mock";
-import type { SmsCampaign, CampaignStatus } from "../../types";
+import { CampaignPipeline } from "../components/shared/campaign-pipeline";
+import { useMarketingStore } from "../../data/marketing-store";
+import { SMS_LIST_SUMMARY } from "../../data/sms-campaigns.mock";
+import type { CampaignStatus } from "../../types";
 
 export function SmsCampaignListPage() {
-  const [campaigns, setCampaigns] = useState<SmsCampaign[]>(MOCK_SMS_CAMPAIGNS);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const navigate = useNavigate();
+  const campaigns = useMarketingStore((s) => s.sms);
+  const [statusFilter, setStatusFilter] = useState<CampaignStatus | "all">("all");
+
+  const counts = useMemo(() => {
+    const next: Partial<Record<CampaignStatus | "all", number>> = { all: campaigns.length };
+    for (const c of campaigns) next[c.status] = (next[c.status] ?? 0) + 1;
+    return next;
+  }, [campaigns]);
 
   const filtered =
     statusFilter === "all"
       ? campaigns
       : campaigns.filter((c) => c.status === statusFilter);
-
-  const handleCreated = (campaign: SmsCampaign) => {
-    setCampaigns((prev) => [campaign, ...prev]);
-  };
 
   return (
     <div className="space-y-6 pb-8">
@@ -47,7 +50,7 @@ export function SmsCampaignListPage() {
           <p className="text-sm text-muted-foreground uppercase tracking-wide">Marketing</p>
           <h1 className="text-2xl font-bold text-foreground">SMS Campaigns</h1>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
+        <Button onClick={() => navigate({ to: "/sms-campaigns/create" })} className="gap-2">
           <Plus className="size-4" />
           Create SMS Campaign
         </Button>
@@ -60,14 +63,16 @@ export function SmsCampaignListPage() {
         <KpiStatCard label="Failed" value={SMS_LIST_SUMMARY.failedCount} delta="+12 today" deltaPositive={false} icon={XCircle} />
       </div>
 
+      <CampaignPipeline counts={counts} active={statusFilter} onChange={setStatusFilter} />
+
       <div className="flex items-center gap-3">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as CampaignStatus | "all")}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
-            {( ["draft", "scheduled", "running", "completed", "paused"] as CampaignStatus[]).map((s) => (
+            {(["draft", "pending_approval", "scheduled", "running", "completed", "paused"] as CampaignStatus[]).map((s) => (
               <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
             ))}
           </SelectContent>
@@ -108,7 +113,7 @@ export function SmsCampaignListPage() {
                   <Button variant="ghost" size="sm" asChild className="gap-1">
                     <Link to="/sms-campaigns/$id" params={{ id: c.id }}>
                       <BarChart3 className="size-4" />
-                      Analytics
+                      {c.status === "draft" || c.status === "pending_approval" ? "Open" : "Analytics"}
                     </Link>
                   </Button>
                 </TableCell>
@@ -118,11 +123,6 @@ export function SmsCampaignListPage() {
         </Table>
       </div>
 
-      <CreateSmsCampaignDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onCreated={handleCreated}
-      />
     </div>
   );
 }

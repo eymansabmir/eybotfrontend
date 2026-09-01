@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Plus, BarChart3, Share2, TrendingUp, Calendar, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +14,10 @@ import {
 import { RoadmapBanner } from "../components/shared/roadmap-banner";
 import { KpiStatCard } from "../components/shared/kpi-stat-card";
 import { CampaignStatusBadge } from "../components/shared/campaign-status-badge";
-import { CreateSocialCampaignDialog } from "../components/social/create-social-campaign-dialog";
-import { MOCK_SOCIAL_CAMPAIGNS, SOCIAL_LIST_SUMMARY, platformLabels } from "../../data/social-campaigns.mock";
-import type { SocialCampaign, SocialPlatform } from "../../types";
+import { CampaignPipeline } from "../components/shared/campaign-pipeline";
+import { useMarketingStore } from "../../data/marketing-store";
+import { SOCIAL_LIST_SUMMARY, platformLabels } from "../../data/social-campaigns.mock";
+import type { CampaignStatus, SocialPlatform } from "../../types";
 import { cn } from "@/lib/utils";
 
 const platformColors: Record<SocialPlatform, string> = {
@@ -27,12 +28,18 @@ const platformColors: Record<SocialPlatform, string> = {
 };
 
 export function SocialCampaignListPage() {
-  const [campaigns, setCampaigns] = useState<SocialCampaign[]>(MOCK_SOCIAL_CAMPAIGNS);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const navigate = useNavigate();
+  const campaigns = useMarketingStore((s) => s.social);
+  const [statusFilter, setStatusFilter] = useState<CampaignStatus | "all">("all");
 
-  const handleCreated = (campaign: SocialCampaign) => {
-    setCampaigns((prev) => [campaign, ...prev]);
-  };
+  const counts = useMemo(() => {
+    const next: Partial<Record<CampaignStatus | "all", number>> = { all: campaigns.length };
+    for (const c of campaigns) next[c.status] = (next[c.status] ?? 0) + 1;
+    return next;
+  }, [campaigns]);
+
+  const filtered =
+    statusFilter === "all" ? campaigns : campaigns.filter((c) => c.status === statusFilter);
 
   return (
     <div className="space-y-6 pb-8">
@@ -43,11 +50,13 @@ export function SocialCampaignListPage() {
           <p className="text-sm text-muted-foreground uppercase tracking-wide">Marketing</p>
           <h1 className="text-2xl font-bold text-foreground">Social Media Campaigns</h1>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
+        <Button onClick={() => navigate({ to: "/social-campaigns/create" })} className="gap-2">
           <Plus className="size-4" />
           Create Campaign
         </Button>
       </div>
+
+      <CampaignPipeline counts={counts} active={statusFilter} onChange={setStatusFilter} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiStatCard label="Total reach" value={SOCIAL_LIST_SUMMARY.totalReach} delta="+22% this month" deltaPositive icon={Share2} />
@@ -70,7 +79,7 @@ export function SocialCampaignListPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {campaigns.map((c) => (
+            {filtered.map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell>
@@ -94,7 +103,7 @@ export function SocialCampaignListPage() {
                   <Button variant="ghost" size="sm" asChild className="gap-1">
                     <Link to="/social-campaigns/$id" params={{ id: c.id }}>
                       <BarChart3 className="size-4" />
-                      Analytics
+                      {c.status === "draft" || c.status === "pending_approval" ? "Open" : "Analytics"}
                     </Link>
                   </Button>
                 </TableCell>
@@ -104,7 +113,6 @@ export function SocialCampaignListPage() {
         </Table>
       </div>
 
-      <CreateSocialCampaignDialog open={dialogOpen} onOpenChange={setDialogOpen} onCreated={handleCreated} />
     </div>
   );
 }

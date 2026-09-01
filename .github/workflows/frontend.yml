@@ -50,4 +50,5 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VITE_API_URL=https://eybotapi.irfworld.com/api
+            VITE_API_URL=https://eybotapi.irfworld.com
+            VITE_BASE_MEDIA_URL=https://eybotapi.irfworld.com/api/storage/file

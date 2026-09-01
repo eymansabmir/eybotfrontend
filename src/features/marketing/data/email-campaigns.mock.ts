@@ -153,7 +153,7 @@ export const MOCK_EMAIL_CAMPAIGNS: EmailCampaign[] = [
     fromName: "EY GCC Practice",
     fromEmail: "gcc@ey.com",
     listSize: 6700,
-    status: "scheduled",
+    status: "pending_approval",
     sentAt: undefined,
     openRate: 0,
     clickRate: 0,

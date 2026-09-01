@@ -17,6 +17,7 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   MinusIcon,
+  Plus,
   TrendingUpIcon,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,9 +38,12 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { useNavigate } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import { RoadmapBanner } from "../components/shared/roadmap-banner";
 import { KpiStatCard } from "../components/shared/kpi-stat-card";
 import { MOCK_SENTIMENT } from "../../data/sentiment.mock";
+import { useMarketingStore } from "../../data/marketing-store";
 import type { SentimentLabel, SentimentTopic } from "../../types";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +60,8 @@ function TrendIcon({ trend }: { trend: SentimentTopic["trend"] }) {
 }
 
 export function SentimentAnalysisPage() {
+  const navigate = useNavigate();
+  const listenQueries = useMarketingStore((s) => s.listenQueries);
   const data = MOCK_SENTIMENT;
 
   const donutData = [
@@ -101,12 +107,39 @@ export function SentimentAnalysisPage() {
     <div className="space-y-6 pb-8">
       <RoadmapBanner />
 
-      <div className="space-y-1">
-        <p className="text-sm text-muted-foreground uppercase tracking-wide">Marketing</p>
-        <h1 className="text-2xl font-bold text-foreground">Sentiment Analysis</h1>
-        <p className="text-sm text-muted-foreground">
-          Cross-channel brand sentiment monitoring and alerting
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground uppercase tracking-wide">Marketing</p>
+          <h1 className="text-2xl font-bold text-foreground">Sentiment Analysis</h1>
+          <p className="text-sm text-muted-foreground">
+            Listen topics first, then monitor mentions, spikes, and alerts
+          </p>
+        </div>
+        <Button className="gap-2" onClick={() => navigate({ to: "/sentiment-analysis/create" })}>
+          <Plus className="size-4" />
+          Create listen query
+        </Button>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        {listenQueries.map((q) => (
+          <Card key={q.id}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-base">{q.name}</CardTitle>
+                <Badge variant="secondary" className="capitalize">{q.status}</Badge>
+              </div>
+              <CardDescription className="font-mono text-[11px] line-clamp-2">{q.query}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p className="text-muted-foreground">{q.sources.join(" · ")}</p>
+              <div className="flex justify-between">
+                <span>{q.mentions24h} mentions / 24h</span>
+                <span className="tabular-nums">Sentiment {q.sentiment}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Tabs defaultValue="overview">

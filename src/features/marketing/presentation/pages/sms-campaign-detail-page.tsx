@@ -1,5 +1,6 @@
 import { useParams, Navigate } from "@tanstack/react-router";
 import { ShieldCheckIcon } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CampaignDetailHeader,
   RateCard,
@@ -13,7 +14,9 @@ import {
 import { RoadmapBanner } from "../components/shared/roadmap-banner";
 import { PerformanceAreaChart } from "../components/shared/performance-chart";
 import { DeliveryLogTable } from "../components/shared/delivery-log-table";
-import { getSmsCampaignById } from "../../data/sms-campaigns.mock";
+import { useMarketingStore } from "../../data/marketing-store";
+import { defaultActivity, defaultApprovals, defaultAudience } from "../../data/workflow.mock";
+import { ActivityPanel, ApprovalsPanel, AudiencePanel } from "../components/shared/workflow-panels";
 import {
   Table,
   TableBody,
@@ -25,7 +28,7 @@ import {
 
 export function SmsCampaignDetailPage() {
   const { id } = useParams({ strict: false });
-  const campaign = getSmsCampaignById(id ?? "");
+  const campaign = useMarketingStore((s) => s.sms.find((c) => c.id === id));
 
   if (!campaign) {
     return <Navigate to="/sms-campaigns" />;
@@ -57,6 +60,15 @@ export function SmsCampaignDetailPage() {
         backTo="/sms-campaigns"
       />
 
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Performance</TabsTrigger>
+          <TabsTrigger value="audience">Audience</TabsTrigger>
+          <TabsTrigger value="approvals">Approvals</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-8 mt-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <RateCard title="Delivery Rate" rate={campaign.deliveryRate} color="#a855f7" formula="Delivered / Sent" />
         <RateCard title="Click-through" rate={campaign.clickRate} color="#f97316" formula="Clicked / Delivered" />
@@ -161,6 +173,18 @@ export function SmsCampaignDetailPage() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="audience" className="mt-6">
+          <AudiencePanel audience={defaultAudience("Enterprise CXO", campaign.audienceSize, campaign.dndScrubbed)} />
+        </TabsContent>
+        <TabsContent value="approvals" className="mt-6">
+          <ApprovalsPanel steps={defaultApprovals(campaign.status)} />
+        </TabsContent>
+        <TabsContent value="activity" className="mt-6">
+          <ActivityPanel events={defaultActivity(campaign.status, campaign.name)} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

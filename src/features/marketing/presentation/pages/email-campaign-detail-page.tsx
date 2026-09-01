@@ -1,5 +1,6 @@
 import { useParams, Navigate } from "@tanstack/react-router";
 import { Cell, Pie, PieChart } from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CampaignDetailHeader,
   RateCard,
@@ -12,7 +13,9 @@ import {
 } from "../components/shared/campaign-detail-shell";
 import { RoadmapBanner } from "../components/shared/roadmap-banner";
 import { PerformanceBarChart } from "../components/shared/performance-chart";
-import { getEmailCampaignById } from "../../data/email-campaigns.mock";
+import { useMarketingStore } from "../../data/marketing-store";
+import { defaultActivity, defaultApprovals, defaultAudience } from "../../data/workflow.mock";
+import { ActivityPanel, ApprovalsPanel, AudiencePanel } from "../components/shared/workflow-panels";
 import {
   Table,
   TableBody,
@@ -67,7 +70,7 @@ function OpenRateHeatmap({ data }: { data: { day: string; hours: number[] }[] })
 
 export function EmailCampaignDetailPage() {
   const { id } = useParams({ strict: false });
-  const campaign = getEmailCampaignById(id ?? "");
+  const campaign = useMarketingStore((s) => s.emails.find((c) => c.id === id));
 
   if (!campaign) {
     return <Navigate to="/email-campaigns" />;
@@ -103,6 +106,14 @@ export function EmailCampaignDetailPage() {
         backTo="/email-campaigns"
       />
 
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Performance</TabsTrigger>
+          <TabsTrigger value="audience">Audience</TabsTrigger>
+          <TabsTrigger value="approvals">Approvals</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="space-y-8 mt-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <RateCard title="Open Rate" rate={campaign.openRate} color="#f97316" formula="Opened / Delivered" />
         <RateCard title="Click Rate" rate={campaign.clickRate} color="#a855f7" formula="Clicked / Opened" />
@@ -267,6 +278,17 @@ export function EmailCampaignDetailPage() {
           </CardContent>
         </Card>
       )}
+        </TabsContent>
+        <TabsContent value="audience" className="mt-6">
+          <AudiencePanel audience={defaultAudience("Enterprise subscribers", campaign.listSize)} />
+        </TabsContent>
+        <TabsContent value="approvals" className="mt-6">
+          <ApprovalsPanel steps={defaultApprovals(campaign.status)} />
+        </TabsContent>
+        <TabsContent value="activity" className="mt-6">
+          <ActivityPanel events={defaultActivity(campaign.status, campaign.name)} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

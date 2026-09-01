@@ -188,7 +188,7 @@ export const MOCK_SMS_CAMPAIGNS: SmsCampaign[] = [
     senderId: "EYAIGOV",
     message: "AI governance workshop — Mar 12, Bengaluru. Register: ey.com/ai-gov-workshop STOP to opt-out",
     audienceSize: 3400,
-    status: "scheduled",
+    status: "pending_approval",
     scheduledAt: "2026-03-08T09:00:00Z",
     deliveryRate: 0,
     clickRate: 0,
