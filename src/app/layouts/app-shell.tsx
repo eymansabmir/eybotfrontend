@@ -3,6 +3,8 @@ import type { ReactNode } from "react"
 import {
   BotIcon,
   LayoutDashboardIcon,
+  CalendarDaysIcon,
+  ClipboardCheckIcon,
   LineChartIcon,
   MailIcon,
   MegaphoneIcon,
@@ -97,6 +99,18 @@ const mainNav = [
     label: "Social Media Campaign",
     to: "/social-campaigns",
     icon: Share2Icon,
+    featureFlag: "MARKETING" as const,
+  },
+  {
+    label: "Content Calendar",
+    to: "/content-calendar",
+    icon: CalendarDaysIcon,
+    featureFlag: "MARKETING" as const,
+  },
+  {
+    label: "Campaign Approvals",
+    to: "/campaign-approvals",
+    icon: ClipboardCheckIcon,
     featureFlag: "MARKETING" as const,
   },
   {

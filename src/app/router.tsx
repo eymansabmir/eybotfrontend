@@ -39,6 +39,8 @@ import { CreateSmsCampaignPage } from "@/features/marketing/presentation/pages/c
 import { CreateEmailCampaignPage } from "@/features/marketing/presentation/pages/create-email-campaign-page"
 import { CreateSocialCampaignPage } from "@/features/marketing/presentation/pages/create-social-campaign-page"
 import { CreateListenQueryPage } from "@/features/marketing/presentation/pages/create-listen-query-page"
+import { ContentCalendarPage } from "@/features/marketing/presentation/pages/content-calendar-page"
+import { CampaignApprovalsPage } from "@/features/marketing/presentation/pages/campaign-approvals-page"
 
 
 import { BotSettingsPage } from "@/features/bots/presentation/pages/bot-settings-page"
@@ -288,6 +290,18 @@ const sentimentCreateRoute = createRoute({
   component: CreateListenQueryPage,
 })
 
+const contentCalendarRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "content-calendar",
+  component: ContentCalendarPage,
+})
+
+const campaignApprovalsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "campaign-approvals",
+  component: CampaignApprovalsPage,
+})
+
 const routeTree = rootRoute.addChildren([
   dashboardRoute,
   botsRoute,
@@ -328,6 +342,8 @@ const routeTree = rootRoute.addChildren([
   socialCampaignsRoute,
   socialCampaignCreateRoute,
   socialCampaignDetailRoute,
+  contentCalendarRoute,
+  campaignApprovalsRoute,
   sentimentAnalysisRoute,
   sentimentCreateRoute,
 ])

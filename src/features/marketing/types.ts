@@ -206,3 +206,34 @@ export interface SentimentMention {
   timestamp: string;
   topic?: string;
 }
+
+export interface SentimentReply {
+  id: string;
+  mentionId: string;
+  text: string;
+  at: string;
+  author: string;
+}
+
+export type MarketingChannel = "sms" | "email" | "social";
+
+export interface ApprovalQueueItem {
+  id: string;
+  channel: MarketingChannel;
+  name: string;
+  status: CampaignStatus;
+  audienceLabel: string;
+  waitingOn: string;
+  submittedAt: string;
+  href: string;
+}
+
+export interface CalendarEntry {
+  id: string;
+  date: string;
+  channel: MarketingChannel;
+  platform?: SocialPlatform;
+  title: string;
+  status: "scheduled" | "published" | "running";
+  href: string;
+}

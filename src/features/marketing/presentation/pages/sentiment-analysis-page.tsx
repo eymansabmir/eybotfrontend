@@ -44,14 +44,9 @@ import { RoadmapBanner } from "../components/shared/roadmap-banner";
 import { KpiStatCard } from "../components/shared/kpi-stat-card";
 import { MOCK_SENTIMENT } from "../../data/sentiment.mock";
 import { useMarketingStore } from "../../data/marketing-store";
-import type { SentimentLabel, SentimentTopic } from "../../types";
+import type { SentimentTopic } from "../../types";
+import { MentionReplyCard } from "../components/sentiment/mention-reply-card";
 import { cn } from "@/lib/utils";
-
-const sentimentBadge: Record<SentimentLabel, string> = {
-  positive: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  neutral: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  negative: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-};
 
 function TrendIcon({ trend }: { trend: SentimentTopic["trend"] }) {
   if (trend === "up") return <ArrowUpIcon className="size-4 text-emerald-500" />;
@@ -145,6 +140,7 @@ export function SentimentAnalysisPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="mentions">Mentions</TabsTrigger>
           <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="topics">Topics</TabsTrigger>
           <TabsTrigger value="geography">Geography</TabsTrigger>
@@ -228,6 +224,20 @@ export function SentimentAnalysisPage() {
                     <p className="text-xs text-muted-foreground mt-2">{new Date(alert.timestamp).toLocaleString()}</p>
                   </div>
                 </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="mentions" className="space-y-4 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mention inbox</CardTitle>
+              <CardDescription>Reply is stored in this browser only until an API is wired</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {data.mentions.map((m) => (
+                <MentionReplyCard key={m.id} mention={m} />
               ))}
             </CardContent>
           </Card>
@@ -383,21 +393,7 @@ export function SentimentAnalysisPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {data.mentions.map((m) => (
-                <div key={m.id} className="rounded-lg border p-4 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{m.source}</Badge>
-                      {m.topic ? <span className="text-xs text-muted-foreground">{m.topic}</span> : null}
-                    </div>
-                    <Badge variant="secondary" className={sentimentBadge[m.sentiment]}>
-                      {m.sentiment}
-                    </Badge>
-                  </div>
-                  <p className="text-sm">{m.snippet}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Score: {m.score.toFixed(2)} · {new Date(m.timestamp).toLocaleString()}
-                  </p>
-                </div>
+                <MentionReplyCard key={m.id} mention={m} />
               ))}
             </CardContent>
           </Card>
